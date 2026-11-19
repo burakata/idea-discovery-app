@@ -43,6 +43,16 @@ docs/engineering.md.
 
 ## 3. Implement
 
+Every task gets its own branch, cut from an up-to-date `main`:
+
+```
+git switch main
+git pull --ff-only
+git switch -c <type>/<short-name>
+```
+
+`<type>` is `feature`, `fix`, `content` or `docs`. Never commit to `main`.
+
 Brief the implementer. It starts with no context, so the brief must stand on
 its own:
 
@@ -57,6 +67,8 @@ Done when: <checks the implementer can run itself>
 
 - One implementer at a time for a given set of files.
 - Owner-facing text: the implementer follows the ui-copy skill.
+- The implementer never commits. When it reports, the lead commits its change
+  to the task branch, with a message that says why.
 
 ## 4. Review
 
@@ -64,7 +76,7 @@ Run these in parallel, as the change requires:
 
 | Reviewer | When |
 |---|---|
-| code-reviewer subagent | Every change. Give it the brief and the changed files, or a commit range when there is one |
+| code-reviewer subagent | Every change. Give it the brief and the range `main...HEAD` |
 | owner-tester subagent | Changes to `prompts/`, the idea page content, seeded demo data or the chat flow |
 | design-review skill | Changes to layout or styling: 390px and 1280px, English and Turkish, with screenshots |
 | scope-guard subagent | Again, if the change grew beyond the approved plan |
@@ -84,6 +96,7 @@ Sort the findings:
 ## 6. Fix
 
 - Send the fixes Burak chooses to the implementer.
+- Commit each round of fixes as a new commit on the task branch.
 - Run again the reviews those fixes touch.
 
 ## 7. Verify
@@ -98,13 +111,22 @@ The lead checks the result itself:
 
 ## 8. Report
 
-Tell Burak:
+Push the task branch and open a pull request into `main`. Burak chose this on
+2026-11-19, so committing to the task branch, pushing it and opening the pull
+request are part of every task. Merging into `main` is always Burak's.
+
+The pull request description, and the message to Burak, say:
 - what changed;
 - what was verified, and what was not;
 - which decisions were recorded;
 - what is left.
 
-Commit nothing unless Burak asks.
+Rules:
+- Never push to `main` directly. Never force-push.
+- Without the GitHub command-line tool (`gh`), push the branch and give
+  Burak the link to open the pull request:
+  `https://github.com/burakata/idea-discovery-app/compare/main...<branch>?expand=1`
+- The next task starts from `main` again, after Burak has merged.
 
 ## 9. Learn
 
