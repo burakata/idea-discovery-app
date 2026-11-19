@@ -1,0 +1,6 @@
+/* The prototype strip sits on top; the shell fills the rest of the screen. */
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}

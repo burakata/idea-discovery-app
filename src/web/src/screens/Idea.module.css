@@ -1,0 +1,170 @@
+.hero {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-5);
+  background: var(--gradient-hero);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--shadow-soft);
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 1.4px;
+  color: var(--color-link);
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-hero);
+  line-height: 1.12;
+  letter-spacing: -1px;
+}
+
+.lead {
+  max-width: var(--size-lead);
+  color: var(--color-muted-strong);
+}
+
+/* On phones the buttons stack on the left and the illustration sits beside them. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.printNote {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+
+/* Small and tucked into the corner on phones, so the first screen is not all hero. */
+.art {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-5);
+  width: var(--size-art-phone);
+}
+
+.two {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.cardTitle {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-body);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.list svg {
+  margin-top: 3px;
+}
+
+.yes svg {
+  color: var(--color-green);
+}
+
+.no svg {
+  color: var(--color-muted);
+}
+
+.point svg {
+  color: var(--color-amber-ink);
+}
+
+.note {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  margin-top: var(--space-4);
+}
+
+.similar {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.business {
+  display: flex;
+  flex-direction: column;
+}
+
+.how {
+  font-weight: var(--weight-medium);
+}
+
+/* Pinned to the bottom so the labels line up across a row of cards. */
+.brandRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  margin-top: auto;
+}
+
+.brandRow a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--size-touch);
+  font-size: var(--text-sm);
+}
+
+.question {
+  margin-top: var(--space-4);
+  font-weight: var(--weight-medium);
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: 1.25fr 0.75fr;
+    align-items: center;
+    padding: var(--space-7) var(--space-8);
+  }
+
+  .hero.plain {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .art {
+    position: static;
+    display: flex;
+    justify-content: center;
+    width: auto;
+  }
+
+  .two,
+  .similar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .note {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}

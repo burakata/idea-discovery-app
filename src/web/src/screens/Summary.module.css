@@ -1,0 +1,144 @@
+.groups {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.group {
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--size-row);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-lg);
+}
+
+.heading {
+  font-size: var(--text-body);
+}
+
+.title {
+  flex: 1;
+  font-weight: var(--weight-bold);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--size-avatar);
+  height: var(--size-avatar);
+  border-radius: var(--radius-md);
+}
+
+.confirmed .icon {
+  color: var(--color-green);
+  background: var(--color-green-tint);
+}
+
+.early .icon {
+  color: var(--color-amber-ink);
+  background: var(--color-amber-bg);
+}
+
+.open .icon {
+  color: var(--color-info-ink);
+  background: var(--color-info-bg);
+}
+
+.chevron {
+  display: grid;
+  color: var(--color-muted-strong);
+  transition: transform 0.15s;
+}
+
+.head[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+.body,
+.bodyClosed {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.bodyClosed {
+  display: none;
+}
+
+.help {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+
+.items {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form,
+.correction {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.form {
+  padding: var(--space-3);
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+}
+
+.correction label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.add {
+  margin-top: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .groups {
+    gap: var(--space-4);
+  }
+
+  .head {
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    pointer-events: none;
+  }
+
+  .chevron {
+    display: none;
+  }
+
+  .body,
+  .bodyClosed {
+    display: block;
+    padding: 0 var(--space-5) var(--space-5);
+  }
+}
+
+/* Three columns once there is room. Early interpretations is the longest
+   group and the one owners act on, so it gets the widest column. */
+@media (min-width: 1200px) {
+  .groups {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1.2fr);
+  }
+}

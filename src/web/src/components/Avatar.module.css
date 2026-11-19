@@ -1,0 +1,58 @@
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size-avatar);
+  height: var(--size-avatar);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-md);
+}
+
+.owner {
+  color: var(--color-info-ink);
+  background: var(--color-info-bg);
+}
+
+.consultant {
+  color: var(--color-amber-ink);
+  background: var(--color-amber-bg);
+}
+
+.assistant {
+  color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+.mine {
+  color: var(--color-green);
+  background: var(--color-green-tint);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.who {
+  flex: 1;
+  min-width: 0;
+}
+
+.who strong {
+  display: block;
+  font-size: var(--text-body);
+}
+
+.who span {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}

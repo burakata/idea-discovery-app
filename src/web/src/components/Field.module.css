@@ -1,0 +1,58 @@
+.field {
+  display: block;
+  width: 100%;
+  min-height: var(--size-touch);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+}
+
+.field::placeholder {
+  color: var(--color-muted);
+}
+
+.area {
+  resize: none;
+  line-height: 1.45;
+}
+
+.switch {
+  --inset: calc((var(--size-switch-height) - var(--size-switch-thumb)) / 2);
+  position: relative;
+  flex: none;
+  width: var(--size-switch-width);
+  height: var(--size-switch-height);
+  padding: 0;
+  background: var(--color-line-strong);
+  border: 0;
+  border-radius: var(--radius-pill);
+  transition: background 0.15s;
+}
+
+.switch[aria-checked='true'] {
+  background: var(--color-accent);
+}
+
+/* Extends the tappable area to the full touch height without changing the look. */
+.switch::after {
+  position: absolute;
+  inset: calc((var(--size-switch-height) - var(--size-touch)) / 2) 0;
+  content: '';
+}
+
+.thumb {
+  position: absolute;
+  top: var(--inset);
+  left: var(--inset);
+  width: var(--size-switch-thumb);
+  height: var(--size-switch-thumb);
+  background: var(--color-paper);
+  border-radius: var(--radius-pill);
+  transition: transform 0.15s;
+}
+
+.switch[aria-checked='true'] .thumb {
+  transform: translateX(calc(var(--size-switch-width) - var(--size-switch-height)));
+}

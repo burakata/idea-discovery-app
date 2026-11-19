@@ -1,0 +1,323 @@
+.shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  display: none;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-paper);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.crumb {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crumbPath,
+.desktopOnly {
+  display: none;
+}
+
+.crumbName {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.3px;
+}
+
+.topRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status {
+  display: none;
+}
+
+/* Burak's links on phones. */
+.strip {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  overflow-x: auto;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.strip a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-touch);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+}
+
+.strip a.active {
+  color: var(--color-paper);
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.page {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-4) var(--space-4) var(--space-7);
+  overflow-y: auto;
+}
+
+.inner {
+  max-width: var(--size-content);
+  margin: 0 auto;
+}
+
+.narrow {
+  max-width: var(--size-narrow);
+  margin: 0 auto;
+}
+
+.pageTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.pageTitle h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xl);
+  letter-spacing: -0.5px;
+}
+
+.pageTitle p {
+  max-width: var(--size-reading);
+  font-size: var(--text-body);
+  color: var(--color-muted-strong);
+}
+
+.bottomNav {
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-paper);
+  border-top: 1px solid var(--color-line);
+}
+
+/* Each item is as wide as its label needs, plus an equal share of what is left. */
+.bottomNav a {
+  display: flex;
+  flex: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--size-row);
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--color-muted-strong);
+  text-align: center;
+  text-decoration: none;
+}
+
+.bottomNav a.active {
+  color: var(--color-accent);
+}
+
+@media (min-width: 900px) {
+  .sidebar {
+    display: flex;
+    flex: 0 0 var(--size-sidebar);
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-4);
+    overflow-y: auto;
+    color: var(--color-navy-ink);
+    background: var(--color-navy);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-2);
+  }
+
+  .mark {
+    display: grid;
+    place-items: center;
+    flex: 0 0 var(--size-control);
+    height: var(--size-control);
+    background: var(--color-navy-mark);
+    border-radius: var(--radius-md);
+  }
+
+  .brand strong {
+    display: block;
+    font-size: var(--text-body);
+    line-height: 1.2;
+  }
+
+  .brand small,
+  .project small {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--color-navy-text);
+  }
+
+  .label {
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    letter-spacing: 1.4px;
+    color: var(--color-navy-muted);
+    text-transform: uppercase;
+  }
+
+  .project {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+    background: var(--color-navy-raised);
+    border-radius: var(--radius-lg);
+  }
+
+  .project strong {
+    display: block;
+    font-size: var(--text-sm);
+  }
+
+  .projectIcon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 var(--size-avatar);
+    height: var(--size-avatar);
+    background: var(--color-navy-mark);
+    border-radius: var(--radius-md);
+  }
+
+  .nav {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--size-touch);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-navy-text);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+  }
+
+  .nav a span:first-of-type {
+    flex: 1;
+  }
+
+  .nav a:hover,
+  .nav a.active {
+    color: var(--color-paper);
+    background: var(--color-navy-raised);
+  }
+
+  .sideNote {
+    padding: var(--space-4) var(--space-3) 0;
+    margin-top: auto;
+    font-size: var(--text-xs);
+    color: var(--color-navy-text);
+    border-top: 1px solid var(--color-navy-line);
+  }
+
+  .sideNote strong {
+    display: block;
+    margin-bottom: var(--space-1);
+    letter-spacing: 1px;
+    color: var(--color-navy-muted);
+    text-transform: uppercase;
+  }
+
+  .topbar {
+    padding: var(--space-5) var(--space-7) var(--space-3);
+    background: transparent;
+    border-bottom: 0;
+  }
+
+  .crumb {
+    font-size: var(--text-sm);
+    color: var(--color-muted-strong);
+  }
+
+  .crumbPath,
+  .desktopOnly {
+    display: inline;
+  }
+
+  .phoneOnly {
+    display: none;
+  }
+
+  .crumbName {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0;
+    color: var(--color-ink);
+  }
+
+  .status {
+    display: inline-flex;
+  }
+
+  .strip,
+  .bottomNav {
+    display: none;
+  }
+
+  .page {
+    padding: var(--space-3) var(--space-7) var(--space-8);
+  }
+}

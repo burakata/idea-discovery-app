@@ -1,0 +1,125 @@
+/* Design tokens. Values come from docs/reference/second-prototype/index.html,
+   with type sizes raised as docs/design.md asks. Use only these in CSS. */
+:root {
+  /* Colour */
+  --color-bg: #f5f7fb;
+  --color-bg-soft: #f9fbfe;
+  --color-paper: #ffffff;
+  --color-ink: #17243a;
+  --color-muted: #6c7b92;
+  --color-muted-strong: #52627a;
+  --color-line: #e3e9f2;
+  --color-line-strong: #cbdcf5;
+  --color-focus: #a8ccff;
+
+  --color-navy: #111f36;
+  --color-navy-raised: rgba(255, 255, 255, 0.12);
+  --color-navy-line: #33445f;
+  --color-navy-ink: #eef4ff;
+  --color-navy-text: #b7c7e2;
+  --color-navy-muted: #8298b9;
+  --color-navy-mark: #2a497b;
+
+  --color-accent: #2563c4;
+  --color-accent-hover: #154fae;
+  --color-accent-ink: #345984;
+  --color-link: #306bd7;
+  --color-accent-tint: #eaf2ff;
+
+  --color-green: #11836e;
+  --color-green-tint: #eef9f1;
+  --color-green-line: #d7eedf;
+
+  --color-red: #b3402e;
+  --color-red-tint: #fdf0ed;
+  --color-red-line: #f3d3cc;
+
+  --color-amber-bg: #fff2dd;
+  --color-amber-bg-soft: #fffaf0;
+  --color-amber-line: #ecd2a2;
+  --color-amber-ink: #8a5c14;
+
+  --color-info-bg: #e7f0fc;
+  --color-info-ink: #3d6091;
+
+  --color-note-bg: #edf4ff;
+  --color-note-line: #d6e6ff;
+  --color-note-ink: #3c5d8b;
+  --color-note-title: #244e92;
+
+  --color-bubble: #f3f6fc;
+  --color-bubble-line: #e9eef6;
+  --color-bubble-ai: #eef5ff;
+  --color-bubble-ai-line: #dfeafb;
+
+  --color-art-stroke: #244875;
+  --color-art-light: #dfeeff;
+  --color-art-mid: #7db3ed;
+  --color-art-ground: #d2e3fc;
+  --color-art-wood: #b0895f;
+
+  --color-scrim: rgba(17, 30, 52, 0.55);
+  --gradient-hero: linear-gradient(112deg, #ffffff 53%, #eaf2ff 100%);
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-hero: 22px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-soft: 0 14px 50px rgba(23, 46, 81, 0.055);
+  --shadow-raised: 0 18px 60px rgba(23, 46, 81, 0.16);
+
+  /* Type. On phones every sentence is at least 16px; only pills, badges and
+     time stamps use --text-xs. --text-sm drops to 14px on desktop (below). */
+  --font: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --text-xs: 13px;
+  --text-sm: 16px;
+  --text-body: 16px;
+  --text-lg: 19px;
+  --text-xl: 24px;
+  --text-hero: clamp(28px, 3vw, 38px);
+  --weight-medium: 600;
+  --weight-bold: 700;
+
+  /* Sizes */
+  --size-touch: 44px;
+  --size-control: 40px;
+  --size-control-sm: 34px;
+  --size-badge: 22px;
+  --size-avatar: 36px;
+  --size-tile: 48px;
+  --size-tile-lg: 52px;
+  --size-row: 60px;
+  --size-switch-width: 52px;
+  --size-switch-height: 30px;
+  --size-switch-thumb: 24px;
+  --size-sidebar: 256px;
+  --size-side-panel: 300px;
+  --size-content: 1180px;
+  --size-narrow: 760px;
+  --size-form: 460px;
+  --size-reading: 68ch;
+  --size-lead: 56ch;
+  --size-art: 320px;
+  --size-art-phone: 100px;
+}
+
+@media (min-width: 900px) {
+  :root {
+    --text-sm: 14px;
+  }
+}

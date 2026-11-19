@@ -1,0 +1,105 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--size-touch);
+  padding: 0 var(--space-5);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.primary {
+  color: var(--color-paper);
+  background: var(--color-accent);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.secondary {
+  color: var(--color-accent-ink);
+  background: var(--color-paper);
+  border-color: var(--color-line-strong);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-accent-tint);
+}
+
+.quiet {
+  color: var(--color-muted-strong);
+  background: transparent;
+}
+
+.quiet:hover:not(:disabled) {
+  background: var(--color-bubble);
+}
+
+.small {
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.wide {
+  width: 100%;
+}
+
+.iconOnly {
+  min-width: var(--size-touch);
+  padding: 0;
+}
+
+/* Kept for screen readers when a button shows only its icon. */
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.positive[aria-pressed='true'] {
+  color: var(--color-green);
+  background: var(--color-green-tint);
+  border-color: var(--color-green-line);
+}
+
+.negative[aria-pressed='true'] {
+  color: var(--color-red);
+  background: var(--color-red-tint);
+  border-color: var(--color-red-line);
+}
+
+@media (min-width: 900px) {
+  .button {
+    min-height: var(--size-control);
+  }
+
+  .small {
+    min-height: var(--size-control-sm);
+  }
+
+  .iconOnly {
+    min-width: var(--size-control);
+  }
+
+  .small.iconOnly {
+    min-width: var(--size-control-sm);
+  }
+}

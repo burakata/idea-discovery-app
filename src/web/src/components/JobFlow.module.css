@@ -1,0 +1,86 @@
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.step strong {
+  display: block;
+}
+
+.step p {
+  color: var(--color-muted-strong);
+}
+
+.step :global(span) + strong {
+  margin-top: var(--space-2);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--size-tile);
+  height: var(--size-tile);
+  color: var(--color-art-stroke);
+  background: var(--color-accent-tint);
+  border-radius: var(--radius-md);
+}
+
+.unknown {
+  background: var(--color-amber-bg-soft);
+  border: 2px dashed var(--color-amber-line);
+  box-shadow: none;
+}
+
+.unknown .icon {
+  color: var(--color-amber-ink);
+  background: var(--color-amber-bg);
+}
+
+.arrow {
+  display: grid;
+  place-items: center;
+  color: var(--color-navy-muted);
+}
+
+.across {
+  display: none;
+}
+
+/* A row only where there is room for it; narrower desktops keep the column. */
+@media (min-width: 1200px) {
+  .flow {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  /* Steps share the row equally and may shrink, so a longer flow still fits. */
+  .step {
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+    padding: var(--space-4);
+    overflow-wrap: anywhere;
+  }
+
+  .down {
+    display: none;
+  }
+
+  .across {
+    display: block;
+  }
+}

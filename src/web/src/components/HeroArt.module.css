@@ -1,0 +1,57 @@
+.art {
+  display: block;
+  width: 100%;
+  max-width: var(--size-art);
+  height: auto;
+}
+
+.art * {
+  stroke: var(--color-art-stroke);
+  stroke-linejoin: round;
+}
+
+.ground {
+  fill: var(--color-art-ground);
+  stroke: none;
+}
+
+.wall {
+  fill: var(--color-paper);
+  stroke-width: 5;
+}
+
+.door {
+  fill: var(--color-art-light);
+  stroke-width: 4;
+}
+
+.rail {
+  fill: none;
+  stroke: var(--color-art-mid);
+  stroke-width: 4;
+}
+
+.boxes {
+  fill: var(--color-art-mid);
+  stroke-width: 2.5;
+}
+
+.pallet {
+  fill: var(--color-art-wood);
+  stroke-width: 2;
+}
+
+.van {
+  fill: var(--color-paper);
+  stroke-width: 4;
+}
+
+.cab {
+  fill: none;
+  stroke-width: 4;
+}
+
+.wheel {
+  fill: var(--color-art-light);
+  stroke-width: 4;
+}

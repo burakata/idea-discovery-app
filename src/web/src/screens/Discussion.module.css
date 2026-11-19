@@ -1,0 +1,184 @@
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--color-paper);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.head h1 {
+  font-size: var(--text-lg);
+  letter-spacing: -0.3px;
+}
+
+/* Left out on phones so the thread has room. */
+.head p {
+  display: none;
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+
+.peopleButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: var(--size-touch);
+  min-height: var(--size-touch);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-accent-ink);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+}
+
+.peopleCount {
+  font-weight: var(--weight-bold);
+}
+
+.thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+/* Stays in view under the heading, so the label is never scrolled away. */
+.simulated {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-amber-ink);
+  background: var(--color-amber-bg-soft);
+  border-bottom: 1px solid var(--color-amber-line);
+}
+
+.replyNote {
+  align-self: flex-end;
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-muted-strong);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-line);
+}
+
+.side {
+  display: none;
+}
+
+.side h2,
+.sheet h2 {
+  font-size: var(--text-body);
+}
+
+.side ul,
+.sheet ul {
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  background: var(--color-scrim);
+}
+
+.sheet {
+  width: 100%;
+  max-height: 80dvh;
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  overflow-y: auto;
+  background: var(--color-paper);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-raised);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (min-width: 900px) {
+  .layout {
+    gap: var(--space-4);
+    max-width: calc(var(--size-content) + 2 * var(--space-7));
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--space-3) var(--space-7) var(--space-6);
+  }
+
+  .panel,
+  .side {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .panel {
+    overflow: hidden;
+  }
+
+  .head {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .head p {
+    display: block;
+  }
+
+  .peopleButton,
+  .simulated,
+  .scrim {
+    display: none;
+  }
+
+  .thread {
+    padding: var(--space-5) var(--space-6);
+  }
+
+  .composer {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .side {
+    display: block;
+    flex: 0 0 var(--size-side-panel);
+    align-self: flex-start;
+    max-height: 100%;
+    padding: var(--space-5);
+    overflow-y: auto;
+    background: var(--color-paper);
+  }
+}
