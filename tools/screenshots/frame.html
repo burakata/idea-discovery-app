@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- Shows a page in a frame of a fixed size, so a 390px layout can be captured
+     by a browser window that cannot be made that narrow. Used by shoot.ps1. -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body { margin: 0; height: 100%; background: #ffffff; overflow: hidden; }
+      iframe { position: absolute; left: 0; top: 0; border: 0; }
+    </style>
+  </head>
+  <body>
+    <iframe id="frame"></iframe>
+    <script>
+      const params = new URLSearchParams(location.search)
+      const frame = document.getElementById('frame')
+      frame.style.width = params.get('w') + 'px'
+      frame.style.height = params.get('h') + 'px'
+      frame.src = params.get('src')
+    </script>
+  </body>
+</html>
