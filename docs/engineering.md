@@ -125,6 +125,25 @@ changes often and its tests mostly break for no reason.
 The API has xUnit tests (`dotnet test src/api`); the web client has Vitest
 (`npm --prefix src/web test`), with tests next to the code as `*.test.ts`.
 
+A new test must fail when the behaviour it covers breaks. Check it: break
+the behaviour for a moment, or show why the test cannot pass without it.
+
+## 13. Never weaken a test to make it pass
+
+Do not remove or loosen an assertion, skip or delete a case, or change an
+expected value to match what the code produces, unless the brief asks for
+it. Name every change to an existing test's assertions, cases or expected
+values in your report, with the reason.
+
+**Why:** the implementer writes both the code and its tests, so a green run
+can mean the code and the tests simply agree with each other. A weakened test
+passes every check and protects nothing.
+
+**Seen here:** PR 1's open-endpoints test could pass while seeing no
+endpoints at all, and PR 2's prompt-reader test proved two lines when the
+demo seeds three. Reviewers caught both; this rule makes catching them
+routine.
+
 ## 10. Deny by default
 
 Every API endpoint needs a signed-in user, and checks on the server that the
