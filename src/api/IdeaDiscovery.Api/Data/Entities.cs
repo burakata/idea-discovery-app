@@ -82,6 +82,10 @@ public class UserSession
     public DateTime ExpiresAt { get; set; }
     public DateTime? RevokedAt { get; set; }
     public DateTime LastSeenAt { get; set; }
+    // The browser's User-Agent (cut short) and the connection's address, so
+    // Burak can tell one sign-in from another. Both are personal data.
+    public string? Device { get; set; }
+    public string? IpAddress { get; set; }
 }
 
 public class Conversation
