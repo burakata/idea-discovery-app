@@ -1,7 +1,7 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.5 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
+**Version:** 0.6 — Scope baseline, with the v1 brief carried over, the Milestone 0 decisions recorded and the home page and project content settled  
 **Prepared:** 19 November 2026; updated 20 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
@@ -113,6 +113,18 @@ A project-level knowledge area stores approved summaries and links to prior conv
 
 ### 4.4 What owners see
 
+**Before a room: the home page.**
+- Someone who is not signed in sees a neutral page:
+  - the app's name;
+  - one or two sentences on what it is for;
+  - an email field to request a sign-in link;
+  - a note that signing in needs the consultant's invitation;
+  - the EN | TR switch.
+
+  It shows no project names and nothing about any client.
+- A signed-in owner sees the list of the projects they are a member of, even when there is only one, and opens a room from there.
+- The consultant sees all projects and can create one.
+
 Each project room has three sections for owners: **The idea**, **Discussion** and **Shared summary**.
 
 - **The idea:** a welcoming page for the project:
@@ -122,6 +134,19 @@ Each project room has three sections for owners: **The idea**, **Discussion** an
   - similar businesses, as reference examples only;
   - a link to the printable version;
   - a prominent "Join discussion" button.
+
+  Where the idea page's content comes from:
+
+  | Content | Source | Milestone |
+  |---|---|---|
+  | Title and introduction | Entered by the consultant when creating the project, in both languages | M1 |
+  | Page headings and the fixed "what this is for / what we are not doing yet" text | The app's own text, the same for every project | M1 |
+  | Illustration | A generic illustration, the same for every project. The consultant can upload an image per project instead (PNG, JPEG or WebP, with a size limit, shown only to members) | Generic: M1. Upload: M1, before deployment |
+  | Job flow, current understanding and open questions | AI drafts (Visual Mapper, Lead) and consultant entries, published only after the consultant approves (R13, R19, R27) | M3 |
+  | Similar businesses | Drafted by the AI on the consultant's request, with sources, published after approval (R20) | M3 |
+  | Print version | Generated from the idea page and the shared summary, in the reader's language, so it is always current. The link is hidden until then (R22) | M3 |
+
+  Until its content exists, each section shows a plain "nothing here yet" state.
 - **Discussion:** the project's active conversation (§4.2). Each message shows the writer's name and role (Business owner, Software consultant, AI assistant). The assistant asks one question at a time. After an owner sends a message, a quiet line tells them a reply will follow.
 - **Shared summary:** three groups: Confirmed, Early interpretations, Open questions (§4.3). On each early interpretation an owner can tap "Right" or "Not right" and add a correction. Everyone sees who reacted and how.
 
@@ -132,7 +157,7 @@ Each project room has three sections for owners: **The idea**, **Discussion** an
 | ID | Feature | Priority | Acceptance criterion |
 |---|---|---|---|
 | R01 | Generic project dashboard | P0 | New user sees generic projects; no default pallet branding. Consultant can create project with title, description and optional visual/reference content. |
-| R02 | Secure invitations and membership | P0 | Consultant invites a named person; they sign in through a one-time, expiring link sent by email or copied by the consultant and shared by hand, and can access only projects of which they are a member. Invite can expire or be revoked. Where the consultant allows it for a project, a person may ask to join from the project link; they see nothing of the project until the consultant approves. |
+| R02 | Secure invitations and membership | P0 | Consultant invites a named person; they sign in through a one-time, expiring link sent by email or copied by the consultant and shared by hand, and can access only projects of which they are a member. Invite can expire or be revoked. The consultant can remove a member: their access and sessions end at once, the removal is audited, their earlier messages stay under their name marked as no longer in the project, and they can be invited again. Where the consultant allows it for a project, a person may ask to join from the project link; they see nothing of the project until the consultant approves. |
 | R03 | Multi-person asynchronous chat | P0 | Two people on separate browsers/devices can exchange persisted messages without sharing local storage; author and timestamps display correctly. |
 | R04 | Participant count and rejoining | P0 | No fixed number of owners; a participant can return tomorrow to the same active conversation and read missed messages. |
 | R05 | Finish and start next conversation | P0 | Only consultant finishes; finished history and output links remain; new conversation is distinct from the finished one. |
@@ -181,7 +206,9 @@ The AI uses a short MCQ only when it would materially simplify a real choice. De
 | **Clarity Reviewer** | Consultant request; Lead internal consult if configured | Consultant only | One high-value ambiguity, possible disagreement or pacing problem with source references; proposed next question. |
 | **Domain Specialist** | Consultant request; private Lead consult | Consultant by default | Plain-language background; distinguishes external example from client intent. |
 | **Summary Editor** | Consultant request / conversation-end proposal | Draft review queue | Traceable concise summary, status of claims, 1–3 questions for next conversation. |
-| **Visual Mapper** | Consultant request when enough facts exist | Draft review queue | Small, readable business journey diagram marking unknown connections as unknown. |
+| **Visual Mapper** | Consultant request when enough facts exist | Draft review queue | Small, readable business journey diagram marking unknown connections as unknown. On the consultant's request, also a simple line illustration (SVG) for the project's idea page, cleaned of any scripts on the server and published only after approval. |
+
+**The consultant's private assistant.** Each project has a private chat between the consultant and the AI, separate from the shared discussion. The assistant knows the project's context and the shared discussion, and can call the specialists above. Owners never see this chat; the server enforces it. Anything it proposes for owners to see (the idea page, the summary, the job flow, an illustration) goes through the consultant's approval. Built in Milestone 3, with the specialists.
 
 A **Prototype Designer** may be a later optional specialist for consultant-requested concept prototypes. There is one default public Lead—not five agents talking at the owners. The consultant may view the specialists' **visible task requests and outputs**, but not hidden chain-of-thought or inaccessible model internals.
 
@@ -333,6 +360,7 @@ Security, authentication and data-protection obligations are release blockers fo
 
 - Supported React/TypeScript app and ASP.NET Core API, users, projects and membership.
 - Secure email invitations and sign-in; generic project setup with project-specific description.
+- The home page and project list (§4.4); removing a member (R02); an optional uploaded image per project.
 - Persistent shared messages, translations foundation, device support, join/leave/rejoin.
 - Conversation finish/read-only/history/new conversation.
 - **Exit:** consultant and one invited participant exchange messages on different devices; access controls and conversation lifecycle pass A01–A04 and A15–A16.
@@ -349,7 +377,8 @@ Security, authentication and data-protection obligations are release blockers fo
 
 - Owner reactions, claim provenance, consultant confirmation, approved project summary.
 - Clarity Reviewer and Domain Specialist first; Summary Editor and Visual Mapper after that.
-- Private agent task/activity log; consultant facilitator controls.
+- Private agent task/activity log; consultant facilitator controls; the consultant's private assistant chat (§5.3).
+- The idea page's job flow, understanding, similar businesses, an AI-drawn illustration on request, and the generated print version (§4.4).
 - Draft and approve idea snapshots, diagrams, comparison tables and next-session guide; persistence, simple progress indicators and readable exports.
 - Short MCQ component with Other / Not decided.
 - **Exit:** A09–A14; one full conversation can produce an approved, attributable output for the next round.
@@ -446,3 +475,4 @@ When an item changes, record: decision date, who confirmed it, the old and new s
 | 0.3 | 20 November 2026 | Burak | §2.1: Phase 1 has one (human) consultant; more consultants per project stay in F14. §2.3: hosting (small Linux VPS with Docker), AI provider (Claude API behind a swappable adapter), sign-in (the app's own one-time email links; a no-link sign-in only in demo or local configurations) and retention decided. §9: the prototype client evolves into the real client, keeping a demo configuration that is off in real deployments. The AI Discovery Playbook v1.1 is added at `docs/playbook/`. Details in `docs/decisions.md`. | §2.1 contradicted F14; Milestone 0 asks for these provisional choices. | None changed. | None. |
 | 0.4 | 20 November 2026 | Burak | §2.3: hosting provider (Hetzner, Germany), domain (a subdomain of the consultant's own) and budget (a small monthly cost) decided, and the email service (Resend's free tier behind a configurable adapter). | Milestone 0's last open choices. | None changed. | None. |
 | 0.5 | 20 November 2026 | Burak | §2.1 Access, R02 and §9 Identity: besides the emailed link, the consultant can copy a person's one-time sign-in link and share it by hand (e.g. WhatsApp), and, where a project allows it, a person can ask to join from the project link and the consultant approves. Nothing of the project is shown before approval. | Simpler ways for owners to join, without weakening the rule that a shared link alone never opens confidential content. | A15 unchanged: a forwarded project link shows only the ask-to-join page, and an unapproved request reads nothing. | None (R02 stays P0). |
+| 0.6 | 20 November 2026 | Burak | §4.4: the home page (neutral when signed out; owners always see their project list) and where each part of the idea page comes from, by milestone. R02: the consultant can remove a member; earlier messages stay, marked. §5.3: the consultant's private assistant chat per project (M3), and the Visual Mapper can draw a project illustration on request (M3). §11: M1 and M3 list these. | How the real app looks on first use and how a new project's idea page is filled were not written down; the prototype's hand-written pallet page hid the question. | None changed. A15 also covers the signed-out home page; removing a member gets its own API tests in M1. | Uploaded project images (part of R01, P0) are scheduled in M1. The private assistant and the AI-drawn illustration are added as P1 in M3. |
