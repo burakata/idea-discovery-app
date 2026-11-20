@@ -52,7 +52,8 @@ git pull --ff-only
 git switch -c <type>/<short-name>
 ```
 
-`<type>` is `feature`, `fix`, `content` or `docs`. Never commit to `main`.
+`<type>` is `feature`, `fix`, `content`, `docs`, `setup` or `ci`. Never
+commit to `main`.
 
 Brief the implementer. It starts with no context, so the brief must stand on
 its own:
@@ -78,6 +79,7 @@ Run these in parallel, as the change requires:
 | Reviewer | When |
 |---|---|
 | code-reviewer subagent | Every change. Give it the brief and the range `main...HEAD` |
+| security-reviewer subagent | Changes to `src/api`, sign-in, membership or roles, AI calls, configuration or secrets. Give it the brief and the range `main...HEAD` |
 | owner-tester subagent | Changes to `prompts/`, the idea page content, seeded demo data or the chat flow |
 | design-review skill | Changes to layout or styling: 390px and 1280px, English and Turkish, with screenshots |
 | scope-guard subagent | Again, if the change grew beyond the approved plan |
@@ -103,12 +105,21 @@ Sort the findings:
 ## 7. Verify
 
 The lead checks the result itself:
-- The build passes: `npm --prefix src/web run build`.
+- The checks for what changed pass locally:
+  - `src/web`: `npm --prefix src/web run build`;
+  - `src/api`: `dotnet build` and `dotnet test`;
+  - docs: `powershell -File tools/check-doc-links.ps1`;
+  - the tests, once they exist.
 - The app does what the plan's "done when" says. Check it in the browser:
-  - `?as=<person>&lang=<en|tr>` switches person and language;
-  - Reset demo gives fresh data.
+  - in the demo configuration, `?as=<person>&lang=<en|tr>` switches person
+    and language, and Reset demo gives fresh data;
+  - against the API, sign in as each role the change involves, and as
+    someone who must be refused.
 - Look at every screenshot before using it. Do not trust exit codes.
 - Reset the demo afterwards so Burak starts from fresh data.
+- After the pull request is open (step 8), its required CI checks must be
+  green before you tell Burak the task is done. If one fails, fix it in a
+  new commit on the branch.
 
 ## 8. Report
 
@@ -124,6 +135,10 @@ The pull request description, and the message to Burak, say:
 
 Rules:
 - Never push to `main` directly. Never force-push.
+- `main` only accepts a pull request whose required CI checks pass
+  (`.github/workflows/ci.yml`, "Protect main" ruleset). When a change adds a
+  CI job, such as tests or the API build, the same pull request asks Burak to
+  add it to the ruleset's required checks.
 - Without the GitHub command-line tool (`gh`), push the branch and give
   Burak the link to open the pull request:
   `https://github.com/burakata/idea-discovery-app/compare/main...<branch>?expand=1`
@@ -139,7 +154,5 @@ Rules:
 
 - **Deployment, feature flags and monitoring:** added when the real build is
   hosted.
-- **A security-reviewer subagent:** added when backend work starts. Until
-  then code-reviewer checks the security basics.
 - **A reviewer from another vendor's model:** waiting for Burak's decision.
   It would send code to that vendor.
