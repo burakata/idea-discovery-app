@@ -2,9 +2,11 @@
 
 ## What this is
 A web app where a software consultant (Burak) and business owners clarify a
-business idea together, helped by an AI assistant. Each idea has its own room
-with three sections: **The idea**, **Discussion** and **Shared summary**.
-Nobody needs to be online at the same moment.
+business idea together, helped by an AI assistant. Burak creates a project
+for each idea and invites its people by email. Each project's room has three
+sections: **The idea**, **Discussion** and **Shared summary**. The discussion
+is the project's active conversation; Burak finishes it and starts the next,
+and finished ones stay readable. Nobody needs to be online at the same moment.
 
 The goal is to understand what the owners want to achieve and how they
 imagine the business working. The AI helps clarify the idea; it never decides
@@ -18,18 +20,23 @@ Read before planning: the Phase 1 PRD,
 (the single source of scope), and @docs/design.md
 
 ## Users
-- Business owners: non-technical, on phones and desktops. Several owners
-  share one room. Some prefer English, some Turkish.
-- Burak, the software consultant: sees everything, approves what the AI
-  sends, confirms the summary.
-- AI assistant: drafts questions and proposes summary updates. Its prompts
-  live in `prompts/`.
+- Business owners: non-technical, on phones and desktops. Any number of
+  owners share one project. Some prefer English, some Turkish.
+- Burak, the software consultant, the only one in Phase 1: sees everything,
+  creates projects, approves what the AI sends, confirms the summary.
+- AI assistants: one public Lead drafts questions, recaps and summary
+  updates; private specialists answer only Burak or the Lead. Their prompts
+  live in `prompts/` and are written from the AI Discovery Playbook v1.1 in
+  `docs/playbook/`.
 
 ## Core rules
-- **Burak approves first.** By default nothing the AI writes reaches owners
-  until Burak approves, edits or rejects it. A per-room switch lets chat
-  messages go out automatically. Summary and job-flow changes always need
-  approval.
+- **Burak approves first.** Each conversation has an AI mode: Off, Review
+  (the default: nothing the AI writes reaches owners until Burak approves,
+  edits or rejects it) or Automatic (chat replies go out selectively).
+  Summary and job-flow changes always need approval.
+- **Private stays private.** Owners never see drafts, specialist results,
+  agent activity or Burak's private notes. The server enforces this, not the
+  screens.
 - **Nothing unconfirmed is shown as fact.** Every statement is Confirmed, an
   Early interpretation, or an Open question, and is labelled as such.
 - **Owners react, Burak confirms.** Owners mark a statement "Right" or "Not
@@ -57,25 +64,35 @@ Read before planning: the Phase 1 PRD,
 - Run the design-review skill before calling any screen finished.
 
 ## Content and prompts
-- Each project (idea) is one config with its name, intro, job-flow steps,
-  current understanding, similar businesses and participants, in both
-  languages. No project-specific text inside components.
+- Each project's name, intro, job-flow steps, current understanding, similar
+  businesses, participants and AI instructions are project data, in both
+  languages. No project-specific text inside components, and nothing from one
+  project becomes a default for another.
+- In the prototype, project data still comes from config files in the code,
+  and `prompts/idea-context.*.md` must not contradict the project config.
+  Update them together. In the real build Burak enters project data in the
+  app (PRD R01, R11).
 - AI prompts live in `prompts/` and are loaded from the files at runtime.
   Never inline or duplicate them in code.
-- `prompts/idea-context.*.md` and the project config must not contradict each
-  other. Update them together.
 - `docs/reference/` holds the earlier prototype, screenshots and the printed
   feedback document. Reference only; do not copy its code structure.
 
 ## Security (real build)
 - The Claude API key stays on the server. Never in the browser, never
   committed.
-- Read the model ID from configuration.
+- Read the model ID, the AI provider and the sign-in method from
+  configuration.
+- People sign in with one-time, expiring email links, and see only the
+  projects they are members of. Signing in without a link exists only in
+  demo or local configurations.
 
 ## Stack
-- Prototype: React + Vite + TypeScript in `src/web`, no backend, simulated AI.
-- Real build (proposed): ASP.NET Core API, React, SQLite, Claude API called
-  from the API project only.
+- Client: React + Vite + TypeScript in `src/web`. Today it is the prototype,
+  with simulated AI and data in local storage. It grows into the real client;
+  the demo stays as a configuration that is off in real deployments.
+- API (proposed, not started): ASP.NET Core with SQLite. It alone calls the
+  Claude API, through a provider adapter.
+- Hosting: a small Linux VPS running Docker.
 
 ## Working style
 - Every change runs through the dev-loop skill. Principles for anyone writing
