@@ -114,6 +114,7 @@ is a skeleton: deny-by-default access and a health endpoint.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
+- Web tests (Vitest): `npm --prefix src/web test`
 - API build and tests (.NET 10 SDK): `dotnet test src/api`
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
-- CI (`.github/workflows/ci.yml`) runs all three on every pull request.
+- CI (`.github/workflows/ci.yml`) runs all of these on every pull request.
