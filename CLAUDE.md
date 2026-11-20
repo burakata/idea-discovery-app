@@ -110,8 +110,9 @@ Read before planning: the Phase 1 PRD,
 
 ## Commands
 The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
-has deny-by-default access, a health endpoint and the M1 database, but no
-other endpoints yet.
+has deny-by-default access, a health endpoint, the M1 database and sign-in
+with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
+but no project endpoints yet.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
@@ -119,8 +120,10 @@ other endpoints yet.
 - API build and tests (.NET 10 SDK): `dotnet test src/api`
 - New database migration: `dotnet tool restore`, then
   `dotnet ef migrations add <Name> --project src/api/IdeaDiscovery.Api`
-- Outside Development the API needs `ConnectionStrings:Default` (it refuses
-  to start without it) and `Consultant:Email`, as environment variables or
-  server settings, never committed.
+- Outside Development the API refuses to start without
+  `ConnectionStrings:Default`, `Auth:TokenKey` (a secret of at least 32
+  characters) and `App:PublicBaseUrl` (the https address links are built
+  from). It also needs `Consultant:Email`. Set them as environment
+  variables or server settings, never committed.
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.
