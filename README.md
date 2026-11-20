@@ -1,50 +1,71 @@
 # Idea Discovery Rooms
 
 A web app where a software consultant and business owners clarify a business
-idea together, helped by an AI assistant. Each idea gets its own room with
-three sections: **The idea**, **Discussion** and **Shared summary**. Nobody
-needs to be online at the same time.
+idea together, helped by an AI assistant. Each project has a room with three
+sections: **The idea**, **Discussion** and **Shared summary**. Nobody needs to
+be online at the same time.
 
 The app collects business requirements: what the business is, who it serves,
 how a job runs and how money is made. It is not the owners' business app, and
 it does not judge whether the idea will work. Owners can use it in English or
 Turkish.
 
-## Status
+**Status:** Phase 1 in progress: M0 done, M1 underway. See the
+[milestones](https://github.com/burakata/idea-discovery-app/milestones).
 
-A clickable front-end prototype. There is no backend, database or login. The
-AI assistant and sharing between people are simulated, and demo data stays in
-your browser. [PROTOTYPE.md](PROTOTYPE.md) lists what is simulated and what
-the real build needs.
+## How it works
 
-The prototype's first project is a pallet transport idea, used as sample
-content. The discussion and reactions in it are invented.
+- **The consultant approves what the AI sends.** By default nothing the AI
+  writes reaches owners until the consultant approves, edits or rejects it.
+- **Nothing unconfirmed is shown as fact.** Every statement is Confirmed, an
+  Early interpretation or an Open question, and is labelled as such.
+- **Owners react, the consultant confirms.** Owners mark a statement "Right"
+  or "Not right"; only the consultant moves it to Confirmed.
 
-## Run the prototype
+The full scope is in the [Phase 1 PRD](docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md),
+and every decision in [docs/decisions.md](docs/decisions.md).
 
-You need Node.js 20.19 or later, or 22.12 or later.
+## The prototype
+
+The idea page in the clickable prototype, on desktop and on a phone. The AI
+and sharing are simulated, and the pallet-transport content is sample data.
+
+<img src="docs/design-review/screenshots/idea-1280-en.png" alt="The prototype's idea page at desktop width" width="640">
+<img src="docs/design-review/screenshots/idea-390-en.png" alt="The prototype's idea page at phone width" width="195">
+
+## Roadmap
+
+- [M1 · Real collaborative foundation](https://github.com/burakata/idea-discovery-app/milestone/2): sign-in, projects and a shared discussion, without AI.
+- [M2 · Lead AI, approvals and control](https://github.com/burakata/idea-discovery-app/milestone/3): the AI Lead, AI modes per conversation and the approval queue.
+- [M3 · Understanding, specialist oversight and outputs](https://github.com/burakata/idea-discovery-app/milestone/4): reactions and confirmation, private specialists, summaries and diagrams.
+- [M4 · Pilot hardening](https://github.com/burakata/idea-discovery-app/milestone/5): polish, privacy, backups and a pilot with real owners.
+
+## Running it
+
+**The web prototype** (demo data in your browser) needs Node.js 20.19 or
+later, or 22.12 or later:
 
 ```
 npm --prefix src/web install
 npm --prefix src/web run dev
 ```
 
-Open http://localhost:5173.
-- **View as**, in the strip at the top, switches between the three business
-  owners and the consultant.
-- **Reset demo** starts again from fresh demo data.
+Open http://localhost:5173. **View as**, in the strip at the top, switches
+between the owners and the consultant; **Reset demo** starts again.
+[PROTOTYPE.md](PROTOTYPE.md) lists what is simulated.
 
-To build and type-check:
+**The API** needs the .NET 10 SDK. It is a skeleton so far:
 
 ```
-npm --prefix src/web run build
+dotnet test src/api
 ```
 
 ## What is where
 
 | Path | Contents |
 |---|---|
-| `src/web/` | The prototype: React, Vite and TypeScript |
+| `src/web/` | The client: React, Vite and TypeScript. Today the prototype |
+| `src/api/` | The API: ASP.NET Core on .NET 10, with its tests |
 | `prompts/` | The AI assistant's prompts, read from these files |
 | `docs/prd/` | The Phase 1 PRD, the single source of scope, with its milestones (§11) and future feature register (§12) |
 | `docs/playbook/` | The AI Discovery Playbook v1.1, which the Lead's prompts are written from |
@@ -54,6 +75,7 @@ npm --prefix src/web run build
 | `docs/engineering.md` | Principles for writing and reviewing code |
 | `docs/design-review/` | Design and owner-test reports, with screenshots |
 | `docs/reference/` | The earlier prototype and the printed feedback document, for reference only |
+| `tools/` | The docs link check, and `tools/screenshots/` for review screenshots |
 | `.claude/` | The Claude Code setup: the dev loop, subagents and skills |
 
 ## How work is done
@@ -73,6 +95,7 @@ npm --prefix src/web run build
   labelled `acceptance-test`, each in the milestone whose exit criteria name
   it.
 
-The proposed real build is an ASP.NET Core API, React and SQLite, with the
+The real build is an ASP.NET Core API on .NET 10 with SQLite and a React
+client, hosted on Hetzner in Germany, with email through Resend and the
 Claude API called from the server only. See
 [docs/decisions.md](docs/decisions.md).
