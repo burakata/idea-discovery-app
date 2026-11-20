@@ -76,6 +76,8 @@ PRD disagree, the PRD wins.
 | 2026-11-20 | The PRD's milestones are GitHub milestones M0 to M4, with goal and exit criteria from PRD §11. Acceptance tests A01 to A16 are issues #28 to #43, labelled `acceptance-test`, in the milestone whose exit criteria name them (M1: A01 to A04, A15, A16; M2: A05 to A08, A12; M3: A09 to A11, A13, A14). An acceptance-test issue closes when a test covering it passes in CI or, where it cannot be automated, a recorded check on the deployed environment passes. Earlier issues sorted: #10, #11 to M0; #7, #8 to M1; #5 to M2; #6, #9 to M4. New issues get a milestone when they are opened | Progress against the PRD is visible in one place, and each milestone's exit is a set of issues to close | Decided |
 | 2026-11-20 | CLAUDE.md's "Working style" keeps only what the dev loop does not say: the pointer to the loop and engineering.md, the lead and implementer roles, small steps with Burak's go-ahead, asking when unclear (one decision at a time), and recording decisions. The repeated loop steps (plan first, scope-guard, owner-tester, ui-copy) live only in the dev loop | Two copies drift apart (issue #11); Burak chose to shorten it | Decided |
 | 2026-11-20 | GitHub deletes a task branch automatically when its pull request is merged ("Automatically delete head branches" is on). The 22 branches already merged were deleted on GitHub and locally. After a merge, the lead runs `git fetch --prune` and `git branch -d <branch>` | Merged branches piled up (issue #10). Deleting a merged branch loses nothing: its commits are in `main`, and GitHub can restore it from the pull request | Decided |
+| 2026-11-20 | Email: the API sends through a configurable adapter (SMTP or the provider's API, chosen in configuration), starting with Resend's free tier. Its current free limits and where it stores data are checked when it is set up; the privacy notice names it | Burak needs a free option for now that can be changed later (open question 11) | Decided |
+| 2026-11-20 | Hosting: a small paid Hetzner cloud server in Germany (a small monthly cost is fine). The app runs at a subdomain of a domain Burak already owns, and Resend sends from that domain; Burak names the domain at the first deployment | Burak's choice (open question 6). Hetzner has no UK data centre; Germany keeps the UK owners' data in Europe, where InterServer (US only) would mean a transfer to the US | Decided |
 
 ## Open questions
 
@@ -98,9 +100,9 @@ Move each to the table once decided.
    person? Partly answered by PRD A11 and R13: both reactions stay visible,
    the AI asks neutrally, and Burak confirms or leaves the statement open.
    How he follows up stays his call.
-6. **Hosting provider, domain and budget.** A small Linux VPS with Docker was
-   decided on 2026-11-20. Still open: which provider, the domain and the
-   rough monthly budget. Needed by the end of M1.
+6. **Hosting provider, domain and budget.** Decided 2026-11-20: Hetzner in
+   Germany, a small monthly cost, a subdomain of Burak's own domain (see the
+   table).
 7. **How long are rooms kept?** Decided 2026-11-20 (see the table).
 8. **Editing a statement owners already reacted to.** In the prototype the
    reactions stay attached when Burak rewrites a statement. Should they be
@@ -114,5 +116,5 @@ Move each to the table once decided.
     reviewer, run on another company's model? It would catch different
     mistakes, but it sends the code to that company and needs its command-line
     tool installed.
-11. **Email service.** Which transactional email service sends the sign-in
-    links and notifications? Needed in M1.
+11. **Email service.** Decided 2026-11-20: Resend's free tier behind a
+    configurable adapter (see the table).

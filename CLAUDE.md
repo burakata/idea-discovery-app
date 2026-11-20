@@ -92,7 +92,8 @@ Read before planning: the Phase 1 PRD,
   the demo stays as a configuration that is off in real deployments.
 - API (proposed, not started): ASP.NET Core with SQLite. It alone calls the
   Claude API, through a provider adapter.
-- Hosting: a small Linux VPS running Docker.
+- Hosting: a small Hetzner cloud server in Germany running Docker. Email
+  through Resend's free tier, behind a configurable adapter.
 
 ## Working style
 - Every change runs through the dev-loop skill: it says when to plan, which
