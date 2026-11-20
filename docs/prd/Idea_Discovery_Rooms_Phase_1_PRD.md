@@ -1,7 +1,7 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.4 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
+**Version:** 0.5 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
 **Prepared:** 19 November 2026; updated 20 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
@@ -44,7 +44,7 @@ The app is **not** the clients' business software, a marketplace, a general proj
 | Purpose | Discover and clarify the intended business, not validate commercial success or design its final software yet. |
 | Generic product | Neutral default dashboard; project-specific introductions, visual references and AI instructions. No pallet-related global branding. |
 | Participants | Variable number of owners/stakeholders plus one consultant; not hardcoded to three. More than one consultant per project is F14. |
-| Access | Email invitation with secure sign-in link; project membership determines visibility. |
+| Access | Invitation with a secure, personal sign-in link, sent by email or shared by the consultant; or a request to join that the consultant approves, where nothing of the project is visible before approval. Project membership determines visibility. |
 | Timing | Asynchronous: members can join, leave and return without losing messages. |
 | Conversation lifecycle | Consultant marks a conversation finished; its discussion and outputs remain saved; subsequent work starts a new conversation in the project. |
 | Languages | English-first app with Turkish support; each participant chooses a language; translations display separately from untouched original messages. |
@@ -132,7 +132,7 @@ Each project room has three sections for owners: **The idea**, **Discussion** an
 | ID | Feature | Priority | Acceptance criterion |
 |---|---|---|---|
 | R01 | Generic project dashboard | P0 | New user sees generic projects; no default pallet branding. Consultant can create project with title, description and optional visual/reference content. |
-| R02 | Secure invitations and membership | P0 | Consultant invites a real email; invited participant signs in and can access only projects of which they are a member. Invite can expire or be revoked. |
+| R02 | Secure invitations and membership | P0 | Consultant invites a named person; they sign in through a one-time, expiring link sent by email or copied by the consultant and shared by hand, and can access only projects of which they are a member. Invite can expire or be revoked. Where the consultant allows it for a project, a person may ask to join from the project link; they see nothing of the project until the consultant approves. |
 | R03 | Multi-person asynchronous chat | P0 | Two people on separate browsers/devices can exchange persisted messages without sharing local storage; author and timestamps display correctly. |
 | R04 | Participant count and rejoining | P0 | No fixed number of owners; a participant can return tomorrow to the same active conversation and read missed messages. |
 | R05 | Finish and start next conversation | P0 | Only consultant finishes; finished history and output links remain; new conversation is distinct from the finished one. |
@@ -283,7 +283,7 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 | Frontend | Supported React + TypeScript | Replace the old offline prototype runtime; reuse design patterns, not its local-only security assumptions. |
 | API | ASP.NET Core | Server-side role checks, project isolation, conversation state, draft approval. |
 | Persistence | SQLite for small private pilot; migration plan for PostgreSQL if needed | Avoid designing around browser localStorage for production data. |
-| Identity / email | Managed auth or carefully implemented passwordless email links | Enforce one-time/expiring tokens and authorised membership. |
+| Identity / email | Carefully implemented passwordless links (emailed or copied by the consultant), and consultant-approved join requests | Enforce one-time/expiring tokens, consultant approval and authorised membership. |
 | AI orchestration | Server-side provider adapter; initially one model plus distinct prompt roles | AI provider configurable; never embed secrets in React bundle. |
 | Async work | Background job queue for drafts, translations and notifications | Idempotent processing and error states; no reliance on browser remaining open. |
 | Artefacts | Versioned object/file storage + metadata and source references | Generators create **drafts**, not automatically published truths. |
@@ -445,3 +445,4 @@ When an item changes, record: decision date, who confirmed it, the old and new s
 | 0.2 | 20 November 2026 | Burak | This PRD replaces the v1 brief (`docs/brief.md`, now kept as `docs/archive/brief-v1.md`) as the single source of scope. Carried over from the brief: the problem, purpose and limits (including working alongside paper and meetings, and no analysis, scoring or pricing of the idea), §4.4 What owners see, the owner experience success criteria in §8, R27, F23, F24 and the note on F09. Brief items this PRD reverses are superseded; see `docs/decisions.md`. | One scope source instead of two that disagree, without losing the brief's owner-experience criteria. | None changed. The owner experience success criteria are added to §8. | R27 added as P1. F23 and F24 added to the future feature register. |
 | 0.3 | 20 November 2026 | Burak | §2.1: Phase 1 has one (human) consultant; more consultants per project stay in F14. §2.3: hosting (small Linux VPS with Docker), AI provider (Claude API behind a swappable adapter), sign-in (the app's own one-time email links; a no-link sign-in only in demo or local configurations) and retention decided. §9: the prototype client evolves into the real client, keeping a demo configuration that is off in real deployments. The AI Discovery Playbook v1.1 is added at `docs/playbook/`. Details in `docs/decisions.md`. | §2.1 contradicted F14; Milestone 0 asks for these provisional choices. | None changed. | None. |
 | 0.4 | 20 November 2026 | Burak | §2.3: hosting provider (Hetzner, Germany), domain (a subdomain of the consultant's own) and budget (a small monthly cost) decided, and the email service (Resend's free tier behind a configurable adapter). | Milestone 0's last open choices. | None changed. | None. |
+| 0.5 | 20 November 2026 | Burak | §2.1 Access, R02 and §9 Identity: besides the emailed link, the consultant can copy a person's one-time sign-in link and share it by hand (e.g. WhatsApp), and, where a project allows it, a person can ask to join from the project link and the consultant approves. Nothing of the project is shown before approval. | Simpler ways for owners to join, without weakening the rule that a shared link alone never opens confidential content. | A15 unchanged: a forwarded project link shows only the ask-to-join page, and an unapproved request reads nothing. | None (R02 stays P0). |

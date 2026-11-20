@@ -155,8 +155,10 @@ forbids cross-project references in AI tools; A16 tests it.
 Read from configuration what differs between deployments or providers: the
 sign-in method, the email service, the AI provider and model, demo mode,
 hosting settings and secrets. A setting that switches off a safety rule (for
-example signing in without an email link) is refused outside demo and local
-configurations. Do not add a setting for behaviour that never varies; that
+example signing in by choosing a user, with no link and no approval) is
+refused outside demo and local configurations. The join methods for real
+users are the personal sign-in link (emailed or copied) and Burak-approved
+join requests. Do not add a setting for behaviour that never varies; that
 is §1.
 
 **Why:** Burak asked for things to be configurable (decisions, 2026-11-20),
