@@ -21,7 +21,9 @@ export default function Idea() {
 
   const base = `/rooms/${project.id}`
   const { intro } = project
-  const printUrl = project.printVersion[lang]
+  const printFile = project.printVersion[lang]
+  // The file sits in public/, so it resolves against the app's base path.
+  const printUrl = printFile && `${import.meta.env.BASE_URL}${printFile}`
   const hasPrintVersion = Object.keys(project.printVersion).length > 0
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 

@@ -167,5 +167,5 @@ export const pallet: Project = {
     assistant,
   ],
   statements,
-  printVersion: { en: '/feedback-document.pdf' },
+  printVersion: { en: 'feedback-document.pdf' },
 }

@@ -27,8 +27,13 @@ and every decision in [docs/decisions.md](docs/decisions.md).
 
 ## The prototype
 
-The idea page in the clickable prototype, on desktop and on a phone. The AI
-and sharing are simulated, and the pallet-transport content is sample data.
+**[Try the demo](https://burakata.github.io/idea-discovery-app/)** in your
+browser. The AI and sharing are simulated, and each visitor's demo lives only
+in their own browser: nothing is sent anywhere, and **Reset demo** starts
+again.
+
+The idea page in the clickable prototype, on desktop and on a phone. The
+pallet-transport content is sample data.
 
 <img src="docs/design-review/screenshots/idea-1280-en.png" alt="The prototype's idea page at desktop width" width="640">
 <img src="docs/design-review/screenshots/idea-390-en.png" alt="The prototype's idea page at phone width" width="195">
