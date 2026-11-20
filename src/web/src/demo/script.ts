@@ -62,10 +62,11 @@ const pausingRow = tableRows(section('Example replies for things you do not hand
   ([situation]) => situation === 'Pausing',
 )
 
-const scriptLines: Bilingual[] = [
-  ...questions,
-  ...(pausingRow ? [{ en: pausingRow[1], tr: pausingRow[2] }] : []),
-]
+export const pausingLine: Bilingual | undefined = pausingRow
+  ? { en: pausingRow[1], tr: pausingRow[2] }
+  : undefined
+
+const scriptLines: Bilingual[] = [...questions, ...(pausingLine ? [pausingLine] : [])]
 
 if (scriptLines.length === 0 || opening === empty) {
   console.error('No scripted lines found in prompts/interviewer.md. Its headings or tables may have changed.')

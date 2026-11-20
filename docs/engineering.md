@@ -99,9 +99,10 @@ Inside the app, trust the types.
 **Why:** checks everywhere add code without catching more. Real failures come
 from the edges.
 
-**Caught by tests:** if the headings in `prompts/interviewer.md` change, the
-prototype's scripted drafts disappear; `src/web/src/demo/script.test.ts`
-now fails in CI when that happens.
+**Caught by tests:** the prototype reads its opening message, example
+questions and pausing reply from `prompts/interviewer.md`.
+`src/web/src/demo/script.test.ts` fails in CI if any of them can no longer be
+found, or if fewer questions remain than the demo seeds.
 
 ## 8. Keep the store as the one door to the data
 

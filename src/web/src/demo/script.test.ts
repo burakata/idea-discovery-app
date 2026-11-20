@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { opening, scriptLine } from './script'
+import { opening, pausingLine, scriptLine, seededLine } from './script'
 
 // script.ts reads prompts/interviewer.md by its headings. If a heading changes,
 // the app only logs to the console, so these tests make that fail CI instead.
@@ -19,5 +19,19 @@ describe('scripted lines from prompts/interviewer.md', () => {
   it('finds the example questions as well as the pausing reply', () => {
     // The pausing reply is always last. A second line means the questions table was found.
     expect(scriptLine(1)).toBeDefined()
+  })
+
+  it('has the three lines the demo seed uses, in English and Turkish', () => {
+    // palletSeed.ts seeds the demo with seededLine(0), (1) and (2).
+    for (const index of [0, 1, 2]) {
+      const line = seededLine(index)
+      expect(line.en.trim(), `seededLine(${index}) en`).not.toBe('')
+      expect(line.tr.trim(), `seededLine(${index}) tr`).not.toBe('')
+    }
+  })
+
+  it('has the pausing reply in English and Turkish', () => {
+    expect(pausingLine?.en.trim()).toBeTruthy()
+    expect(pausingLine?.tr.trim()).toBeTruthy()
   })
 })
