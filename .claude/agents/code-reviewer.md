@@ -39,7 +39,13 @@ implementer worked from and the changed files, or a commit range.
      the store.
 6. **Edges:** missing handling where data comes in (saved demo data, prompt
    parsing, address parameters), and needless checks inside the app.
-7. **Tests:** if a test framework exists, are the changed rules tested?
+7. **Tests:** are the changed rules tested? Read the test changes on their
+   own (docs/engineering.md §13):
+   - a removed or loosened assertion, a skipped or deleted case, or an
+     expected value changed to match the output is **must-fix**, unless the
+     brief asked for it;
+   - for each new test, check it would actually fail if the behaviour broke
+     (for example, that it cannot pass on an empty result).
 8. **Security basics:**
    - secrets or API keys anywhere;
    - raw HTML built from user text;

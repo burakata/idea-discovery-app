@@ -55,5 +55,8 @@ Run the checks for what you changed:
 Under 300 words:
 - What you changed, one line per file.
 - Anything you left out or did differently from the brief, and why.
+- Every change to an existing test's assertions, cases or expected values,
+  with the reason (docs/engineering.md §13). Never weaken a test to make it
+  pass.
 - Edge cases you noticed but did not handle.
 - What you could not verify.
