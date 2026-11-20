@@ -41,8 +41,9 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
      and send a message. You see "Yanıt gelecek." and no reply.
   3. Switch back to Burak and open "Waiting for you". The draft reply is
      there. Approve it and it appears in the Discussion. The queue also starts
-     with seeded items: drafted replies, proposed summary changes and a
-     job-flow change that leaves one part as a question.
+     with seeded items: a proposed summary change where two owners disagree,
+     and a job-flow change that records one owner's view while the step stays
+     a question.
   4. Turn on "Send chat replies automatically", switch to an owner and send
      another message. The reply arrives by itself after a moment.
   5. As Tom, open the Shared summary and tap "Not right" on a statement.

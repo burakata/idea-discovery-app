@@ -7,7 +7,7 @@ import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 4
+const VERSION = 5
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =
@@ -27,7 +27,7 @@ type Action =
   | { type: 'addStatement'; roomId: string; group: 'early' | 'open'; text: string }
   | { type: 'reset' }
 
-function createInitialState(): AppState {
+export function createInitialState(): AppState {
   const people: Record<string, Person> = {}
   const rooms: Record<string, Room> = {}
   for (const project of projects) {
@@ -108,7 +108,7 @@ function assistantMessage(id: string, lang: Lang, text: string, translation?: st
   }
 }
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   const viewer = state.people[state.viewAs]
 
   switch (action.type) {

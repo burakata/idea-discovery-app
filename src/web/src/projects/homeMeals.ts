@@ -92,8 +92,8 @@ export const homeMeals: Project = {
       icon: 'people',
       who: { en: 'Home cook', tr: 'Evde yemek yapan' },
       what: {
-        en: 'Says what meals are on offer.',
-        tr: 'Hangi yemeklerin olduğunu duyurur.',
+        en: 'Cooks a meal to sell.',
+        tr: 'Satmak için yemek pişirir.',
       },
       unknown: false,
     },

@@ -7,7 +7,7 @@ neutral question. Invented sample project (home-cooked meals).
 
 **Tom:** Roughly how much will this cost us, and how long will it take?
 
-**Assistant:** Burak is the right person to answer that. I'll note your question for him. Meanwhile: imagine someone wants to buy from you tomorrow. What happens first?
+**Assistant:** Burak is the right person to answer that. I'll note your question for him. Meanwhile: imagine a customer wants something tomorrow. What happens first?
 
 ## 2. Turkish: asked about Burak's cost
 

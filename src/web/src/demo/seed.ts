@@ -146,45 +146,38 @@ export const homeMealsSeed: RoomSeed = {
       text: whatNext.en,
       translation: whatNext.tr,
     },
-    // Only Tom described it, and he said whom, not how. The open question stays,
-    // and the text says it rests on one owner's word.
-    {
-      id: 'seed-q2',
-      kind: 'statement',
-      group: 'early',
-      text: {
-        en: 'A neighbour asks the cook for a portion. So far only Tom has said this.',
-        tr: 'Komşu, yemek yapandan bir porsiyon ister. Şimdiye kadar bunu yalnızca Tom söyledi.',
-      },
-      source: { saidBy: 'tom', quote: 'asks the cook for a portion' },
-    },
-    // The owners disagree, so it becomes an open question with both views.
+    // The owners disagree, so it replaces the early interpretation with an open question
+    // holding both views.
     {
       id: 'seed-q4',
       kind: 'statement',
       group: 'open',
+      replaces: 'order-ahead',
       text: {
         en: 'Are meals always ordered a day ahead? Elif thinks they should be, so nobody cooks food for nothing; Tom says some cooks make extra and sell what is left.',
         tr: 'Yemekler her zaman bir gün önceden mi sipariş ediliyor? Elif öyle olması gerektiğini düşünüyor, böylece kimse boşuna yemek pişirmez; Tom ise bazı yemek yapanların fazladan pişirip kalanı sattığını söylüyor.',
       },
       source: {
         saidBy: 'elif',
-        quote: 'meals should be ordered a day ahead, so nobody cooks food for nothing',
+        quote: 'Bence yemekler bir gün önceden sipariş edilmeli, böylece kimse boşuna yemek pişirmez.',
       },
     },
-    // Splits the unknown step into two questions. Nothing is claimed: no owner has
-    // said how the meal reaches the neighbour or how they pay, so there is no source.
+    // Records Tom's view of the handover. The step stays a question, because Elif has
+    // not said how it works and Hasan has not joined.
     {
       id: 'seed-q3',
       kind: 'jobFlow',
       stepId: 'handover',
-      who: { en: 'How does the meal reach the neighbour?', tr: 'Yemek komşuya nasıl ulaşıyor?' },
-      what: { en: 'Nobody has said yet.', tr: 'Henüz kimse söylemedi.' },
-      unknown: true,
-      stillUnknown: {
-        who: { en: 'How does the neighbour pay?', tr: 'Komşu ödemeyi nasıl yapıyor?' },
-        what: { en: 'Nobody has said yet.', tr: 'Henüz kimse söylemedi.' },
+      who: {
+        en: 'How does the meal reach the neighbour, and how do they pay?',
+        tr: 'Yemek komşuya nasıl ulaşıyor, ödeme nasıl yapılıyor?',
       },
+      what: {
+        en: 'Tom says they agree a time and the neighbour collects it. Not agreed by all yet.',
+        tr: 'Tom’a göre bir saat kararlaştırılıyor ve komşu yemeği gidip alıyor. Henüz herkes aynı fikirde değil.',
+      },
+      unknown: true,
+      source: { saidBy: 'tom', quote: 'agree a time to collect it' },
     },
   ],
   scriptIndex: 3,

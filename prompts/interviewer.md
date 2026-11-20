@@ -135,10 +135,10 @@ Turkish (when the person's setting is `tr`):
 | English | Turkish |
 |---|---|
 | Who do you think your customers would be? | Sizce müşterileriniz kimler olur? |
-| Imagine someone wants to buy from you tomorrow. What happens first? | Diyelim ki yarın biri sizden bir şey almak istiyor. İlk olarak ne olur? |
-| And what happens after that? | Peki sonra ne oluyor? |
+| Imagine a customer wants something tomorrow. What happens first? | Diyelim ki yarın bir müşteri bir şey istiyor. İlk ne olur? |
+| And what happens after that? | Ve sonra ne olur? |
 | Who does the work at that point? | O noktada işi kim yapıyor? |
-| How do you expect the business to earn money? | İşin nasıl para kazanmasını bekliyorsunuz? |
+| How would the business make money? | Sizce bu iş nasıl para kazanır? |
 | What absolutely has to be in place on day one? | İlk gün mutlaka hazır olması gereken şey ne? |
 | If I've understood correctly: … Is that right? | Doğru anladıysam şöyle: … Böyle mi? |
 
