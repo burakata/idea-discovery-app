@@ -55,6 +55,8 @@ Name it in your report whenever a change touches:
   reaches owners unapproved, and only Burak moves a statement to Confirmed.
 - The language rules: both languages, translations beneath messages.
 - Seeded demo data that is shown as the owners' own words.
+- Who can see or change what: sign-in, membership and roles, and the
+  project and conversation scoping of queries (§10, §11).
 
 **Why:** these are the product's core promises (CLAUDE.md, "Core rules"), and
 breaking them does not break the build. Nothing fails; owners are simply
@@ -120,3 +122,42 @@ changes often and its tests mostly break for no reason.
 
 There is no test framework yet. The first change that touches these rules
 should propose adding one (Vitest), as a decision for Burak.
+
+## 10. Deny by default
+
+Every API endpoint needs a signed-in user, and checks on the server that the
+user is a member of the project, with the right role, before it reads or
+changes anything. Access comes from an explicit rule, never from a missing
+one: an endpoint without a rule refuses. Hiding a button in the client is not
+a check. Each endpoint gets a test that a non-member is refused, and that an
+owner is refused anything only Burak may see.
+
+**Why:** a missing check breaks nothing visible. An owner simply sees
+another project, a draft or a private note. PRD §3 and §10 require access to
+be enforced on the server; A09 and A15 test it.
+
+## 11. Scope every query to its project and conversation
+
+Every query that reads or changes project data filters by the project, and by
+the conversation where the data belongs to one, using the ids the access
+check approved. Never trust an id from the request body on its own. Private
+data (drafts, specialist results, agent activity, private notes) is also
+filtered by who may see it. The same holds for what is sent to the AI: only
+the current project's material.
+
+**Why:** one unscoped query puts one project's owners' words in front of
+another project's owners. PRD §9 asks for this scoping in every query; §10
+forbids cross-project references in AI tools; A16 tests it.
+
+## 12. Configure what varies, not everything
+
+Read from configuration what differs between deployments or providers: the
+sign-in method, the email service, the AI provider and model, demo mode,
+hosting settings and secrets. A setting that switches off a safety rule (for
+example signing in without an email link) is refused outside demo and local
+configurations. Do not add a setting for behaviour that never varies; that
+is §1.
+
+**Why:** Burak asked for things to be configurable (decisions, 2026-11-20),
+so that providers can change and the demo can run without code changes. A
+setting nobody changes is untested code.
