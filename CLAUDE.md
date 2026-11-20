@@ -90,9 +90,9 @@ Read before planning: the Phase 1 PRD,
 - Client: React + Vite + TypeScript in `src/web`. Today it is the prototype,
   with simulated AI and data in local storage. It grows into the real client;
   the demo stays as a configuration that is off in real deployments.
-- API: ASP.NET Core on .NET 10 in `src/api`, started as a skeleton; SQLite
-  (proposed) comes next. It alone calls the Claude API, through a provider
-  adapter.
+- API: ASP.NET Core on .NET 10 in `src/api`, with EF Core and SQLite
+  (migrations applied on startup). It alone calls the Claude API, through a
+  provider adapter.
 - Hosting: a small Hetzner cloud server in Germany running Docker. Email
   through Resend's free tier, behind a configurable adapter.
 
@@ -110,11 +110,17 @@ Read before planning: the Phase 1 PRD,
 
 ## Commands
 The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
-is a skeleton: deny-by-default access and a health endpoint.
+has deny-by-default access, a health endpoint and the M1 database, but no
+other endpoints yet.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
 - Web tests (Vitest): `npm --prefix src/web test`
 - API build and tests (.NET 10 SDK): `dotnet test src/api`
+- New database migration: `dotnet tool restore`, then
+  `dotnet ef migrations add <Name> --project src/api/IdeaDiscovery.Api`
+- Outside Development the API needs `ConnectionStrings:Default` (it refuses
+  to start without it) and `Consultant:Email`, as environment variables or
+  server settings, never committed.
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.

@@ -1,3 +1,4 @@
+using IdeaDiscovery.Api.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 
@@ -37,7 +38,11 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+builder.Services.AddDatabase(builder.Configuration);
+
 var app = builder.Build();
+
+DatabaseSetup.Initialise(app.Services);
 
 app.UseAuthentication();
 app.UseAuthorization();
