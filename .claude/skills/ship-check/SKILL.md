@@ -1,72 +1,104 @@
 ---
 name: ship-check
-description: Pre-release checklist for Idea Discovery Rooms. Run before sharing an invite link with real owners.
+description: Pre-release checklist for Idea Discovery Rooms, from the PRD's Definition of Done (§14) and release blockers (§10). Run on the deployed environment before inviting real owners.
 disable-model-invocation: true
 ---
 
 # Ship check
 
-Go through every item. Report each as PASS, FAIL or NOT CHECKED with one line
-of evidence. Do not fix anything unless asked; report first.
+Run it against the deployed environment, not a local build or the demo
+configuration. Go through every item. Report each as PASS, FAIL or NOT
+CHECKED with one line of evidence. Do not fix anything unless asked; report
+first. PRD: `docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md`.
 
-## Build
-- [ ] Backend builds and tests pass.
-- [ ] Frontend builds with no errors.
+## Build and tests
+- [ ] `main` is green: every required CI check passes on its latest commit.
+- [ ] The acceptance tests A01 to A16 (PRD §8) pass, or each failing one is
+      named with the reason it does not block this pilot.
+- [ ] The demo configuration is off. `?as=`, `?lang=`, Reset demo and
+      no-link sign-in do not work.
 
 ## Secrets
-- [ ] No API key or secret anywhere in the repository or its history.
-- [ ] The Claude API key is read from configuration on the server only.
-- [ ] No request from the browser goes directly to the Claude API.
+- [ ] No API key, password or token anywhere in the repository or its
+      history.
+- [ ] The AI provider key and model ID are read from configuration on the
+      server only.
+- [ ] No request from the browser goes directly to the AI provider.
 
-## Owner experience (check at 390px and 1280px)
-- [ ] An invite link opens the idea page for the right project.
-- [ ] Entering a name and reaching the discussion takes under a minute.
+## Access (PRD §10: release blockers)
+- [ ] An invite is bound to its email, works once, expires and can be
+      revoked.
+- [ ] A forwarded invite or room link opens nothing for anyone else (A15).
+- [ ] A signed-in owner sees only the projects they are a member of,
+      including by typing addresses or ids directly.
+- [ ] Owners cannot see drafts, the queue, specialist results, agent
+      activity, private notes or settings, through any screen, address,
+      error message or email (A05, A09).
+- [ ] Nothing from one project appears in another: text, agents or AI
+      context (A16).
+- [ ] User text is shown as text, never run as HTML.
+
+## The pilot works (PRD §14)
+- [ ] Burak creates a generic project and invites at least one outside
+      participant.
+- [ ] Both can talk at different times on different devices and come back to
+      the same active conversation (A01, A03).
+- [ ] Burak finishes a conversation and starts the next; the old transcript
+      and approved outputs stay readable and unchanged (A04).
+- [ ] AI modes per conversation:
+      - Off: no AI message; people still talk (A06);
+      - Review: nothing the AI writes reaches owners before Burak approves;
+        an edited draft goes out as edited, a rejected one never (A05);
+      - Automatic: selective replies only; summary and flow changes still
+        wait for approval (A07).
+- [ ] `@Lead` follows the current mode; owners cannot call a specialist
+      (A08).
+- [ ] The Lead stays silent when a question is open, and
+      `NO_PUBLIC_REPLY` never appears as a message or draft (A12).
+- [ ] Owners mark Right or Not right with a correction, each reaction shows
+      who made it, and only Burak confirms; dissent stays visible (A11,
+      A14).
+- [ ] The idea snapshot, the shared understanding and the next-conversation
+      questions can be drafted, approved and kept.
+- [ ] Burak can read private specialist results; owners cannot.
+
+## Language
+- [ ] The app opens in English; the switch is visible on every owner screen
+      without opening a menu.
+- [ ] Switching to Türkçe changes all interface text and project content,
+      and the AI's next message to that person; the choice is remembered for
+      that person only.
+- [ ] A message in the other language shows a translation beneath the
+      unchanged original, and the translation does not strengthen it (A10).
+
+## Owner experience (390px and 1280px)
+- [ ] From the email link, an owner signs in and reaches the idea page in
+      under a minute.
 - [ ] The idea page explains what this is for without any help from Burak.
-- [ ] Closing the page and reopening the link shows the same room.
 - [ ] The design-review skill has been run with no unresolved problems.
+- [ ] Keyboard use, labelled icons and contrast are checked (PRD §10).
 
-## Approval
-- [ ] With approval on, nothing the AI writes appears to owners before Burak
-      approves it.
-- [ ] An edited draft is sent as edited. A rejected draft never appears.
-- [ ] The automatic switch works per room and affects chat messages only.
-- [ ] Summary and job-flow changes need approval even in automatic mode.
-- [ ] Owners cannot see drafts, the queue, private notes or room settings,
-      including by typing an address directly.
-- [ ] `NO_REPLY` never appears as a visible message or a draft.
+## Data and operations (PRD §10)
+- [ ] Data survives a server restart.
+- [ ] Backups run, a restore has been tried, and they roll off as decided.
+- [ ] The privacy notice is published and matches the retention decision in
+      docs/decisions.md.
+- [ ] An AI or email failure loses no human message, and a retry does not
+      publish twice.
+- [ ] Approvals, confirmations, mode changes and conversation closures are
+      recorded with who and when.
 
-## Shared summary
-- [ ] Owners can mark "Right" or "Not right" and add a correction.
-- [ ] Each reaction shows who made it.
-- [ ] Only Burak can move a statement to Confirmed.
-- [ ] Nothing reaches Confirmed without Burak's action.
-- [ ] Export downloads the summary with all three groups.
-
-## Language and translation
-- [ ] The app opens in English; the AI's opening message is in English.
-- [ ] The switch is visible without opening a menu, on every screen.
-- [ ] Switching to Türkçe changes all interface text and project content.
-- [ ] After switching, the AI's next message to that person is in Turkish.
-- [ ] The choice survives closing and reopening the link, and does not
-      affect anyone else.
-- [ ] A Turkish message shows an English translation beneath it for an
-      English reader, and the other way round. The original is unchanged.
-- [ ] The two strings files have identical keys.
-
-## Prompts
+## Prompts and scope
 - [ ] All prompts are loaded from `prompts/`, not duplicated in code.
-- [ ] The idea-context file for the project is appended.
-- [ ] The idea page and the idea-context file say the same thing.
 - [ ] owner-tester has been run since the last prompt change, with no
       unresolved findings.
-
-## Data
-- [ ] Rooms survive a server restart.
-- [ ] There is a way to back up a room.
-
-## Scope
+- [ ] security-reviewer has reviewed every change to access, sign-in, AI
+      calls and configuration, with no unresolved must-fixes.
 - [ ] Nothing from the PRD's future feature register has been built.
-- [ ] docs/decisions.md is up to date.
+- [ ] docs/decisions.md is up to date, and the open questions that block
+      inviting owners are answered.
 
-Finish with a one-line verdict: ready to share, or not, and the blocking
-items.
+Finish with a one-line verdict: ready to invite owners, or not, and the
+blocking items. After the pilot, the PRD's last §14 item (did the AI surface
+a useful ambiguity or prevent a mistaken assumption?) is Burak's review, not
+part of this check.
