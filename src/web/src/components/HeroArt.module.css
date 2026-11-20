@@ -8,6 +8,7 @@
 .art * {
   stroke: var(--color-art-stroke);
   stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
 .ground {
@@ -15,43 +16,37 @@
   stroke: none;
 }
 
-.wall {
-  fill: var(--color-paper);
+.legs {
+  fill: none;
   stroke-width: 5;
 }
 
-.door {
-  fill: var(--color-art-light);
-  stroke-width: 4;
-}
-
-.rail {
-  fill: none;
-  stroke: var(--color-art-mid);
-  stroke-width: 4;
-}
-
-.boxes {
-  fill: var(--color-art-mid);
-  stroke-width: 2.5;
-}
-
-.pallet {
-  fill: var(--color-art-wood);
-  stroke-width: 2;
-}
-
-.van {
+.person {
   fill: var(--color-paper);
   stroke-width: 4;
 }
 
-.cab {
-  fill: none;
+.body {
+  fill: var(--color-art-mid);
   stroke-width: 4;
 }
 
-.wheel {
+.table {
+  fill: var(--color-art-wood);
+  stroke-width: 4;
+}
+
+.bulb {
   fill: var(--color-art-light);
+  stroke-width: 4;
+}
+
+.bubble {
+  fill: var(--color-paper);
+  stroke-width: 4;
+}
+
+.detail {
+  fill: none;
   stroke-width: 4;
 }

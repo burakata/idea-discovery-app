@@ -1,19 +1,22 @@
 import styles from './HeroArt.module.css'
 
-// Warehouse, pallet and van. Redrawn from the reference prototype's hero artwork.
+// People around a table with a lightbulb and a speech bubble: an idea being talked through.
 export function HeroArt() {
   return (
     <svg className={styles.art} viewBox="0 0 360 270" aria-hidden="true">
-      <ellipse className={styles.ground} cx="170" cy="229" rx="153" ry="18" />
-      <path className={styles.wall} d="M45 117L143 43 239 117V222H45Z" />
-      <rect className={styles.door} x="83" y="127" width="121" height="95" />
-      <path className={styles.rail} d="M83 148H204" />
-      <path className={styles.boxes} d="M99 206v-30h32v30m0 0v-30h32v30m-47-30v-28h32v28m32 0v-28h-32" />
-      <path className={styles.pallet} d="M92 210h112v8H92z" />
-      <path className={styles.van} d="M220 181h61l31 23v20h-92z" />
-      <path className={styles.cab} d="M281 181v23h31" />
-      <circle className={styles.wheel} cx="242" cy="225" r="13" />
-      <circle className={styles.wheel} cx="291" cy="225" r="13" />
+      <ellipse className={styles.ground} cx="180" cy="236" rx="150" ry="18" />
+      <path className={styles.legs} d="M140 196v36M220 196v36" />
+      <circle className={styles.person} cx="100" cy="124" r="19" />
+      <path className={styles.body} d="M70 184q0-36 30-36t30 36z" />
+      <circle className={styles.person} cx="180" cy="106" r="19" />
+      <path className={styles.body} d="M150 170q0-36 30-36t30 36z" />
+      <circle className={styles.person} cx="260" cy="124" r="19" />
+      <path className={styles.body} d="M230 184q0-36 30-36t30 36z" />
+      <ellipse className={styles.table} cx="180" cy="188" rx="104" ry="20" />
+      <circle className={styles.bulb} cx="180" cy="46" r="18" />
+      <path className={styles.detail} d="M172 70h16M175 77h10M180 16v-6M156 26l-4-4M204 26l4-4" />
+      <path className={styles.bubble} d="M262 40h50a12 12 0 0 1 12 12v18a12 12 0 0 1-12 12h-32l-14 14v-14h-4a12 12 0 0 1-12-12V52a12 12 0 0 1 12-12z" />
+      <path className={styles.detail} d="M274 61h1M286 61h1M298 61h1" />
     </svg>
   )
 }

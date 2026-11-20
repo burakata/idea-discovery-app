@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { PrototypeBar } from './components/PrototypeBar'
-import { findProject, projects } from './projects'
+import { findProject } from './projects'
 import Discussion from './screens/Discussion'
 import Idea from './screens/Idea'
 import Join from './screens/Join'
@@ -14,7 +14,7 @@ import { StoreProvider, useStore } from './state/store'
 
 function Home() {
   const { viewer } = useStore()
-  return <Navigate to={`/rooms/${viewer.roomId ?? projects[0].id}`} replace />
+  return <Navigate to={viewer.roomId ? `/rooms/${viewer.roomId}` : '/rooms'} replace />
 }
 
 // Owners see only their own room.

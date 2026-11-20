@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Page } from '../components/AppShell'
 import { Button } from '../components/Button'
@@ -16,15 +15,10 @@ import styles from './Idea.module.css'
 export default function Idea() {
   const project = useOutletContext<Project>()
   const { state } = useStore()
-  const { t, lang, pick } = useT()
-  const [printNote, setPrintNote] = useState(false)
+  const { t, pick } = useT()
 
   const base = `/rooms/${project.id}`
   const { intro } = project
-  const printFile = project.printVersion[lang]
-  // The file sits in public/, so it resolves against the app's base path.
-  const printUrl = printFile && `${import.meta.env.BASE_URL}${printFile}`
-  const hasPrintVersion = Object.keys(project.printVersion).length > 0
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 
   const steps = state.rooms[project.id].jobFlow.map((step) => {
@@ -45,7 +39,7 @@ export default function Idea() {
 
   return (
     <Page>
-      <section className={project.illustration ? styles.hero : `${styles.hero} ${styles.plain}`}>
+      <section className={styles.hero}>
         <div>
           <p className={styles.eyebrow}>{pick(intro.eyebrow).text}</p>
           <h1>{pick(intro.title).text}</h1>
@@ -54,28 +48,11 @@ export default function Idea() {
             <Button variant="primary" iconRight="arrowRight" to={`${base}/discussion`}>
               {t.idea.join}
             </Button>
-            {printUrl && (
-              <Button icon="print" href={printUrl}>
-                {t.idea.print}
-              </Button>
-            )}
-            {!printUrl && hasPrintVersion && (
-              <Button icon="print" onClick={() => setPrintNote(true)}>
-                {t.idea.print}
-              </Button>
-            )}
           </div>
-          {printNote && !printUrl && (
-            <p className={styles.printNote} role="status">
-              {t.idea.printComing}
-            </p>
-          )}
         </div>
-        {project.illustration === 'warehouse' && (
-          <div className={styles.art}>
-            <HeroArt />
-          </div>
-        )}
+        <div className={styles.art}>
+          <HeroArt />
+        </div>
       </section>
 
       {intro.purpose.length > 0 && (
@@ -167,10 +144,12 @@ export default function Idea() {
                 <p className={styles.how}>{pick(business.how).text}</p>
                 <div className={styles.brandRow}>
                   <Pill tone="neutral">{business.name}</Pill>
-                  <a href={business.url} target="_blank" rel="noopener noreferrer">
-                    {t.idea.visit}
-                    <Icon name="external" size={16} />
-                  </a>
+                  {business.url && (
+                    <a href={business.url} target="_blank" rel="noopener noreferrer">
+                      {t.idea.visit}
+                      <Icon name="external" size={16} />
+                    </a>
+                  )}
                 </div>
               </Card>
             ))}

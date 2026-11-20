@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, type ReactNode } from 'react'
-import { seeds, startingViewer } from '../demo/palletSeed'
+import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
 import type { Lang } from '../projects/types'
@@ -7,7 +7,7 @@ import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 3
+const VERSION = 4
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =

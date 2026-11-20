@@ -19,7 +19,7 @@ export interface Participant {
 
 export interface JobFlowStep {
   id: string
-  icon: 'warehouse' | 'van' | 'pallet'
+  icon: 'people' | 'discussion' | 'send' | 'check'
   who: Text
   what: Text
   unknown: boolean
@@ -27,7 +27,8 @@ export interface JobFlowStep {
 
 export interface SimilarBusiness {
   name: string
-  url: string
+  // Optional: invented example descriptions have no website.
+  url?: string
   how: Bilingual
 }
 
@@ -43,9 +44,7 @@ export interface Project {
   name: Bilingual
   status: Bilingual
   // Shown beside the project's name in the sidebar and the rooms list.
-  icon: 'pallet' | 'idea'
-  // The hero illustration on the idea page, or null for none.
-  illustration: 'warehouse' | null
+  icon: 'idea'
   intro: {
     eyebrow: Bilingual
     title: Bilingual
@@ -60,9 +59,6 @@ export interface Project {
   similarQuestion: Bilingual
   participants: Participant[]
   statements: StartingStatement[]
-  // File name of the printable document in src/web/public/, per language,
-  // resolved against the base URL. Missing means not ready yet.
-  printVersion: Partial<Record<Lang, string>>
 }
 
 export const burak: Participant = {
