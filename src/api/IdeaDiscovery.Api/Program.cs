@@ -1,11 +1,25 @@
+using System.Threading.RateLimiting;
+using IdeaDiscovery.Api.Auth;
 using IdeaDiscovery.Api.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Cookie authentication. There is no sign-in yet (a later change adds it), so
-// refusals answer with a status code and never redirect to a login page.
+// Refuses to start outside Development without a strong token key and an
+// https public address.
+var authSettings = AuthSettings.Read(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton(authSettings);
+builder.Services.AddSingleton<TokenHasher>();
+builder.Services.AddScoped<SignInLinks>();
+// One clock for the whole app, so tests can move it.
+builder.Services.TryAddSingleton(TimeProvider.System);
+
+// Cookie authentication. Refusals answer with a status code and never
+// redirect to a login page. The cookie holds only a session id; every request
+// is checked against the database.
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -17,6 +31,9 @@ builder.Services
             ? CookieSecurePolicy.SameAsRequest
             : CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        // A session lasts 30 days from sign-in and is never extended.
+        options.SlidingExpiration = false;
+        options.Events.OnValidatePrincipal = SessionValidation.ValidateAsync;
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -28,6 +45,35 @@ builder.Services
             return Task.CompletedTask;
         };
     });
+builder.Services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+    .Configure<TimeProvider>((options, clock) => options.TimeProvider = clock);
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = CsrfProtection.HeaderName;
+    options.Cookie.Name = "idr_csrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    // Antiforgery refuses to run behind a TLS-terminating proxy when this is
+    // Always, because the app sees plain http. The token's cookie carries no
+    // access; PR 9 (forwarded headers) makes it Secure on the public address.
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+
+// Using links is limited per client IP: 10 attempts in 15 minutes.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(AuthEndpoints.RedeemRateLimit, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0,
+            }));
+});
 
 // Deny by default: an endpoint without an explicit access rule needs a
 // signed-in user.
@@ -36,6 +82,10 @@ builder.Services.AddAuthorization(options =>
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
+    // Read from the database on each request, never from the cookie.
+    options.AddPolicy(SessionValidation.ConsultantPolicy, policy => policy
+        .RequireAuthenticatedUser()
+        .RequireClaim(SessionValidation.ConsultantClaim, "true"));
 });
 
 builder.Services.AddDatabase(builder.Configuration);
@@ -44,11 +94,16 @@ var app = builder.Build();
 
 DatabaseSetup.Initialise(app.Services);
 
+app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<CsrfProtection>();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
     .AllowAnonymous();
+
+app.MapAuth();
+app.MapConsultant();
 
 app.Run();
 

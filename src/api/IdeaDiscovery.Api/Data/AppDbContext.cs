@@ -76,6 +76,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<UserSession>(e =>
         {
+            e.Property(x => x.Device).HasMaxLength(200);
+            e.Property(x => x.IpAddress).HasMaxLength(64);
             e.HasIndex(x => x.UserId);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
