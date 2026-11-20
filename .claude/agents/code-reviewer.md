@@ -53,8 +53,11 @@ implementer worked from and the changed files, or a commit range.
    - raw HTML built from user text;
    - prototype-only switches (`?as=`, `?lang=`, View as, Reset demo) leaking
      into code meant to outlive the prototype.
-9. **Docs:** PROTOTYPE.md, the Commands in CLAUDE.md or docs/decisions.md
-   out of step with the change.
+9. **Demo mode** (docs/engineering.md §14): a UI change that breaks demo
+   mode, or adds a screen or feature with no demo data or no simulated
+   stand-in for a server call, is **must-fix**.
+10. **Docs:** PROTOTYPE.md, the Commands in CLAUDE.md or docs/decisions.md
+    out of step with the change.
 
 ## Do not report
 
