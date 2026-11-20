@@ -15,6 +15,23 @@ screenshot of each.
 Screens: join, the idea, discussion, shared summary, Burak's queue, private
 notes, rooms list.
 
+## Taking the screenshots
+Start the dev server (`npm --prefix src/web run dev`), then run:
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/screenshots/review-shots.ps1 -OutDir docs/design-review/screenshots
+```
+
+- It takes the whole set with headless Edge, each shot from a fresh browser,
+  so every shot shows the starting demo data.
+- Phone shots are a 390px frame captured at double resolution.
+- Files ending in `-full` show the whole page.
+- For one shot, use `tools/screenshots/shoot.ps1` directly.
+- Headless Edge sometimes captures a blank page. The script retakes phone
+  shots that are missing their bottom navigation, but look at every image
+  before using it.
+- When screens are added, add them to the list in `review-shots.ps1`.
+
 ## Checklist
 
 ### First impression
