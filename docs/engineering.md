@@ -99,8 +99,10 @@ Inside the app, trust the types.
 **Why:** checks everywhere add code without catching more. Real failures come
 from the edges.
 
-**Known gap:** if the headings in `prompts/interviewer.md` change, the
-prototype silently produces no scripted drafts. It only logs to the console.
+**Caught by tests:** the prototype reads its opening message, example
+questions and pausing reply from `prompts/interviewer.md`.
+`src/web/src/demo/script.test.ts` fails in CI if any of them can no longer be
+found, or if fewer questions remain than the demo seeds.
 
 ## 8. Keep the store as the one door to the data
 
@@ -120,9 +122,8 @@ components; screenshots and design-review cover how things look.
 **Why:** those rules are cheap to test and invisible when broken. Markup
 changes often and its tests mostly break for no reason.
 
-The API has xUnit tests in `src/api` (`dotnet test src/api`). The web client
-has no test framework yet; Vitest is proposed for it in the next M1 pull
-request, as a decision for Burak.
+The API has xUnit tests (`dotnet test src/api`); the web client has Vitest
+(`npm --prefix src/web test`), with tests next to the code as `*.test.ts`.
 
 ## 10. Deny by default
 
