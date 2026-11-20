@@ -10,7 +10,11 @@ builder.Services
     .AddCookie(options =>
     {
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        // Behind a TLS-terminating proxy the app sees plain http, so only
+        // local development may send the cookie without the Secure flag.
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Events.OnRedirectToLogin = context =>
         {
@@ -38,17 +42,9 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapApiEndpoints();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
+    .AllowAnonymous();
 
 app.Run();
-
-public static class ApiEndpoints
-{
-    public static void MapApiEndpoints(this IEndpointRouteBuilder app)
-    {
-        app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
-            .AllowAnonymous();
-    }
-}
 
 public partial class Program;

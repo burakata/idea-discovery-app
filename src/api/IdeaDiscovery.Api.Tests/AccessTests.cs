@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -33,9 +34,38 @@ public class AccessTests : IClassFixture<WebApplicationFactory<Program>>
                 services.AddSingleton<IStartupFilter, UnruledEndpointFilter>()));
         var client = factory.CreateClient();
 
+        // The fallback policy also answers unmatched paths with 401, so prove
+        // the route exists before trusting the 401.
+        var registered = factory.Services.GetServices<EndpointDataSource>()
+            .SelectMany(source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .Any(endpoint => endpoint.RoutePattern.RawText == "/test/unruled");
+        Assert.True(registered, "The test route /test/unruled is not registered.");
+
         var response = await client.GetAsync("/test/unruled");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    // Opening an endpoint to anonymous requests must be a deliberate act:
+    // add its route here on purpose.
+    private static readonly string[] AllowedAnonymousRoutes = ["/health"];
+
+    [Fact]
+    public void Only_listed_endpoints_are_open_to_anonymous_requests()
+    {
+        var open = _factory.Services.GetServices<EndpointDataSource>()
+            .SelectMany(source => source.Endpoints)
+            .Where(endpoint => endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null)
+            .Select(endpoint => (endpoint as RouteEndpoint)?.RoutePattern.RawText
+                ?? endpoint.DisplayName
+                ?? "(unnamed endpoint)")
+            .Where(route => !AllowedAnonymousRoutes.Contains(route))
+            .ToList();
+
+        Assert.True(open.Count == 0,
+            "These endpoints allow anonymous requests but are not on the allow-list in AccessTests: "
+            + string.Join(", ", open));
     }
 
     private sealed class UnruledEndpointFilter : IStartupFilter
