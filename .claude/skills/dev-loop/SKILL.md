@@ -13,7 +13,8 @@ docs/engineering.md.
 
 ## 1. Understand
 
-- Read CLAUDE.md, and the documents the request touches: docs/brief.md,
+- Read CLAUDE.md, and the documents the request touches: the Phase 1 PRD
+  (`Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`),
   docs/design.md, docs/decisions.md, `prompts/`, docs/reference/.
 - Read them again even if you saw them in an earlier session. They change
   between sessions, and Burak has had to say "check again, it should be

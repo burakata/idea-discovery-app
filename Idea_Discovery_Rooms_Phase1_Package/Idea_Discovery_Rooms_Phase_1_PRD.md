@@ -1,8 +1,8 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.1 — Scope baseline  
-**Prepared:** 19 November 2026  
+**Version:** 0.2 — Scope baseline, with the v1 brief carried over  
+**Prepared:** 19 November 2026; updated 20 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
 **First pilot:** A pallet-transport business-idea discussion (project-specific content, not part of the generic app)
@@ -14,6 +14,18 @@
 **Idea Discovery Rooms** is a private, reusable web application for a consultant and invited business stakeholders to explore an early-stage idea. Participants can join one shared discussion at different times. A selective AI Lead asks useful, non-leading questions, occasionally summarises and, when requested, consults specialist AI assistants. The consultant controls publication and formal confirmation.
 
 The application starts with a **generic dashboard**. Each project has its own name, introduction, optional images, reference businesses, participants, instructions, conversations and outputs. The pallet-transport use case is one configured project; its provisional assumptions must never become global application defaults.
+
+### Problem
+
+Understanding a customer's business idea currently means back-and-forth emails or sending a document and waiting for feedback. The owners are busy, non-technical, and rarely free at the same time as the consultant.
+
+### Purpose and limits
+
+- Collect business requirements: what the business is, who it serves, how a job runs from start to finish, how money is made, what matters first.
+- Not for technical details. Not for deep detail at this stage.
+- Not for judging whether the idea will succeed. No analysis, scoring or pricing of the idea.
+- Separate from the business app the owners eventually want built.
+- The app runs alongside a printed feedback document and face-to-face conversations. It does not replace them.
 
 ### The first private pilot must prove three things
 
@@ -99,6 +111,20 @@ A conversation has a title, sequence number, participants, state (`Active`, `Fin
 
 A project-level knowledge area stores approved summaries and links to prior conversations. It must distinguish who said something, the status of the interpretation and any dissent. The system must never describe silence as agreement or combine different owners' preferences into one invented decision.
 
+### 4.4 What owners see
+
+Each project room has three sections for owners: **The idea**, **Discussion** and **Shared summary**.
+
+- **The idea:** a welcoming page for the project:
+  - a short introduction to what the conversation is for;
+  - a simple job-flow diagram, drawn from a list of steps, with unknown steps shown as questions (see `docs/design.md`);
+  - what we understand so far, clearly marked as needing confirmation;
+  - similar businesses, as reference examples only;
+  - a link to the printable version;
+  - a prominent "Join discussion" button.
+- **Discussion:** the project's active conversation (§4.2). Each message shows the writer's name and role (Business owner, Software consultant, AI assistant). The assistant asks one question at a time. After an owner sends a message, a quiet line tells them a reply will follow.
+- **Shared summary:** three groups: Confirmed, Early interpretations, Open questions (§4.3). On each early interpretation an owner can tap "Right" or "Not right" and add a correction. Everyone sees who reacted and how.
+
 ## 5. Phase 1 functional requirements
 
 **Priority legend:** **P0** = essential for first secure pilot; **P1** = planned within Phase 1, after the P0 pilot works; **P2** = future roadmap, not a Phase 1 commitment.
@@ -131,6 +157,7 @@ A project-level knowledge area stores approved summaries and links to prior conv
 | R24 | Mobile / desktop usability | P0 | Critical tasks—sign in, read, answer, approve (consultant)—work on phone and desktop without horizontal scrolling. |
 | R25 | Simple progress and action-needed status | P1 | Room shows a plain-language stage and whether a human reply or consultant approval is pending; no invented percentage-complete score. |
 | R26 | Consultant-private notes | P1 (proposed) | Consultant may save notes separate from shared discussion; owners never see them, and the AI cannot quote them to owners. |
+| R27 | Consultant-added statements | P1 | Consultant can add statements and open questions to the shared summary, including answers given on paper or in person; the source is recorded. |
 
 ### 5.1 AI response and approval behaviour
 
@@ -241,6 +268,14 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 - Every public AI message in review mode has an approval record.
 - No cross-project or consultant-private information is exposed to an owner.
 
+### Owner experience success criteria
+
+- An owner opens the link, understands what it is for and what Burak thinks the idea is, without any explanation.
+- An owner can correct something Burak got wrong in two taps.
+- An owner who prefers Turkish finds the switch without help, and the English-only owner can follow everything written in Turkish.
+- It looks like a professional product, on a phone and on a desktop.
+- Burak ends up with fewer assumptions than he started with.
+
 ## 9. Suggested technical approach (not yet a final decision)
 
 | Layer | Pragmatic proposal | Notes |
@@ -345,7 +380,7 @@ These items are **not discarded**. They are tracked so the private tool can evol
 | F06 | Full discussion and all artefact export (PDF, Markdown, DOCX, JSON) | Phase 2 | Portable evidence beyond the Phase 1 readable summary/output export. |
 | F07 | Import printed documents, uploaded files, audio and meeting transcripts | Phase 2 | Attribute transcribed material, distinguish original evidence and AI extraction. |
 | F08 | Advanced agent orchestration, configurable specialist chains and agent-to-agent coordination rules | Phase 2 | First prove simple Lead → private specialist workflow. |
-| F09 | More specialist roles: Prototype Designer, UX Researcher, Legal/Compliance Context, Pricing Context | Phase 2 | Invoked only when relevant to the discovery stage; avoid unsolicited advice. |
+| F09 | More specialist roles: Prototype Designer, UX Researcher, Legal/Compliance Context, Pricing Context | Phase 2 | Invoked only when relevant to the discovery stage; avoid unsolicited advice. Pricing Context explains how pricing works in the industry; it never prices, scores or judges the idea itself. |
 | F10 | Human comments/annotations directly on diagrams and prototypes | Phase 2 | Faster corrections than ordinary chat for visual outputs. |
 | F11 | Search across conversations, project memory and semantic retrieval | Phase 2 | Useful once projects contain more history; must respect isolation and provenance. |
 | F12 | More notification channels, digests, reminders and calendar scheduling | Phase 2 | Email actionable notifications first; avoid excessive nudges. |
@@ -359,6 +394,8 @@ These items are **not discarded**. They are tracked so the private tool can evol
 | F20 | Aggregate quality metrics and cross-project insights with consent | Product stage | Measure outcomes and privacy-safe product value, not just number of questions. |
 | F21 | Native mobile apps | Optional later | Responsive web is the primary experience until usage justifies native capabilities. |
 | F22 | Full project-management, estimation and delivery planning modules | Separate later product/stage | Keep initial discovery experience focused; link instead of sprawling. |
+| F23 | A queue of pre-approved follow-up questions | Phase 2 | Carried over from the v1 brief's Later list. |
+| F24 | Languages other than English and Turkish | Product stage | Carried over from the v1 brief's Later list. |
 
 ### Feature admission rules for future work
 
@@ -400,3 +437,9 @@ The private pilot is ready when **all** are true:
 This PRD draws on the product choices in the conversation through **19 November 2026**, plus the existing `decisions.md`, the React prototype v2 documentation and the **AI Discovery Playbook v1.1**. Earlier `Proposed` entries remain proposals unless explicitly confirmed by later choices. The supplied pallet-specific documents inform *one pilot project's context*, not the core product specification.
 
 When an item changes, record: decision date, who confirmed it, the old and new scope, why, affected acceptance tests and whether it moves between P0, P1 and the future backlog. Maintain the PRD and feature register together, rather than keeping future ideas in scattered chats.
+
+### Change log
+
+| Version | Date | Confirmed by | Change | Why | Acceptance tests | Priority moves |
+|---|---|---|---|---|---|---|
+| 0.2 | 20 November 2026 | Burak | This PRD replaces the v1 brief (`docs/brief.md`, now kept as `docs/archive/brief-v1.md`) as the single source of scope. Carried over from the brief: the problem, purpose and limits (including working alongside paper and meetings, and no analysis, scoring or pricing of the idea), §4.4 What owners see, the owner experience success criteria in §8, R27, F23, F24 and the note on F09. Brief items this PRD reverses are superseded; see `docs/decisions.md`. | One scope source instead of two that disagree, without losing the brief's owner-experience criteria. | None changed. The owner experience success criteria are added to §8. | R27 added as P1. F23 and F24 added to the future feature register. |

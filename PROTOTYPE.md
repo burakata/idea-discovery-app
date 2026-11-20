@@ -71,7 +71,7 @@ Kaya, an owner who has not joined yet and whose app is still in English.
 | "View as" decides who you are | An invite link per room and each person's own device |
 | `?as=burak&lang=tr` in the address sets the viewer and language | Must not exist. It would expose Burak's queue to anyone |
 | Everything is saved in this browser's local storage | A server and database shared by everyone in the room |
-| Rooms come from config files in the code | The same, per the brief. Creating a project inside the app is on the Later list |
+| Rooms come from config files in the code | The consultant creates projects in the app (PRD R01) |
 | The Print version link opens a PDF copied into the app. There is no Turkish PDF yet, so Turkish shows "coming soon" | A document per language, kept in step with the project config |
 | No sign-in of any kind | To be decided: open question 4 in docs/decisions.md |
 
@@ -107,6 +107,6 @@ Kaya, an owner who has not joined yet and whose app is still in English.
 
 ## Not built
 
-Everything on the Later list in docs/brief.md. Also sign-in, sharing between
+Everything in the PRD's future feature register. Also sign-in, sharing between
 devices, creating a project in the app, notifications, exporting the
 discussion, and a "request a note" button.
