@@ -13,7 +13,9 @@ what the business should be.
 This is NOT the owners' business app. It only collects business requirements.
 No technical details and no deep detail at this stage.
 
-Read before planning: @docs/brief.md and @docs/design.md
+Read before planning: the Phase 1 PRD,
+`Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`
+(the single source of scope), and @docs/design.md
 
 ## Users
 - Business owners: non-technical, on phones and desktops. Several owners
@@ -33,8 +35,8 @@ Read before planning: @docs/brief.md and @docs/design.md
 - **Owners react, Burak confirms.** Owners mark a statement "Right" or "Not
   right". Only Burak moves it to Confirmed.
 - The assistant never asks owners about technology, platforms or features.
-- Build v1 only, as listed in docs/brief.md. Anything else goes to "Later"
-  in docs/brief.md, not into code.
+- Build Phase 1 only, as listed in the PRD. Anything else goes to the PRD's
+  future feature register, not into code.
 
 ## Language
 - English first. Each person can switch to Turkish (EN | TR). The switch

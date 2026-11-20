@@ -46,7 +46,7 @@ npm --prefix src/web run build
 |---|---|
 | `src/web/` | The prototype: React, Vite and TypeScript |
 | `prompts/` | The AI assistant's prompts, read from these files |
-| `docs/brief.md` | What v1 includes, and what is left for later |
+| `Idea_Discovery_Rooms_Phase1_Package/` | The Phase 1 PRD (the single source of scope), its implementation plan and the future feature register |
 | `docs/design.md` | Look and layout rules, for phone and desktop |
 | `docs/decisions.md` | Product and technical decisions, and open questions |
 | `docs/engineering.md` | Principles for writing and reviewing code |

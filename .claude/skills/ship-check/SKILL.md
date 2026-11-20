@@ -65,7 +65,7 @@ of evidence. Do not fix anything unless asked; report first.
 - [ ] There is a way to back up a room.
 
 ## Scope
-- [ ] Nothing from the "Later" list in docs/brief.md has been built.
+- [ ] Nothing from the PRD's future feature register has been built.
 - [ ] docs/decisions.md is up to date.
 
 Finish with a one-line verdict: ready to share, or not, and the blocking

@@ -1,3 +1,7 @@
+> **Superseded on 20 November 2026** by the Phase 1 PRD,
+> `Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`.
+> Kept for reference only; it is not a source of scope.
+
 # Brief: Idea Discovery Rooms
 
 ## Problem

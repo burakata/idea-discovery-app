@@ -16,7 +16,7 @@ These items are **not discarded**. They are tracked so the private tool can evol
 | F06 | Full discussion and all artefact export (PDF, Markdown, DOCX, JSON) | Phase 2 | Portable evidence beyond the Phase 1 readable summary/output export. |
 | F07 | Import printed documents, uploaded files, audio and meeting transcripts | Phase 2 | Attribute transcribed material, distinguish original evidence and AI extraction. |
 | F08 | Advanced agent orchestration, configurable specialist chains and agent-to-agent coordination rules | Phase 2 | First prove simple Lead → private specialist workflow. |
-| F09 | More specialist roles: Prototype Designer, UX Researcher, Legal/Compliance Context, Pricing Context | Phase 2 | Invoked only when relevant to the discovery stage; avoid unsolicited advice. |
+| F09 | More specialist roles: Prototype Designer, UX Researcher, Legal/Compliance Context, Pricing Context | Phase 2 | Invoked only when relevant to the discovery stage; avoid unsolicited advice. Pricing Context explains how pricing works in the industry; it never prices, scores or judges the idea itself. |
 | F10 | Human comments/annotations directly on diagrams and prototypes | Phase 2 | Faster corrections than ordinary chat for visual outputs. |
 | F11 | Search across conversations, project memory and semantic retrieval | Phase 2 | Useful once projects contain more history; must respect isolation and provenance. |
 | F12 | More notification channels, digests, reminders and calendar scheduling | Phase 2 | Email actionable notifications first; avoid excessive nudges. |
@@ -30,6 +30,8 @@ These items are **not discarded**. They are tracked so the private tool can evol
 | F20 | Aggregate quality metrics and cross-project insights with consent | Product stage | Measure outcomes and privacy-safe product value, not just number of questions. |
 | F21 | Native mobile apps | Optional later | Responsive web is the primary experience until usage justifies native capabilities. |
 | F22 | Full project-management, estimation and delivery planning modules | Separate later product/stage | Keep initial discovery experience focused; link instead of sprawling. |
+| F23 | A queue of pre-approved follow-up questions | Phase 2 | Carried over from the v1 brief's Later list. |
+| F24 | Languages other than English and Turkish | Product stage | Carried over from the v1 brief's Later list. |
 
 ### Feature admission rules for future work
 
