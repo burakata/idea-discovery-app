@@ -95,17 +95,16 @@ Read before planning: the Phase 1 PRD,
 - Hosting: a small Linux VPS running Docker.
 
 ## Working style
-- Every change runs through the dev-loop skill. Principles for anyone writing
-  or reviewing code: docs/engineering.md.
+- Every change runs through the dev-loop skill: it says when to plan, which
+  subagents and skills to run, and how to verify and report. Principles for
+  anyone writing or reviewing code: docs/engineering.md.
 - The main session leads and does not write app code; the implementer
   subagent does, and the code-reviewer subagent reviews it.
-- Plan before coding. Propose the smallest change that works.
-- Ask Burak when a requirement is unclear instead of assuming.
+- Work in small steps, one pull request each, and wait for Burak's go-ahead
+  before starting the next.
+- Ask Burak when a requirement is unclear instead of assuming. Put decisions
+  to him one at a time, with a recommendation.
 - Record every product or technical decision in docs/decisions.md.
-- Before adding a feature, run the scope-guard subagent.
-- After changing a prompt, the idea page content or the chat flow, run the
-  owner-tester subagent.
-- For owner-facing text, use the ui-copy skill.
 
 ## Commands
 Prototype only so far (see PROTOTYPE.md). No backend and no tests yet.
