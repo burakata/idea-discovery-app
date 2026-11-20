@@ -35,3 +35,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pwsh tools/check-doc-links.ps1
+
+  api:
+    name: API build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test src/api
