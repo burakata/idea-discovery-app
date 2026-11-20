@@ -82,6 +82,7 @@ PRD disagree, the PRD wins.
 | 2026-11-20 | The API targets .NET 10 LTS (SDK pinned in `src/api/global.json`) | Burak's choice; .NET 7 on this machine is out of support | Decided |
 | 2026-11-20 | API style: ASP.NET Core minimal APIs, one API project and one xUnit test project in `src/api`, tested through `WebApplicationFactory` against the real `Program`. Cookie authentication (HttpOnly, SameSite=Lax) answers refusals with 401 or 403, never a redirect; the authorisation fallback policy needs a signed-in user, so an endpoint without an explicit rule is refused. CI job "API build and test" runs `dotnet test src/api` | Fewest moving parts for a small API; deny by default is docs/engineering.md §10 | Proposed |
 | 2026-11-20 | "API build and test" is the third required check on "Protect main", with "Web build and type-check" and "Docs links" | The API's tests now guard every merge, as the 2026-11-20 ruleset row asks for each new CI job | Decided |
+| 2026-11-20 | No licence: the repository stays public with all rights reserved, so others may read the code but not reuse, copy or modify it. A licence can be added later | Burak's choice; it keeps the option of turning the private tool into a product | Decided |
 
 ## Open questions
 
