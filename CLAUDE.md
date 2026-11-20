@@ -112,3 +112,5 @@ Prototype only so far (see PROTOTYPE.md). No backend and no tests yet.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
+- Check links in the docs: `powershell -File tools/check-doc-links.ps1`
+- CI (`.github/workflows/ci.yml`) runs both on every pull request.
