@@ -235,7 +235,7 @@ function reducer(state: AppState, action: Action): AppState {
             // The known part replaces the step; what is still unknown follows it as a question.
             jobFlow: room.jobFlow.flatMap((step) => {
               if (step.id !== item.stepId) return [step]
-              const known = { ...step, who: item.who, what: item.what, unknown: false }
+              const known = { ...step, who: item.who, what: item.what, unknown: item.unknown ?? false }
               if (!item.stillUnknown) return [known]
               return [known, { ...step, ...item.stillUnknown, id: `${step.id}-unknown`, unknown: true }]
             }),

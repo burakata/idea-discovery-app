@@ -63,7 +63,10 @@ export interface JobFlowProposal {
   what: Text
   // The part of the step that is still not known. It stays in the flow as a question.
   stillUnknown?: { who: Text; what: Text }
-  source: Source
+  // True when the step itself stays a question (a split into questions).
+  unknown?: boolean
+  // None when the change rests on what nobody has said yet.
+  source?: Source
 }
 
 export type QueueItem = MessageDraft | StatementProposal | JobFlowProposal

@@ -140,10 +140,10 @@ export default function Idea() {
         <>
           <div className={styles.similar}>
             {project.similarBusinesses.map((business) => (
-              <Card key={business.name} className={styles.business}>
+              <Card key={business.name.en} className={styles.business}>
                 <p className={styles.how}>{pick(business.how).text}</p>
                 <div className={styles.brandRow}>
-                  <Pill tone="neutral">{business.name}</Pill>
+                  <Pill tone="neutral">{pick(business.name).text}</Pill>
                   {business.url && (
                     <a href={business.url} target="_blank" rel="noopener noreferrer">
                       {t.idea.visit}

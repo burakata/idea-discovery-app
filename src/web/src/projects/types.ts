@@ -26,7 +26,7 @@ export interface JobFlowStep {
 }
 
 export interface SimilarBusiness {
-  name: string
+  name: Bilingual
   // Optional: invented example descriptions have no website.
   url?: string
   how: Bilingual

@@ -26,7 +26,7 @@ Check these naturally; do not present them as settled.
 
 ## Not known yet
 - How a neighbour asks for a meal.
-- Who delivers the meals.
+- How the meal reaches the neighbour.
 - How payment is taken.
 - Who sets the price of a meal.
 

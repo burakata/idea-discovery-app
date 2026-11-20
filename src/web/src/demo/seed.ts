@@ -79,9 +79,9 @@ export const homeMealsSeed: RoomSeed = {
       id: 'seed-7',
       authorId: 'assistant',
       at: '2026-11-12T14:02:00',
-      lang: 'en',
-      text: firstStep.en,
-      translation: firstStep.tr,
+      lang: 'tr',
+      text: firstStep.tr,
+      translation: firstStep.en,
       scripted: true,
     },
     {
@@ -137,8 +137,7 @@ export const homeMealsSeed: RoomSeed = {
   // Nothing starts as confirmed. Hasan has not joined, and only Burak confirms.
   confirmed: [],
   queue: [
-    // The reply to Tom's message, the last in the thread. Elif's message
-    // answers Burak's question, so the assistant stayed quiet there.
+    // The reply to Tom's message, the last in the thread.
     {
       id: 'seed-q1',
       kind: 'message',
@@ -147,30 +146,17 @@ export const homeMealsSeed: RoomSeed = {
       text: whatNext.en,
       translation: whatNext.tr,
     },
-    // Closes the open question "How does a neighbour ask for a meal?": the answer
-    // becomes an early interpretation. One fact; the collection time is a job-flow change.
+    // Only Tom described it, and he said whom, not how. The open question stays,
+    // and the text says it rests on one owner's word.
     {
       id: 'seed-q2',
       kind: 'statement',
       group: 'early',
-      replaces: 'how-ordered',
       text: {
-        en: 'A neighbour asks the cook for a portion.',
-        tr: 'Komşu, yemek yapandan bir porsiyon ister.',
+        en: 'A neighbour asks the cook for a portion. So far only Tom has said this.',
+        tr: 'Komşu, yemek yapandan bir porsiyon ister. Şimdiye kadar bunu yalnızca Tom söyledi.',
       },
       source: { saidBy: 'tom', quote: 'asks the cook for a portion' },
-    },
-    // Rewords the existing statement about the cook's choice instead of repeating it.
-    {
-      id: 'seed-q3',
-      kind: 'statement',
-      group: 'early',
-      replaces: 'cook-chooses',
-      text: {
-        en: 'Each cook may decide what to make each day.',
-        tr: 'Her yemek yapan, her gün ne pişireceğine kendisi karar veriyor olabilir.',
-      },
-      source: { saidBy: 'tom', quote: 'the cook decides what to make each day' },
     },
     // The owners disagree, so it becomes an open question with both views.
     {
@@ -182,25 +168,23 @@ export const homeMealsSeed: RoomSeed = {
         tr: 'Yemekler her zaman bir gün önceden mi sipariş ediliyor? Elif öyle olması gerektiğini düşünüyor, böylece kimse boşuna yemek pişirmez; Tom ise bazı yemek yapanların fazladan pişirip kalanı sattığını söylüyor.',
       },
       source: {
-        saidBy: 'tom',
-        quote: 'Some cooks make extra and sell what is left.',
+        saidBy: 'elif',
+        quote: 'meals should be ordered a day ahead, so nobody cooks food for nothing',
       },
     },
-    // Fills in only the part Tom described. Who delivers and how payment is taken stay questions.
+    // Splits the unknown step into two questions. Nothing is claimed: no owner has
+    // said how the meal reaches the neighbour or how they pay, so there is no source.
     {
-      id: 'seed-q5',
+      id: 'seed-q3',
       kind: 'jobFlow',
       stepId: 'handover',
-      who: { en: 'Neighbour and cook', tr: 'Komşu ve yemek yapan' },
-      what: {
-        en: 'They agree a time for the meal to be collected.',
-        tr: 'Yemeğin alınacağı saati birlikte kararlaştırırlar.',
-      },
+      who: { en: 'How does the meal reach the neighbour?', tr: 'Yemek komşuya nasıl ulaşıyor?' },
+      what: { en: 'Nobody has said yet.', tr: 'Henüz kimse söylemedi.' },
+      unknown: true,
       stillUnknown: {
-        who: { en: 'How is payment taken?', tr: 'Ödeme nasıl alınıyor?' },
+        who: { en: 'How does the neighbour pay?', tr: 'Komşu ödemeyi nasıl yapıyor?' },
         what: { en: 'Nobody has said yet.', tr: 'Henüz kimse söylemedi.' },
       },
-      source: { saidBy: 'tom', quote: 'they agree a time to collect it' },
     },
   ],
   scriptIndex: 3,
@@ -208,7 +192,7 @@ export const homeMealsSeed: RoomSeed = {
 
 // A sample of what prompts/consultant-notes.md asks the assistant to write.
 export const homeMealsNote: SampleNote = {
-  written: '2026-11-13T12:30:00',
+  written: '2026-11-13T15:00:00',
   sections: [
     {
       heading: 'What is confirmed',
@@ -232,10 +216,10 @@ export const homeMealsNote: SampleNote = {
     {
       heading: 'What I would ask next',
       items: [
-        'After a neighbour asks for a meal and a time is agreed, how does the meal reach them?',
+        'Does the neighbour always collect the meal, or does it sometimes come to them? So far only Tom has described it, and only the collecting.',
         'What happens if a cook cannot make a meal they offered?',
-        'Who agrees the price with the neighbour, and when?',
-        'How does the neighbour pay, and when?',
+        'Who sets the price of a meal?',
+        'How does the neighbour pay?',
         'Hasan, how do you see ordering ahead compared with selling what is left?',
       ],
     },
@@ -243,7 +227,7 @@ export const homeMealsNote: SampleNote = {
       heading: 'What this may mean for the software',
       caveat: 'My reading, not the owners’ words.',
       items: [
-        'Neighbours seem to ask cooks directly, so each cook may need a simple way to say what is on offer today.',
+        'Tom describes neighbours asking cooks directly, so each cook may need a simple way to say what is on offer today.',
         'Some meals are made to order and some are made extra, so an offer may need to say which kind it is.',
       ],
     },

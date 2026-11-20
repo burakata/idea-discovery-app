@@ -12,18 +12,18 @@ const understanding: (Bilingual & { id: string })[] = [
   },
   {
     id: 'nearby-customers',
-    en: 'Customers may mostly be people who live nearby.',
-    tr: 'Müşteriler çoğunlukla yakında oturan insanlar olabilir.',
+    en: 'Customers are mostly people who live nearby.',
+    tr: 'Müşteriler çoğunlukla yakında oturan insanlar.',
   },
   {
     id: 'cook-chooses',
-    en: 'Each cook may decide what to make.',
-    tr: 'Her yemek yapan, ne pişireceğine kendisi karar veriyor olabilir.',
+    en: 'Each cook decides what to make.',
+    tr: 'Ne pişireceğine her yemek yapan kendisi karar veriyor.',
   },
   {
     id: 'order-ahead',
-    en: 'Meals may be ordered a day ahead.',
-    tr: 'Yemekler bir gün önceden sipariş ediliyor olabilir.',
+    en: 'Meals are ordered a day ahead.',
+    tr: 'Yemekler bir gün önceden sipariş ediliyor.',
   },
 ]
 
@@ -31,19 +31,19 @@ const understanding: (Bilingual & { id: string })[] = [
 const furtherInterpretations: (Bilingual & { id: string })[] = [
   {
     id: 'small-portions',
-    en: 'Each cook may make only a few portions at a time.',
-    tr: 'Her yemek yapan bir seferde yalnızca birkaç porsiyon hazırlıyor olabilir.',
+    en: 'Each cook makes only a few portions at a time.',
+    tr: 'Her yemek yapan bir seferde yalnızca birkaç porsiyon hazırlıyor.',
   },
   {
     id: 'start-small',
-    en: 'You may start with a few cooks you already know.',
-    tr: 'İşe, zaten tanıdığınız birkaç kişiyle başlamayı düşünüyor olabilirsiniz.',
+    en: 'The plan is to start with a few cooks you already know.',
+    tr: 'Plan, zaten tanıdığınız birkaç yemek yapan kişiyle başlamak.',
   },
 ]
 
 const unclear: (Bilingual & { id: string })[] = [
-  { id: 'how-ordered', en: 'How does a neighbour ask for a meal?', tr: 'Komşu yemeği nasıl istiyor?' },
-  { id: 'who-delivers', en: 'Who delivers the meals?', tr: 'Yemekleri kim teslim ediyor?' },
+  { id: 'how-ordered', en: 'How does a neighbour ask for a meal?', tr: 'Komşu bir yemek istediğinde ne yapıyor?' },
+  { id: 'who-delivers', en: 'How does the meal reach the neighbour?', tr: 'Yemek komşuya nasıl ulaşıyor?' },
   { id: 'payment', en: 'How is payment taken?', tr: 'Ödeme nasıl alınıyor?' },
   { id: 'who-prices', en: 'Who sets the price of a meal?', tr: 'Bir yemeğin fiyatını kim belirliyor?' },
 ]
@@ -80,7 +80,10 @@ export const homeMeals: Project = {
     notYet: [
       { en: 'We are not discussing technical details', tr: 'Teknik ayrıntıları konuşmuyoruz' },
       { en: 'We are not finalising a list of features', tr: 'Bir özellik listesi kesinleştirmiyoruz' },
-      { en: 'We are not settling prices or timelines', tr: 'Fiyat ve süre konularını kesinleştirmiyoruz' },
+      {
+        en: 'We are not discussing what the software would cost or how long it would take',
+        tr: 'Yazılımın maliyetini ya da ne kadar süreceğini konuşmuyoruz',
+      },
     ],
   },
   jobFlow: [
@@ -89,8 +92,8 @@ export const homeMeals: Project = {
       icon: 'people',
       who: { en: 'Home cook', tr: 'Evde yemek yapan' },
       what: {
-        en: 'Cooks a few meals and says what is on offer.',
-        tr: 'Birkaç yemek pişirir ve neler olduğunu söyler.',
+        en: 'Says what meals are on offer.',
+        tr: 'Hangi yemeklerin olduğunu duyurur.',
       },
       unknown: false,
     },
@@ -98,13 +101,16 @@ export const homeMeals: Project = {
       id: 'ask',
       icon: 'discussion',
       who: { en: 'Neighbour', tr: 'Komşu' },
-      what: { en: 'Asks for a meal.', tr: 'Bir yemek ister.' },
+      what: { en: 'Wants a meal.', tr: 'Bir yemek ister.' },
       unknown: false,
     },
     {
       id: 'handover',
       icon: 'send',
-      who: { en: 'Who delivers, and how is payment taken?', tr: 'Yemeği kim teslim ediyor, ödeme nasıl alınıyor?' },
+      who: {
+        en: 'How does the meal reach the neighbour, and how do they pay?',
+        tr: 'Yemek komşuya nasıl ulaşıyor, ödeme nasıl yapılıyor?',
+      },
       what: { en: 'Nobody has said yet.', tr: 'Henüz kimse söylemedi.' },
       unknown: true,
     },
@@ -121,28 +127,28 @@ export const homeMeals: Project = {
   // Plain descriptions of ways of working. The labels are generic, not companies.
   similarBusinesses: [
     {
-      name: 'Neighbourhood noticeboard',
+      name: { en: 'Neighbourhood noticeboard', tr: 'Mahalle ilan panosu' },
       how: {
         en: 'Neighbours post what they have cooked, and others get in touch to ask for a portion.',
         tr: 'Komşular pişirdikleri yemeği duyurur, isteyenler bir porsiyon için onlara ulaşır.',
       },
     },
     {
-      name: 'Shared kitchen',
+      name: { en: 'Shared kitchen', tr: 'Ortak mutfak' },
       how: {
         en: 'Several cooks use one place to prepare meals, and customers collect them from there.',
         tr: 'Birkaç kişi yemeklerini tek bir yerde hazırlar, müşteriler yemeği oradan alır.',
       },
     },
     {
-      name: 'Weekly meal plan',
+      name: { en: 'Weekly meal plan', tr: 'Haftalık yemek planı' },
       how: {
         en: 'Customers choose their meals for the week, and they are made and brought on set days.',
         tr: 'Müşteri haftalık yemeklerini seçer; yemekler belirli günlerde hazırlanıp getirilir.',
       },
     },
     {
-      name: 'Local food stall',
+      name: { en: 'Local food stall', tr: 'Yerel yemek tezgâhı' },
       how: {
         en: 'Cooks sell what they made on a fixed day in one place, and customers simply turn up.',
         tr: 'Yemek yapanlar hazırladıklarını belirli bir günde tek bir yerde satar, müşteri gelip alır.',
@@ -151,7 +157,7 @@ export const homeMeals: Project = {
   ],
   similarQuestion: {
     en: 'Which of these feels closest to your idea, and what would be different?',
-    tr: 'Bunlardan hangisi fikrinize daha yakın, farklı olan ne olurdu?',
+    tr: 'Bunlardan hangisi fikrinize en yakın, farklı olan ne olurdu?',
   },
   participants: [
     { id: 'elif', role: 'owner', name: 'Elif Yıldız', language: 'tr', joined: true },
