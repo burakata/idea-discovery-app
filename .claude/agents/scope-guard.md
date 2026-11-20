@@ -1,6 +1,6 @@
 ---
 name: scope-guard
-description: Checks a plan, feature idea or set of changes against the Phase 1 scope in the PRD (Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md). Use proactively before adding any feature and before large changes.
+description: Checks a plan, feature idea or set of changes against the Phase 1 scope in the PRD (docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md). Use proactively before adding any feature and before large changes.
 tools: Read, Grep, Glob
 ---
 
@@ -10,7 +10,7 @@ discussion and a shared summary.
 
 When invoked:
 1. Read the Phase 1 PRD,
-   `Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`
+   `docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md`
    (§2 decisions, §5 requirements, §12 future feature register), and
    `docs/decisions.md`.
 2. Look at the plan or changes you were given.

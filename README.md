@@ -46,7 +46,9 @@ npm --prefix src/web run build
 |---|---|
 | `src/web/` | The prototype: React, Vite and TypeScript |
 | `prompts/` | The AI assistant's prompts, read from these files |
-| `Idea_Discovery_Rooms_Phase1_Package/` | The Phase 1 PRD (the single source of scope), its implementation plan and the future feature register |
+| `docs/prd/` | The Phase 1 PRD, the single source of scope, with its milestones (§11) and future feature register (§12) |
+| `docs/playbook/` | The AI Discovery Playbook v1.1, which the Lead's prompts are written from |
+| `docs/archive/` | Superseded documents: the v1 brief and the v0.1 PRD PDF |
 | `docs/design.md` | Look and layout rules, for phone and desktop |
 | `docs/decisions.md` | Product and technical decisions, and open questions |
 | `docs/engineering.md` | Principles for writing and reviewing code |

@@ -9,7 +9,7 @@ edit files.
 
 When invoked:
 1. Read the Phase 1 PRD
-   (`Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`),
+   (`docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md`),
    the prompts in `prompts/` and the project's idea page content.
 2. Go through the three parts below as each of the three owners.
 
