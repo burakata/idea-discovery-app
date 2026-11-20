@@ -125,5 +125,9 @@ but no project endpoints yet.
   characters) and `App:PublicBaseUrl` (the https address links are built
   from). It also needs `Consultant:Email`. Set them as environment
   variables or server settings, never committed.
+- Emails: in Development `Email:Provider` is `Folder`, so sign-in emails
+  are saved as `.eml` files in `src/api/IdeaDiscovery.Api/emails/` (open one
+  to sign in locally). `Folder` is refused outside Development; with no
+  provider set there, the API starts with a warning and sends nothing.
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.

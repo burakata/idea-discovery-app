@@ -1,6 +1,7 @@
 using System.Threading.RateLimiting;
 using IdeaDiscovery.Api.Auth;
 using IdeaDiscovery.Api.Data;
+using IdeaDiscovery.Api.Mail;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -14,6 +15,15 @@ var authSettings = AuthSettings.Read(builder.Configuration, builder.Environment)
 builder.Services.AddSingleton(authSettings);
 builder.Services.AddSingleton<TokenHasher>();
 builder.Services.AddScoped<SignInLinks>();
+
+// Refuses to start with the Folder sender outside Development. With no
+// provider the app starts and drops emails with a warning.
+var emailSettings = EmailSettings.Read(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton(emailSettings);
+builder.Services.AddSingleton<EmailQueue>();
+if (emailSettings.Provider == EmailProvider.Folder) builder.Services.AddSingleton<IEmailSender, FolderEmailSender>();
+else builder.Services.AddSingleton<IEmailSender, NoEmailSender>();
+builder.Services.AddHostedService<EmailDispatcher>();
 // One clock for the whole app, so tests can move it.
 builder.Services.TryAddSingleton(TimeProvider.System);
 
@@ -64,6 +74,17 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Asking for links: 10 an hour per client IP. Past it the answer is 429,
+    // which says nothing about any email.
+    options.AddPolicy(AuthEndpoints.RequestLinkRateLimit, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
     options.AddPolicy(AuthEndpoints.RedeemRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -93,6 +114,9 @@ builder.Services.AddDatabase(builder.Configuration);
 var app = builder.Build();
 
 DatabaseSetup.Initialise(app.Services);
+
+if (emailSettings.Provider == EmailProvider.None)
+    app.Logger.LogWarning("Email:Provider is not set. Sign-in emails are dropped, not sent.");
 
 app.UseRateLimiter();
 app.UseAuthentication();

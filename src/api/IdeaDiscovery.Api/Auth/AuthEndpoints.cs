@@ -1,5 +1,6 @@
 using System.Text.Json;
 using IdeaDiscovery.Api.Data;
+using IdeaDiscovery.Api.Mail;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,9 +12,12 @@ namespace IdeaDiscovery.Api.Auth;
 public static class AuthEndpoints
 {
     public const string RedeemRateLimit = "redeem";
+    public const string RequestLinkRateLimit = "request-link";
     private const int MaxDeviceLength = 200;
+    private const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);
+    private sealed record RequestLinkRequest(string? Email);
 
     public static void MapAuth(this IEndpointRouteBuilder app)
     {
@@ -29,6 +33,11 @@ public static class AuthEndpoints
             .AllowAnonymous()
             .RequireRateLimiting(RedeemRateLimit);
 
+        // Anonymous on purpose: the person asking has no session yet.
+        auth.MapPost("/request-link", RequestLinkAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting(RequestLinkRateLimit);
+
         auth.MapPost("/sign-out", SignOutAsync);
         auth.MapGet("/me", MeAsync);
     }
@@ -36,6 +45,35 @@ public static class AuthEndpoints
     // Every failure looks the same, so a response never says whether a link
     // was used, expired, revoked or never existed.
     private static IResult LinkNotValid() => Results.Text("{\"error\":\"link_not_valid\"}", "application/json", statusCode: 400);
+
+    // The same empty 202 for every email and every body, so the answer never says
+    // whether an email is known. The request touches no database: it only checks
+    // the shape and queues the work, which the email dispatcher does afterwards.
+    private static async Task<IResult> RequestLinkAsync(
+        HttpContext http, EmailQueue queue, ILogger<SignInLinks> log)
+    {
+        var accepted = Results.Accepted();
+
+        string? email = null;
+        try { if (http.Request.HasJsonContentType()) email = (await http.Request.ReadFromJsonAsync<RequestLinkRequest>())?.Email; }
+        catch (JsonException) { }
+        catch (BadHttpRequestException) { }
+        if (string.IsNullOrWhiteSpace(email) || email.Length > MaxEmailLength) return accepted;
+        email = Emails.Normalise(email);
+        if (!LooksLikeEmail(email)) return accepted;
+
+        if (!queue.Enqueue(new SignInLinkRequest(email, http.Connection.RemoteIpAddress?.ToString())))
+            log.LogWarning("The sign-in link queue is full, so a request was dropped.");
+        return accepted;
+    }
+
+    // Cheap shape check: one "@" with something on both sides, and no spaces.
+    private static bool LooksLikeEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        return at > 0 && at == email.LastIndexOf('@') && at < email.Length - 1
+            && !email.Any(c => char.IsWhiteSpace(c) || char.IsControl(c));
+    }
 
     private static async Task<IResult> RedeemAsync(
         HttpContext http, AppDbContext db, TokenHasher hasher, TimeProvider clock, ILogger<SignInLinks> log)
