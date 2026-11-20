@@ -113,15 +113,16 @@ of one file.
 
 ## 9. Test the rules, not the markup
 
-When a test framework exists, test the rules that fail silently: approval and
+Test the rules that fail silently: access and scoping, approval and
 confirmation, the prompt parser, language fallbacks. Do not snapshot
 components; screenshots and design-review cover how things look.
 
 **Why:** those rules are cheap to test and invisible when broken. Markup
 changes often and its tests mostly break for no reason.
 
-There is no test framework yet. The first change that touches these rules
-should propose adding one (Vitest), as a decision for Burak.
+The API has xUnit tests in `src/api` (`dotnet test src/api`). The web client
+has no test framework yet; Vitest is proposed for it in the next M1 pull
+request, as a decision for Burak.
 
 ## 10. Deny by default
 

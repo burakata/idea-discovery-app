@@ -90,8 +90,9 @@ Read before planning: the Phase 1 PRD,
 - Client: React + Vite + TypeScript in `src/web`. Today it is the prototype,
   with simulated AI and data in local storage. It grows into the real client;
   the demo stays as a configuration that is off in real deployments.
-- API (proposed, not started): ASP.NET Core with SQLite. It alone calls the
-  Claude API, through a provider adapter.
+- API: ASP.NET Core on .NET 10 in `src/api`, started as a skeleton; SQLite
+  (proposed) comes next. It alone calls the Claude API, through a provider
+  adapter.
 - Hosting: a small Hetzner cloud server in Germany running Docker. Email
   through Resend's free tier, behind a configurable adapter.
 
