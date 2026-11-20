@@ -54,12 +54,18 @@ public class AccessTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public void Only_listed_endpoints_are_open_to_anonymous_requests()
     {
-        var open = _factory.Services.GetServices<EndpointDataSource>()
+        var found = _factory.Services.GetServices<EndpointDataSource>()
             .SelectMany(source => source.Endpoints)
             .Where(endpoint => endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null)
             .Select(endpoint => (endpoint as RouteEndpoint)?.RoutePattern.RawText
                 ?? endpoint.DisplayName
                 ?? "(unnamed endpoint)")
+            .ToList();
+
+        // Prove the test can see the app's endpoints, so an empty read cannot pass.
+        Assert.Contains("/health", found);
+
+        var open = found
             .Where(route => !AllowedAnonymousRoutes.Contains(route))
             .ToList();
 
