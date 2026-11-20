@@ -108,9 +108,11 @@ Read before planning: the Phase 1 PRD,
 - Record every product or technical decision in docs/decisions.md.
 
 ## Commands
-Prototype only so far (see PROTOTYPE.md). No backend and no tests yet.
+The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
+is a skeleton: deny-by-default access and a health endpoint.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
+- API build and tests (.NET 10 SDK): `dotnet test src/api`
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
-- CI (`.github/workflows/ci.yml`) runs both on every pull request.
+- CI (`.github/workflows/ci.yml`) runs all three on every pull request.
