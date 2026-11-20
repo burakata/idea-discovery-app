@@ -33,8 +33,6 @@ const en = {
   },
   idea: {
     join: 'Join discussion',
-    print: 'Print version',
-    printComing: 'The print version in this language is coming soon.',
     purposeTitle: 'What this is for',
     notYetTitle: 'What we are not doing yet',
     flowTitle: 'How one job might run',

@@ -38,12 +38,6 @@
   margin-top: var(--space-5);
 }
 
-.printNote {
-  margin-top: var(--space-3);
-  font-size: var(--text-sm);
-  color: var(--color-muted-strong);
-}
-
 /* Small and tucked into the corner on phones, so the first screen is not all hero. */
 .art {
   position: absolute;
@@ -140,10 +134,6 @@
     grid-template-columns: 1.25fr 0.75fr;
     align-items: center;
     padding: var(--space-7) var(--space-8);
-  }
-
-  .hero.plain {
-    grid-template-columns: 1fr;
   }
 
   .actions {

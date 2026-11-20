@@ -120,10 +120,10 @@ export default function Queue() {
                 <JobFlowStep
                   step={{
                     id: item.id,
-                    icon: current?.icon ?? 'pallet',
+                    icon: current?.icon ?? 'people',
                     who: pick(item.who).text,
                     what: pick(item.what).text,
-                    unknown: false,
+                    unknown: item.unknown ?? false,
                     note: otherLanguage(item.what),
                   }}
                   unknownLabel={t.idea.unknownStep}
@@ -132,7 +132,7 @@ export default function Queue() {
                   <JobFlowStep
                     step={{
                       id: `${item.id}-unknown`,
-                      icon: current?.icon ?? 'pallet',
+                      icon: current?.icon ?? 'people',
                       who: pick(item.stillUnknown.who).text,
                       what: pick(item.stillUnknown.what).text,
                       unknown: true,
@@ -143,7 +143,7 @@ export default function Queue() {
               </ul>
             </div>
           </div>
-          {source(item.source)}
+          {item.source && source(item.source)}
         </>
       )
     }

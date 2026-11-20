@@ -18,7 +18,6 @@ import {
   Lightbulb,
   MessagesSquare,
   NotebookPen,
-  Package,
   Pencil,
   Plus,
   Printer,
@@ -26,9 +25,7 @@ import {
   SendHorizontal,
   Sparkles,
   Trash2,
-  Truck,
   Users,
-  Warehouse,
   X,
 } from 'lucide-react'
 
@@ -57,9 +54,6 @@ const icons = {
   question: CircleHelp,
   chevron: ChevronDown,
   external: ExternalLink,
-  warehouse: Warehouse,
-  van: Truck,
-  pallet: Package,
   assistant: Sparkles,
   translate: Languages,
   reset: RotateCcw,

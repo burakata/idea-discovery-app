@@ -14,8 +14,9 @@ npm --prefix src/web install
 npm --prefix src/web run dev
 ```
 
-Open http://localhost:5173. It opens on the pallet room's idea page as Murat
-Kaya, an owner who has not joined yet and whose app is still in English.
+Open http://localhost:5173. It opens as Burak on the project list. The sample
+project, "Home-cooked meals" / "Ev yemekleri", is **invented**: its owners,
+messages and reactions are sample data, not a real idea.
 
 To preview the online build locally under the same sub-path, build it from
 PowerShell (Git Bash rewrites the path), then start the `pages-preview`
@@ -35,32 +36,35 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
 - **EN | TR** is the real language switch. It is per person: switch View as
   and you get that person's language.
 - Things to try:
-  1. As Murat, switch to TR, tap "Sohbete katıl", enter a name and send a
-     message. You see "Yanıt gelecek." and no reply.
-  2. Switch to Burak and open "Waiting for you". The draft reply is there.
-     Approve it and it appears in the Discussion. The queue also starts with
-     five seeded items: a reply to David, an answer to an open question, a
-     reworded statement, a new open question where two owners disagree, and a
-     job-flow change that leaves one part as a question.
-  3. Turn on "Send chat replies automatically", switch to an owner and send
+  1. As Burak, open "Home-cooked meals" from the project list.
+  2. Switch View as to Hasan, switch to TR, tap "Sohbete katıl", enter a name
+     and send a message. You see "Yanıt gelecek." and no reply.
+  3. Switch back to Burak and open "Waiting for you". The draft reply is
+     there. Approve it and it appears in the Discussion. The queue also starts
+     with seeded items: a proposed summary change where two owners disagree,
+     and a job-flow change that records one owner's view while the step stays
+     a question.
+  4. Turn on "Send chat replies automatically", switch to an owner and send
      another message. The reply arrives by itself after a moment.
-  4. As David, open the Shared summary and tap "Not right" on a statement.
-  5. As Burak, confirm, edit, remove or add statements, then Export.
-  6. As Burak, open "All rooms" to see the empty example project.
+  5. As Tom, open the Shared summary and tap "Not right" on a statement.
+  6. As Burak, confirm, edit, remove or add statements, then Export.
+  7. As Burak, open "All rooms" to see the empty example project.
 
 | Person | Role | Starts as |
 |---|---|---|
-| Selin Aydın | Business owner | joined, Turkish |
-| Murat Kaya | Business owner | not joined, English (prefers Turkish) |
-| David Harper | Business owner | joined, English only |
-| Burak | Software consultant | English |
+| Elif Yıldız | Business owner | joined, Turkish |
+| Hasan Aksoy | Business owner | not joined, Turkish |
+| Tom Bennett | Business owner | joined, English only |
+| Burak | Software consultant | English; the demo starts as him |
 
 ## What is real
 
 - The look: design tokens in `src/web/src/styles/tokens.css` and the shared
   components in `src/web/src/components/`.
-- The project config in `src/web/src/projects/pallet.ts`, in English and
-  Turkish. A second project is one more config file.
+- The project config in `src/web/src/projects/homeMeals.ts`, in English and
+  Turkish, with its seeded demo data in `src/web/src/demo/seed.ts`. A second
+  project is one more config file. The earlier pallet project is real client
+  work and is kept only as reference in `docs/reference/`.
 - The owner-facing strings in `src/web/src/strings/en.ts` and `tr.ts`. The
   build fails if a key is missing from either.
 - The approval rules: AI messages wait for Burak unless the room's switch is
@@ -83,8 +87,8 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
 | `?as=burak&lang=tr` in the address sets the viewer and language | Must not exist. It would expose Burak's queue to anyone |
 | Everything is saved in this browser's local storage | A server and database shared by everyone in the room |
 | Rooms come from config files in the code | The consultant creates projects in the app (PRD R01) |
-| The Print version link opens a PDF copied into the app. There is no Turkish PDF yet, so Turkish shows "coming soon" | A document per language, kept in step with the project config |
-| No sign-in of any kind | To be decided: open question 4 in docs/decisions.md |
+| No Print version link | Generated from the idea page and shared summary, in the reader's language (M3) |
+| No sign-in of any kind | One-time email sign-in links, a copied link or an approved join request (M1) |
 
 ## What the real build needs
 
@@ -107,9 +111,6 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
   reactions stay attached to the new wording. (Open question 8.)
 - A statement or edit Burak types exists in one language only. (Open
   question 9.)
-- The similar-business cards no longer match the printed document word for
-  word: no per-card questions and no "platform". The PDF still says
-  "platform".
 - With approval on, an owner sees "A reply will follow." for as long as Burak
   takes. Nothing tells them when it arrives.
 - Burak's own screens (queue, private notes, rooms) are always English and

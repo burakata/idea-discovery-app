@@ -10,20 +10,20 @@ param([Parameter(Mandatory = $true)][string]$OutDir)
 Add-Type -AssemblyName System.Drawing
 $shoot = Join-Path $PSScriptRoot 'shoot.ps1'
 $OutDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutDir)
-$p = '/rooms/pallet'
+$p = '/rooms/home-meals'
 $shots = @(
-  "join-390-en|$p/join?as=murat&lang=en|390|844", "join-390-tr|$p/join?as=murat&lang=tr|390|844",
-  "join-1280-en|$p/join?as=murat&lang=en|1280|800", "join-1280-tr|$p/join?as=murat&lang=tr|1280|800",
-  "idea-390-en|$p`?as=murat&lang=en|390|844", "idea-390-tr|$p`?as=murat&lang=tr|390|844",
-  "idea-1280-en|$p`?as=murat&lang=en|1280|800", "idea-1280-tr|$p`?as=murat&lang=tr|1280|800",
-  "idea-390-en-full|$p`?as=murat&lang=en|390|3900", "idea-390-tr-full|$p`?as=murat&lang=tr|390|4000",
-  "idea-1280-en-full|$p`?as=murat&lang=en|1280|1950", "idea-1280-tr-full|$p`?as=murat&lang=tr|1280|1950",
-  "discussion-390-en|$p/discussion?as=david&lang=en|390|844", "discussion-390-tr|$p/discussion?as=selin&lang=tr|390|844",
-  "discussion-1280-en|$p/discussion?as=david&lang=en|1280|800", "discussion-1280-tr|$p/discussion?as=selin&lang=tr|1280|800",
-  "summary-390-en|$p/summary?as=david&lang=en|390|844", "summary-390-tr|$p/summary?as=selin&lang=tr|390|844",
-  "summary-1280-en|$p/summary?as=david&lang=en|1280|800", "summary-1280-tr|$p/summary?as=selin&lang=tr|1280|800",
-  "summary-390-en-full|$p/summary?as=david&lang=en|390|3300", "summary-390-tr-full|$p/summary?as=selin&lang=tr|390|3400",
-  "summary-1280-en-full|$p/summary?as=david&lang=en|1280|1500", "summary-1280-tr-full|$p/summary?as=selin&lang=tr|1280|1600",
+  "join-390-en|$p/join?as=hasan&lang=en|390|844", "join-390-tr|$p/join?as=hasan&lang=tr|390|844",
+  "join-1280-en|$p/join?as=hasan&lang=en|1280|800", "join-1280-tr|$p/join?as=hasan&lang=tr|1280|800",
+  "idea-390-en|$p`?as=hasan&lang=en|390|844", "idea-390-tr|$p`?as=hasan&lang=tr|390|844",
+  "idea-1280-en|$p`?as=hasan&lang=en|1280|800", "idea-1280-tr|$p`?as=hasan&lang=tr|1280|800",
+  "idea-390-en-full|$p`?as=hasan&lang=en|390|3900", "idea-390-tr-full|$p`?as=hasan&lang=tr|390|4000",
+  "idea-1280-en-full|$p`?as=hasan&lang=en|1280|1950", "idea-1280-tr-full|$p`?as=hasan&lang=tr|1280|1950",
+  "discussion-390-en|$p/discussion?as=tom&lang=en|390|844", "discussion-390-tr|$p/discussion?as=elif&lang=tr|390|844",
+  "discussion-1280-en|$p/discussion?as=tom&lang=en|1280|800", "discussion-1280-tr|$p/discussion?as=elif&lang=tr|1280|800",
+  "summary-390-en|$p/summary?as=tom&lang=en|390|844", "summary-390-tr|$p/summary?as=elif&lang=tr|390|844",
+  "summary-1280-en|$p/summary?as=tom&lang=en|1280|800", "summary-1280-tr|$p/summary?as=elif&lang=tr|1280|800",
+  "summary-390-en-full|$p/summary?as=tom&lang=en|390|3300", "summary-390-tr-full|$p/summary?as=elif&lang=tr|390|3400",
+  "summary-1280-en-full|$p/summary?as=tom&lang=en|1280|1500", "summary-1280-tr-full|$p/summary?as=elif&lang=tr|1280|1600",
   "summary-390-burak|$p/summary?as=burak&lang=en|390|3500", "summary-1280-burak|$p/summary?as=burak&lang=en|1280|1600",
   "queue-390-en|$p/queue?as=burak&lang=en|390|844", "queue-1280-en|$p/queue?as=burak&lang=en|1280|800",
   "queue-390-en-full|$p/queue?as=burak&lang=en|390|4300", "queue-1280-en-full|$p/queue?as=burak&lang=en|1280|2400",

@@ -22,7 +22,7 @@ describe('scripted lines from prompts/interviewer.md', () => {
   })
 
   it('has the three lines the demo seed uses, in English and Turkish', () => {
-    // palletSeed.ts seeds the demo with seededLine(0), (1) and (2).
+    // seed.ts seeds the demo with seededLine(0), (1) and (2).
     for (const index of [0, 1, 2]) {
       const line = seededLine(index)
       expect(line.en.trim(), `seededLine(${index}) en`).not.toBe('')

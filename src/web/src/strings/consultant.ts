@@ -67,7 +67,7 @@ export const consultant = {
   },
   rooms: {
     title: 'Rooms',
-    sub: 'One room for each idea. Each is defined by one config.',
+    sub: 'One room for each idea.',
     open: 'Open room',
     messages: 'messages',
     waiting: 'waiting for you',

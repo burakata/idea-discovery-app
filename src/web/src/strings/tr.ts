@@ -35,8 +35,6 @@ const tr: Strings = {
   },
   idea: {
     join: 'Sohbete katıl',
-    print: 'Yazdırılabilir sürüm',
-    printComing: 'Bu dildeki yazdırılabilir sürüm yakında eklenecek.',
     purposeTitle: 'Bu ne için?',
     notYetTitle: 'Henüz ne yapmıyoruz?',
     flowTitle: 'Bir iş nasıl ilerleyebilir?',

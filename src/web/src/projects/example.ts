@@ -6,7 +6,6 @@ export const example: Project = {
   name: { en: 'Example project', tr: 'Örnek proje' },
   status: { en: 'Not started', tr: 'Başlamadı' },
   icon: 'idea',
-  illustration: null,
   intro: {
     eyebrow: { en: 'Example', tr: 'Örnek' },
     title: { en: 'A second room, still empty.', tr: 'İkinci bir oda, henüz boş.' },
@@ -24,5 +23,4 @@ export const example: Project = {
   similarQuestion: { en: '', tr: '' },
   participants: [burak, assistant],
   statements: [],
-  printVersion: {},
 }
