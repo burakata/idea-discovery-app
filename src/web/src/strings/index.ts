@@ -12,11 +12,37 @@ const localeByLang: Record<Lang, string> = { en: 'en-GB', tr: 'tr-TR' }
 // whole screen stays in English there, whatever his language setting is.
 const consultantScreen = /^\/rooms\/?$|\/(queue|notes)\/?$/
 
+export function isEnglishOnly(pathname: string): boolean {
+  return consultantScreen.test(pathname)
+}
+
+export function screenLang(pathname: string, viewerLang: Lang): Lang {
+  return isEnglishOnly(pathname) ? 'en' : viewerLang
+}
+
+// Text in the reader's language. "missing" means only the other language exists.
+export function pickText(text: Text, lang: Lang): { text: string; missing: boolean } {
+  const own = text[lang]
+  if (own) return { text: own, missing: false }
+  return { text: text[lang === 'en' ? 'tr' : 'en'] ?? '', missing: true }
+}
+
+// The translation line for something written in another language, if one is needed.
+export function translationLine(written: Written, lang: Lang, t: Strings) {
+  return written.lang === lang
+    ? undefined
+    : {
+        label: t.discussion.translated,
+        text: written.translation,
+        placeholder: t.discussion.translationPlaceholder,
+      }
+}
+
 export function useT() {
   const { viewer } = useStore()
   const { pathname } = useLocation()
-  const englishOnly = consultantScreen.test(pathname)
-  const lang = englishOnly ? 'en' : viewer.language
+  const englishOnly = isEnglishOnly(pathname)
+  const lang = screenLang(pathname, viewer.language)
   const t = stringsByLang[lang]
   const time = new Intl.DateTimeFormat(localeByLang[lang], {
     day: 'numeric',
@@ -31,20 +57,7 @@ export function useT() {
     englishOnly,
     time: (iso: string) => time.format(new Date(iso)),
     personName: (person: Person) => (person.role === 'assistant' ? t.roles.assistant : person.name),
-    // Text in the reader's language. "missing" means only the other language exists.
-    pick: (text: Text) => {
-      const own = text[lang]
-      if (own) return { text: own, missing: false }
-      return { text: text[lang === 'en' ? 'tr' : 'en'] ?? '', missing: true }
-    },
-    // The translation line for something written in another language, if one is needed.
-    translationOf: (written: Written) =>
-      written.lang === lang
-        ? undefined
-        : {
-            label: t.discussion.translated,
-            text: written.translation,
-            placeholder: t.discussion.translationPlaceholder,
-          },
+    pick: (text: Text) => pickText(text, lang),
+    translationOf: (written: Written) => translationLine(written, lang, t),
   }
 }
