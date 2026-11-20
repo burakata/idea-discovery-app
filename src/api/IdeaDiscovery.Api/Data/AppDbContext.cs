@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace IdeaDiscovery.Api.Data;
 
@@ -14,6 +15,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<MessageTranslation> MessageTranslations => Set<MessageTranslation>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
+    // SQLite hands times back with Kind Unspecified. All stored times are UTC,
+    // so every DateTime read from the database is marked as UTC.
+    protected override void ConfigureConventions(ModelConfigurationBuilder c)
+    {
+        c.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        c.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
+    }
+
+    private sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
+        v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+    private sealed class NullableUtcDateTimeConverter() : ValueConverter<DateTime?, DateTime?>(
+        v => v, v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -39,7 +54,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<Invitation>(e =>
         {
-            e.Property(x => x.Role).HasConversion<string>();
             e.HasIndex(x => x.ProjectId);
             e.HasIndex(x => x.Email);
             e.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
@@ -51,6 +65,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.Property(x => x.Purpose).HasConversion<string>();
             e.HasIndex(x => x.TokenHash).IsUnique();
+            // Every token belongs to someone: an invitation or a user.
+            e.ToTable(t => t.HasCheckConstraint(
+                "CK_SignInTokens_Owner",
+                "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) " +
+                "OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)"));
             e.HasOne<Invitation>().WithMany().HasForeignKey(x => x.InvitationId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });

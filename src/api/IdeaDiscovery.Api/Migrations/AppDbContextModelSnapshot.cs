@@ -130,10 +130,6 @@ namespace IdeaDiscovery.Api.Migrations
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AcceptedUserId");
@@ -316,7 +312,10 @@ namespace IdeaDiscovery.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SignInTokens");
+                    b.ToTable("SignInTokens", t =>
+                        {
+                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("IdeaDiscovery.Api.Data.User", b =>

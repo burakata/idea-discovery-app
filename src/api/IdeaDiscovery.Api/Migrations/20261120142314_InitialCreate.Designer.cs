@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdeaDiscovery.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261120141137_InitialCreate")]
+    [Migration("20261120142314_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -131,10 +131,6 @@ namespace IdeaDiscovery.Api.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -319,7 +315,10 @@ namespace IdeaDiscovery.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SignInTokens");
+                    b.ToTable("SignInTokens", t =>
+                        {
+                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("IdeaDiscovery.Api.Data.User", b =>

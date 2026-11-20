@@ -150,9 +150,10 @@ public sealed class DatabaseTests : IDisposable
     [Fact]
     public void Token_hash_is_unique()
     {
+        var user = AddUser("a@example.test");
         var token = () => new SignInToken
         {
-            Id = Guid.NewGuid(), TokenHash = "same-hash", Purpose = TokenPurpose.SignIn,
+            Id = Guid.NewGuid(), TokenHash = "same-hash", Purpose = TokenPurpose.SignIn, UserId = user.Id,
             CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddHours(1),
         };
         _db.SignInTokens.Add(token());
@@ -214,5 +215,163 @@ public sealed class DatabaseTests : IDisposable
         DatabaseSetup.SyncConsultant(_db, Config(), NullLogger.Instance);
 
         Assert.DoesNotContain(_db.Users.ToList(), u => u.IsConsultant);
+    }
+
+    private Invitation AddInvitation(User creator)
+    {
+        var invitation = new Invitation
+        {
+            Id = Guid.NewGuid(), ProjectId = AddProject(creator).Id, Email = "o@example.test", DisplayName = "Owner",
+            CreatedById = creator.Id, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddDays(7),
+        };
+        _db.Invitations.Add(invitation);
+        _db.SaveChanges();
+        return invitation;
+    }
+
+    private UserSession AddSession(User user)
+    {
+        var session = new UserSession
+        {
+            Id = Guid.NewGuid(), UserId = user.Id, CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(1), LastSeenAt = DateTime.UtcNow,
+        };
+        _db.UserSessions.Add(session);
+        _db.SaveChanges();
+        return session;
+    }
+
+    private static SignInToken NewToken(string hash, TokenPurpose purpose, Guid? invitationId, Guid? userId) => new()
+    {
+        Id = Guid.NewGuid(), TokenHash = hash, Purpose = purpose, InvitationId = invitationId, UserId = userId,
+        CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddHours(1),
+    };
+
+    [Fact]
+    public void An_invitation_has_no_role_and_cannot_make_a_consultant()
+    {
+        Assert.Null(typeof(Invitation).GetProperty("Role"));
+        Assert.DoesNotContain(typeof(Invitation).GetProperties(), p => p.PropertyType == typeof(MemberRole));
+
+        var columns = _db.Model.FindEntityType(typeof(Invitation))!.GetProperties().Select(p => p.Name).ToList();
+        Assert.DoesNotContain(columns, c => c.Contains("Role") || c.Contains("Consultant"));
+    }
+
+    [Fact]
+    public void Becoming_consultant_revokes_that_users_open_sessions_only()
+    {
+        var owner = AddUser("owner@example.test");
+        var other = AddUser("other@example.test");
+        var open = AddSession(owner);
+        var alreadyRevoked = AddSession(owner);
+        var revokedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        alreadyRevoked.RevokedAt = revokedAt;
+        var othersSession = AddSession(other);
+        _db.SaveChanges();
+
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "owner@example.test")), NullLogger.Instance);
+
+        var sessions = NewContext().UserSessions.ToDictionary(s => s.Id);
+        Assert.NotNull(sessions[open.Id].RevokedAt);
+        Assert.Equal(revokedAt, sessions[alreadyRevoked.Id].RevokedAt);
+        Assert.Null(sessions[othersSession.Id].RevokedAt);
+    }
+
+    [Fact]
+    public void Losing_the_consultant_flag_revokes_sessions_and_leaves_the_new_consultant_alone()
+    {
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "first@example.test")), NullLogger.Instance);
+        var first = _db.Users.Single(u => u.Email == "first@example.test");
+        var second = AddUser("second@example.test");
+        var firstSession = AddSession(first);
+        var secondSession = AddSession(second);
+
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "second@example.test")), NullLogger.Instance);
+
+        var sessions = NewContext().UserSessions.ToDictionary(s => s.Id);
+        Assert.NotNull(sessions[firstSession.Id].RevokedAt);
+        Assert.NotNull(sessions[secondSession.Id].RevokedAt);
+    }
+
+    [Fact]
+    public void Clearing_the_setting_revokes_the_old_consultants_sessions()
+    {
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "first@example.test")), NullLogger.Instance);
+        var session = AddSession(_db.Users.Single());
+
+        DatabaseSetup.SyncConsultant(_db, Config(), NullLogger.Instance);
+
+        Assert.NotNull(NewContext().UserSessions.Single(s => s.Id == session.Id).RevokedAt);
+    }
+
+    [Fact]
+    public void An_unchanged_consultant_keeps_their_sessions()
+    {
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "boss@example.test")), NullLogger.Instance);
+        var session = AddSession(_db.Users.Single());
+
+        DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "boss@example.test")), NullLogger.Instance);
+
+        Assert.Null(NewContext().UserSessions.Single(s => s.Id == session.Id).RevokedAt);
+    }
+
+    [Fact]
+    public void Every_token_belongs_to_an_invitation_or_a_user()
+    {
+        var user = AddUser("a@example.test");
+        var invitation = AddInvitation(user);
+
+        // Valid shapes are accepted.
+        _db.SignInTokens.Add(NewToken("h1", TokenPurpose.Invitation, invitation.Id, null));
+        _db.SignInTokens.Add(NewToken("h2", TokenPurpose.SignIn, null, user.Id));
+        _db.SaveChanges();
+
+        // Invalid shapes are refused, each on its own.
+        foreach (var bad in new[]
+        {
+            NewToken("b1", TokenPurpose.Invitation, null, null),
+            NewToken("b2", TokenPurpose.Invitation, null, user.Id),
+            NewToken("b3", TokenPurpose.SignIn, null, null),
+            NewToken("b4", TokenPurpose.SignIn, invitation.Id, null),
+        })
+        {
+            using var db = NewContext();
+            db.SignInTokens.Add(bad);
+            Assert.Throws<DbUpdateException>(() => db.SaveChanges());
+        }
+    }
+
+    [Fact]
+    public void Conversation_numbers_are_unique_within_a_project()
+    {
+        var user = AddUser("a@example.test");
+        var project = AddProject(user);
+        _db.Conversations.Add(NewConversation(project, user, 1, ConversationState.Finished));
+        _db.SaveChanges();
+
+        _db.Conversations.Add(NewConversation(project, user, 1, ConversationState.Active));
+        Assert.Throws<DbUpdateException>(() => _db.SaveChanges());
+    }
+
+    [Fact]
+    public void Times_read_back_as_utc()
+    {
+        var user = AddUser("a@example.test");
+        var project = AddProject(user);
+        var conversation = NewConversation(project, user, 1, ConversationState.Finished);
+        conversation.FinishedAt = DateTime.UtcNow;
+        _db.Conversations.Add(conversation);
+        _db.SaveChanges();
+
+        using var fresh = NewContext();
+        Assert.Equal(DateTimeKind.Utc, fresh.Users.Single().CreatedAt.Kind);
+        var read = fresh.Conversations.Single();
+        Assert.Equal(DateTimeKind.Utc, read.StartedAt.Kind);
+        Assert.Equal(DateTimeKind.Utc, read.FinishedAt!.Value.Kind);
+
+        // A nullable time that is empty stays empty.
+        _db.SignInTokens.Add(NewToken("h", TokenPurpose.SignIn, null, user.Id));
+        _db.SaveChanges();
+        Assert.Null(NewContext().SignInTokens.Single().UsedAt);
     }
 }

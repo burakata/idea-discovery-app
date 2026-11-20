@@ -38,6 +38,8 @@ public class ProjectMember
     public Guid Id { get; set; }
     public Guid ProjectId { get; set; }
     public Guid UserId { get; set; }
+    // Descriptive only. It never grants consultant powers: access checks use
+    // User.IsConsultant, which comes from configuration.
     public MemberRole Role { get; set; }
     public DateTime JoinedAt { get; set; }
 }
@@ -49,7 +51,7 @@ public class Invitation
     public string Email { get; set; } = "";
     // Entered by Burak; owners cannot change it.
     public string DisplayName { get; set; } = "";
-    public MemberRole Role { get; set; }
+    // No role: an invitation can only make an owner.
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime ExpiresAt { get; set; }

@@ -31,8 +31,8 @@ public static class DatabaseSetup
         if (string.IsNullOrWhiteSpace(configured))
         {
             logger.LogWarning("Consultant:Email is not set, so nobody is the consultant.");
-            foreach (var other in db.Users.Where(u => u.IsConsultant))
-                other.IsConsultant = false;
+            foreach (var other in db.Users.Where(u => u.IsConsultant).ToList())
+                SetConsultant(db, other, false);
             db.SaveChanges();
             return;
         }
@@ -51,10 +51,22 @@ public static class DatabaseSetup
             };
             db.Users.Add(user);
         }
-        user.IsConsultant = true;
+        SetConsultant(db, user, true);
 
-        foreach (var other in db.Users.Where(u => u.IsConsultant && u.Email != email))
-            other.IsConsultant = false;
+        foreach (var other in db.Users.Where(u => u.IsConsultant && u.Email != email).ToList())
+            SetConsultant(db, other, false);
         db.SaveChanges();
+    }
+
+    // Changing the flag signs the user out everywhere, so a session never
+    // outlives the powers it was opened with.
+    private static void SetConsultant(AppDbContext db, User user, bool value)
+    {
+        if (user.IsConsultant == value) return;
+        user.IsConsultant = value;
+        if (db.Entry(user).State == EntityState.Added) return;
+        var now = DateTime.UtcNow;
+        foreach (var session in db.UserSessions.Where(s => s.UserId == user.Id && s.RevokedAt == null).ToList())
+            session.RevokedAt = now;
     }
 }

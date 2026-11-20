@@ -134,7 +134,6 @@ namespace IdeaDiscovery.Api.Migrations
                     ProjectId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     DisplayName = table.Column<string>(type: "TEXT", nullable: false),
-                    Role = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedById = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -237,6 +236,7 @@ namespace IdeaDiscovery.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SignInTokens", x => x.Id);
+                    table.CheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
                     table.ForeignKey(
                         name: "FK_SignInTokens_Invitations_InvitationId",
                         column: x => x.InvitationId,
