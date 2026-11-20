@@ -278,7 +278,7 @@ public sealed class DatabaseTests : IDisposable
     }
 
     [Fact]
-    public void Losing_the_consultant_flag_revokes_sessions_and_leaves_the_new_consultant_alone()
+    public void Losing_the_consultant_flag_revokes_sessions_including_the_new_consultants()
     {
         DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "first@example.test")), NullLogger.Instance);
         var first = _db.Users.Single(u => u.Email == "first@example.test");
@@ -333,6 +333,8 @@ public sealed class DatabaseTests : IDisposable
             NewToken("b2", TokenPurpose.Invitation, null, user.Id),
             NewToken("b3", TokenPurpose.SignIn, null, null),
             NewToken("b4", TokenPurpose.SignIn, invitation.Id, null),
+            NewToken("b5", TokenPurpose.Invitation, invitation.Id, user.Id),
+            NewToken("b6", TokenPurpose.SignIn, invitation.Id, user.Id),
         })
         {
             using var db = NewContext();

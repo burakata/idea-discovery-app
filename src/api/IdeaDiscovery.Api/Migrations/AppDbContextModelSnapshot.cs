@@ -314,7 +314,7 @@ namespace IdeaDiscovery.Api.Migrations
 
                     b.ToTable("SignInTokens", t =>
                         {
-                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
+                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL AND \"UserId\" IS NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL AND \"InvitationId\" IS NULL)");
                         });
                 });
 

@@ -68,8 +68,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             // Every token belongs to someone: an invitation or a user.
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_SignInTokens_Owner",
-                "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) " +
-                "OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)"));
+                "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL AND \"UserId\" IS NULL) " +
+                "OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL AND \"InvitationId\" IS NULL)"));
             e.HasOne<Invitation>().WithMany().HasForeignKey(x => x.InvitationId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });

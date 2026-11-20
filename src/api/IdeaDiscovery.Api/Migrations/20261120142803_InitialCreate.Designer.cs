@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IdeaDiscovery.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261120142314_InitialCreate")]
+    [Migration("20261120142803_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -317,7 +317,7 @@ namespace IdeaDiscovery.Api.Migrations
 
                     b.ToTable("SignInTokens", t =>
                         {
-                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
+                            t.HasCheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL AND \"UserId\" IS NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL AND \"InvitationId\" IS NULL)");
                         });
                 });
 

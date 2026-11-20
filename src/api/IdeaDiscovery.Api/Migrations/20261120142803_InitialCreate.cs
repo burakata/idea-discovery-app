@@ -236,7 +236,7 @@ namespace IdeaDiscovery.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SignInTokens", x => x.Id);
-                    table.CheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL)");
+                    table.CheckConstraint("CK_SignInTokens_Owner", "(\"Purpose\" = 'Invitation' AND \"InvitationId\" IS NOT NULL AND \"UserId\" IS NULL) OR (\"Purpose\" = 'SignIn' AND \"UserId\" IS NOT NULL AND \"InvitationId\" IS NULL)");
                     table.ForeignKey(
                         name: "FK_SignInTokens_Invitations_InvitationId",
                         column: x => x.InvitationId,
