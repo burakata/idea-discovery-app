@@ -136,7 +136,7 @@ Turkish (when the person's setting is `tr`):
 |---|---|
 | Who do you think your customers would be? | Sizce müşterileriniz kimler olur? |
 | Imagine a customer wants something tomorrow. What happens first? | Diyelim ki yarın bir müşteri bir şey istiyor. İlk ne olur? |
-| And what happens after that? | Ve sonra ne olur? |
+| And what happens after that? | Peki sonra ne oluyor? |
 | Who does the work at that point? | O noktada işi kim yapıyor? |
 | How would the business make money? | Sizce bu iş nasıl para kazanır? |
 | What absolutely has to be in place on day one? | İlk gün mutlaka hazır olması gereken şey ne? |

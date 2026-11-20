@@ -173,8 +173,8 @@ export const homeMealsSeed: RoomSeed = {
         tr: 'Yemek komşuya nasıl ulaşıyor, ödeme nasıl yapılıyor?',
       },
       what: {
-        en: 'Tom says they agree a time and the neighbour collects it. Not agreed by all yet.',
-        tr: 'Tom’a göre bir saat kararlaştırılıyor ve komşu yemeği gidip alıyor. Henüz herkes aynı fikirde değil.',
+        en: 'Tom says they agree a time and the neighbour collects it. Elif and Hasan have not said yet.',
+        tr: 'Tom’a göre bir saat kararlaştırılıyor ve komşu yemeği gidip alıyor. Elif ve Hasan henüz bir şey söylemedi.',
       },
       unknown: true,
       source: { saidBy: 'tom', quote: 'agree a time to collect it' },
