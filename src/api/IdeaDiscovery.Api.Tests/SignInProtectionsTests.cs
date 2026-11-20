@@ -1,6 +1,3 @@
-// Needed by SignInA15Tests, which calls AddInMemoryCollection without importing the namespace.
-global using Microsoft.Extensions.Configuration;
-
 using System.Net;
 using System.Text.Json;
 using IdeaDiscovery.Api.Auth;
@@ -272,6 +269,82 @@ public class SignInProtectionsTests
         Assert.Equal(burakId, signedOut.ActorUserId);
         Assert.All(audit, a => Assert.NotEqual(default, a.CreatedAt));
         _ = owner;
+    }
+
+    // ---- An invitation never signs anyone in as the consultant ----
+    [Fact]
+    public async Task An_invitation_for_the_consultants_email_is_refused_and_changes_nothing()
+    {
+        using var f = new RoomsFactory();
+        var projectId = f.SeedProject();
+        var invitationId = f.SeedInvitation(projectId, RoomsFactory.ConsultantEmail);
+        var token = await f.InvitationToken(invitationId);
+        var person = f.NewPerson();
+
+        var response = await person.Redeem(token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("link_not_valid", (await person.Json(response)).GetProperty("error").GetString());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await person.Me()).StatusCode);
+        Assert.Null(f.WithDb(db => db.SignInTokens.Single().UsedAt));
+        Assert.Null(f.WithDb(db => db.Invitations.Single().AcceptedAt));
+        Assert.Equal(0, f.WithDb(db => db.ProjectMembers.Count()));
+        Assert.Equal(0, f.WithDb(db => db.UserSessions.Count()));
+        Assert.Equal(1, f.WithDb(db => db.AuditEvents.Count(a => a.Action == "sign_in_failed")));
+        Assert.Equal(0, f.WithDb(db => db.AuditEvents.Count(a => a.Action == "sign_in" || a.Action == "invitation_accepted")));
+    }
+
+    [Fact]
+    public async Task Copying_a_link_for_an_invitation_to_the_consultants_email_is_refused_with_409()
+    {
+        using var f = new RoomsFactory();
+        var invitationId = f.SeedInvitation(f.SeedProject(), RoomsFactory.ConsultantEmail);
+        var burak = await f.ConsultantSignedIn();
+
+        var response = await burak.Post($"/consultant/invitations/{invitationId}/link");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(0, f.WithDb(db => db.SignInTokens.Count(t => t.InvitationId == invitationId)));
+        Assert.Equal(0, f.WithDb(db => db.AuditEvents.Count(a => a.Action == "invitation_link_copied")));
+    }
+
+    // ---- A body that is not JSON ----
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task A_redeem_with_a_text_body_or_no_body_gets_the_same_400_and_is_audited(bool withTextBody)
+    {
+        using var f = new RoomsFactory();
+        var person = f.NewPerson();
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/redeem");
+        if (withTextBody) request.Content = new StringContent("not json at all", System.Text.Encoding.UTF8, "text/plain");
+        request.Headers.TryAddWithoutValidation("Origin", RoomsFactory.BaseUrl);
+        request.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", await person.CsrfToken());
+
+        var response = await person.Http.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("link_not_valid", (await person.Json(response)).GetProperty("error").GetString());
+        Assert.Equal(1, f.WithDb(db => db.AuditEvents.Count(a => a.Action == "sign_in_failed")));
+    }
+
+    // ---- LastSeenAt is written at most every five minutes ----
+    [Fact]
+    public async Task LastSeenAt_is_updated_only_when_more_than_five_minutes_have_passed()
+    {
+        using var f = new RoomsFactory();
+        var ownerId = f.SeedOwner();
+        var owner = await f.SignedIn(ownerId);
+        DateTime LastSeen() => f.WithDb(db => db.UserSessions.Single(s => s.UserId == ownerId).LastSeenAt);
+        var signedInAt = LastSeen();
+
+        f.Clock.Advance(TimeSpan.FromMinutes(4));
+        Assert.Equal(HttpStatusCode.OK, (await owner.Me()).StatusCode);
+        Assert.Equal(signedInAt, LastSeen());
+
+        f.Clock.Advance(TimeSpan.FromMinutes(2));
+        Assert.Equal(HttpStatusCode.OK, (await owner.Me()).StatusCode);
+        Assert.Equal(f.Now, LastSeen());
     }
 
     // ---- GET changes nothing ----

@@ -66,6 +66,9 @@ public static class ConsultantEndpoints
             if (invitation.RevokedAt is not null || invitation.AcceptedAt is not null || invitation.ExpiresAt <= now)
                 return Results.Conflict(new { error = "invitation_not_open" });
 
+            if (await db.Users.AnyAsync(u => u.Email == invitation.Email && u.IsConsultant))
+                return Results.Conflict(new { error = "invitation_not_open" });
+
             var link = await links.ForInvitationAsync(invitationId);
             AuditLog.Add(db, clock, "invitation_link_copied", SessionValidation.UserId(http.User), Ip(http),
                 invitation.ProjectId, $"invitation:{invitationId}");

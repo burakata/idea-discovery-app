@@ -43,7 +43,8 @@ public static class AuthEndpoints
         var ip = http.Connection.RemoteIpAddress?.ToString();
 
         string? token = null;
-        try { token = (await http.Request.ReadFromJsonAsync<RedeemRequest>())?.Token; }
+        // A body that is not JSON fails like every other bad link, not with a 500.
+        try { if (http.Request.HasJsonContentType()) token = (await http.Request.ReadFromJsonAsync<RedeemRequest>())?.Token; }
         catch (JsonException) { }
         catch (BadHttpRequestException) { }
 
@@ -112,6 +113,9 @@ public static class AuthEndpoints
                 return null;
 
             user = await db.Users.SingleOrDefaultAsync(u => u.Email == invitation.Email);
+            // An invitation must never sign anyone in as the consultant. Nothing
+            // has been committed, so leaving here rolls the spent token back.
+            if (user is { IsConsultant: true }) return null;
             if (user is null)
             {
                 user = new User

@@ -7,9 +7,6 @@ public sealed record AuthSettings(string TokenKey, Uri PublicBaseUrl, IReadOnlyL
     // Development the app refuses to start with it.
     public const string DevelopmentTokenKey = "development-only-token-key-not-a-secret-0001";
 
-    // The Vite dev server, allowed as an Origin in Development only.
-    private const string ViteDevOrigin = "http://localhost:5173";
-
     public const int MinimumTokenKeyLength = 32;
 
     // Where a person's browser reaches the app; links are built from it and
@@ -36,7 +33,6 @@ public sealed record AuthSettings(string TokenKey, Uri PublicBaseUrl, IReadOnlyL
                     : "App:PublicBaseUrl must be an absolute https URL.");
 
         var origins = new List<string> { baseUrl.GetLeftPart(UriPartial.Authority) };
-        if (development) origins.Add(ViteDevOrigin);
         return new AuthSettings(key, baseUrl, origins);
     }
 }
