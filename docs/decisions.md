@@ -50,6 +50,14 @@ confirmed).
 | 2026-11-19 | No separate tester or security-reviewer subagent yet. The implementer writes tests; code-reviewer checks security basics. A security reviewer is added when backend work starts | No backend, deployment or real data yet | Proposed |
 | 2026-11-16 | Prototype: `?as=` and `?lang=` in the address set who is viewing and the language | Used for review screenshots. Must not exist in the real build, where `?as=burak` would expose the queue | Proposed |
 | 2026-11-20 | The Phase 1 PRD (`Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`, v0.2) replaces `docs/brief.md` as the single source of scope. The brief's items the PRD lacked were carried into it: the problem, purpose and limits (working alongside paper and meetings; no analysis, scoring or pricing of the idea), what owners see (§4.4), the owner experience success criteria (§8), consultant-added statements (R27) and two Later items (F23, F24). The brief is kept as `docs/archive/brief-v1.md`, for reference only. The PRD's reversals of the brief now apply: the consultant creates projects in the app (R01); a consultant-requested concept prototype (R23, P1 late); several conversations per project; AI modes Off / Review / Automatic per conversation; email sign-in; private specialist agents; multiple-choice questions | Two scope sources that disagree would give every agent conflicting instructions | Decided |
+| 2026-11-20 | Phase 1 has one human consultant per project: Burak. Several AI assistants stay as the PRD has them (one public Lead, private specialists, R14). More human consultants stay in F14 | PRD §2.1 said "consultant(s)" while F14 put multiple consultants at Product stage. §2.1 now matches F14 | Decided |
+| 2026-11-20 | The AI Discovery Playbook v1.1 lives in `docs/playbook/`, exactly as Burak supplied it. It is the source the Lead and specialist prompts and the facilitator controls (PRD §5.4) are written from in M2. It is reference, not loaded at runtime: the app's prompts stay in `prompts/`. Its `project-context/pallet-room.md` is context for the pallet project only | The PRD bases the Lead and the controls on the Playbook, but it was not in the repository | Decided |
+| 2026-11-20 | `src/web` grows into the real client instead of a fresh start. Its components, tokens and strings stay; the store's demo data and local storage are replaced by an API client. The demo stays available as a configuration (demo data, simulated AI, choosing who is viewing) that is off in real deployments. `?as=`, `?lang=` and Reset demo exist only in demo mode | Burak: evolve it if the demo can stay configurable. The store is already the one door to the data (docs/engineering.md §8), so the swap stays in one place. PRD §9: reuse design patterns, not local-only security assumptions | Decided |
+| 2026-11-20 | Make things configurable where they differ between deployments or providers: sign-in method, email service, AI provider and model, demo mode, hosting settings | Burak: "make things configurable as much as possible". Lead's reading, Proposed: settings for what genuinely varies, not a switch for every behaviour (docs/engineering.md §1) | Decided |
+| 2026-11-20 | Sign-in: the API sends its own one-time, expiring email sign-in links, through a transactional email service (open question 11). No managed sign-in service. The sign-in method is configurable, but signing in without a link (choosing a user) works only in a demo or local configuration, and the app refuses that setting anywhere else | Owners' identities stay in our database, as the PRD's data model assumes. PRD §10 and A15 make identity-bound sign-in a release blocker for real users | Decided |
+| 2026-11-20 | AI provider: the Claude API, called only from the server, behind a provider adapter so another provider can be configured later. The model ID is read from configuration. Confirms the AI part of the 2026-11-16 "Real build" row | Burak's choice; PRD §9 asks for a server-side, configurable provider. Building several providers now is F13 (Phase 2) | Decided |
+| 2026-11-20 | Hosting: one small Linux VPS running Docker, with the SQLite file on its local disk; we handle updates and backups. Which provider, the domain and the budget are open question 6 | Cheap and simple for a small private pilot; SQLite needs a local disk, not shared network storage | Decided |
+| 2026-11-20 | Retention: a project and its conversations are kept until Burak deletes the project. An owner can ask for their project to be deleted. Backups roll off after 30 days (provisional figure). A short privacy notice says this before real owners join | PRD §10: retention and deletion must be defined before real owners submit confidential details | Decided |
 
 ## Open questions
 
@@ -61,14 +69,15 @@ Move each to the table once decided.
    delayed. Nothing in v1, or an email or message with the link?
 3. **How does Burak know something is waiting?** A count in the app only, or
    an email as well?
-4. **How do owners get in?** Invite link plus a display name, or something
-   stronger? What stops a stranger with the link from reading the room?
+4. **How do owners get in?** Decided 2026-11-20: one-time, expiring email
+   sign-in links bound to the invited person (see the table).
 5. **Disagreement.** If one owner marks a statement right and another marks
    it not right, what does Burak do: ask in the discussion, or raise it in
    person?
-6. **Where is it hosted, and what does it cost to run?**
-7. **How long are rooms kept, and can an owner ask for theirs to be
-   deleted?**
+6. **Hosting provider, domain and budget.** A small Linux VPS with Docker was
+   decided on 2026-11-20. Still open: which provider, the domain and the
+   rough monthly budget. Needed by the end of M1.
+7. **How long are rooms kept?** Decided 2026-11-20 (see the table).
 8. **Editing a statement owners already reacted to.** In the prototype the
    reactions stay attached when Burak rewrites a statement. Should they be
    cleared, so nobody is shown as agreeing with words they never saw?
@@ -78,3 +87,5 @@ Move each to the table once decided.
     reviewer, run on another company's model? It would catch different
     mistakes, but it sends the code to that company and needs its command-line
     tool installed.
+11. **Email service.** Which transactional email service sends the sign-in
+    links and notifications? Needed in M1.
