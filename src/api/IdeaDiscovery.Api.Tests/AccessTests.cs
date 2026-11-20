@@ -50,7 +50,9 @@ public class AccessTests : IClassFixture<WebApplicationFactory<Program>>
     // Opening an endpoint to anonymous requests must be a deliberate act:
     // add its route here on purpose.
     // /auth/csrf, /auth/request-link and /auth/redeem: a signed-out person needs all three to sign in.
-    private static readonly string[] AllowedAnonymousRoutes = ["/health", "/auth/csrf", "/auth/request-link", "/auth/redeem"];
+    // /join/{code}, /join/request and /join/claim: a person asking to join has no session; each is limited by the project code or the browser's own secret.
+    private static readonly string[] AllowedAnonymousRoutes =
+        ["/health", "/auth/csrf", "/auth/request-link", "/auth/redeem", "/join/{code}", "/join/request", "/join/claim"];
 
     [Fact]
     public void Only_listed_endpoints_are_open_to_anonymous_requests()

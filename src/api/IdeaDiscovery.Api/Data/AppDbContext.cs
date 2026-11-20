@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<JoinRequest> JoinRequests => Set<JoinRequest>();
     public DbSet<SignInToken> SignInTokens => Set<SignInToken>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
@@ -41,6 +42,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         b.Entity<Project>(e =>
         {
             e.HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.JoinCode).HasMaxLength(64);
+            e.HasIndex(x => x.JoinCode).IsUnique();
+        });
+
+        b.Entity<JoinRequest>(e =>
+        {
+            e.Property(x => x.State).HasConversion<string>();
+            e.Property(x => x.Name).HasMaxLength(80);
+            e.Property(x => x.UncheckedEmail).HasMaxLength(254);
+            e.Property(x => x.SecretHash).HasMaxLength(64);
+            e.Property(x => x.Device).HasMaxLength(200);
+            e.Property(x => x.IpAddress).HasMaxLength(64);
+            e.HasIndex(x => new { x.ProjectId, x.State });
+            e.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.DecidedById).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         b.Entity<ProjectMember>(e =>
