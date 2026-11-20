@@ -142,7 +142,9 @@ Rules:
 - Without the GitHub command-line tool (`gh`), push the branch and give
   Burak the link to open the pull request:
   `https://github.com/burakata/idea-discovery-app/compare/main...<branch>?expand=1`
-- The next task starts from `main` again, after Burak has merged.
+- The next task starts from `main` again, after Burak has merged. GitHub
+  deletes the merged branch; remove the local copy with `git fetch --prune`
+  and `git branch -d <branch>`.
 
 ## 9. Learn
 
