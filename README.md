@@ -64,9 +64,14 @@ npm --prefix src/web run build
 - **Claude Code does the work, in three roles:**
   - a lead session plans, reviews and reports;
   - an implementer subagent writes the code;
-  - a code-reviewer subagent reviews it.
+  - a code-reviewer subagent reviews it, with a security-reviewer subagent
+    for the API, sign-in, AI calls and configuration.
 - **A branch and pull request for each task.** Only the project owner merges
-  into `main`.
+  into `main`, and only once the required CI checks pass.
+- **Milestones and acceptance tests on GitHub.** The PRD's milestones M0 to M4
+  are GitHub milestones, and its acceptance tests A01 to A16 are issues
+  labelled `acceptance-test`, each in the milestone whose exit criteria name
+  it.
 
 The proposed real build is an ASP.NET Core API, React and SQLite, with the
 Claude API called from the server only. See
