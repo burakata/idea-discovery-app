@@ -1,7 +1,7 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.3 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
+**Version:** 0.4 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
 **Prepared:** 19 November 2026; updated 20 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
@@ -444,4 +444,4 @@ When an item changes, record: decision date, who confirmed it, the old and new s
 |---|---|---|---|---|---|---|
 | 0.2 | 20 November 2026 | Burak | This PRD replaces the v1 brief (`docs/brief.md`, now kept as `docs/archive/brief-v1.md`) as the single source of scope. Carried over from the brief: the problem, purpose and limits (including working alongside paper and meetings, and no analysis, scoring or pricing of the idea), §4.4 What owners see, the owner experience success criteria in §8, R27, F23, F24 and the note on F09. Brief items this PRD reverses are superseded; see `docs/decisions.md`. | One scope source instead of two that disagree, without losing the brief's owner-experience criteria. | None changed. The owner experience success criteria are added to §8. | R27 added as P1. F23 and F24 added to the future feature register. |
 | 0.3 | 20 November 2026 | Burak | §2.1: Phase 1 has one (human) consultant; more consultants per project stay in F14. §2.3: hosting (small Linux VPS with Docker), AI provider (Claude API behind a swappable adapter), sign-in (the app's own one-time email links; a no-link sign-in only in demo or local configurations) and retention decided. §9: the prototype client evolves into the real client, keeping a demo configuration that is off in real deployments. The AI Discovery Playbook v1.1 is added at `docs/playbook/`. Details in `docs/decisions.md`. | §2.1 contradicted F14; Milestone 0 asks for these provisional choices. | None changed. | None. |
-| 0.3 | 20 November 2026 | Burak | §2.3: hosting provider (Hetzner, Germany), domain (a subdomain of the consultant's own) and budget (a small monthly cost) decided, and the email service (Resend's free tier behind a configurable adapter). | Milestone 0's last open choices. | None changed. | None. |
+| 0.4 | 20 November 2026 | Burak | §2.3: hosting provider (Hetzner, Germany), domain (a subdomain of the consultant's own) and budget (a small monthly cost) decided, and the email service (Resend's free tier behind a configurable adapter). | Milestone 0's last open choices. | None changed. | None. |
