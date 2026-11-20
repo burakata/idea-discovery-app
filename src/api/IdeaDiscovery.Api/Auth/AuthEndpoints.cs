@@ -1,5 +1,6 @@
 using System.Text.Json;
 using IdeaDiscovery.Api.Data;
+using IdeaDiscovery.Api.Mail;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,9 +12,13 @@ namespace IdeaDiscovery.Api.Auth;
 public static class AuthEndpoints
 {
     public const string RedeemRateLimit = "redeem";
+    public const string RequestLinkRateLimit = "request-link";
     private const int MaxDeviceLength = 200;
+    private const int MaxLinkRequestsPerEmailPerHour = 3;
+    private const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);
+    private sealed record RequestLinkRequest(string? Email);
 
     public static void MapAuth(this IEndpointRouteBuilder app)
     {
@@ -29,6 +34,11 @@ public static class AuthEndpoints
             .AllowAnonymous()
             .RequireRateLimiting(RedeemRateLimit);
 
+        // Anonymous on purpose: the person asking has no session yet.
+        auth.MapPost("/request-link", RequestLinkAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting(RequestLinkRateLimit);
+
         auth.MapPost("/sign-out", SignOutAsync);
         auth.MapGet("/me", MeAsync);
     }
@@ -36,6 +46,65 @@ public static class AuthEndpoints
     // Every failure looks the same, so a response never says whether a link
     // was used, expired, revoked or never existed.
     private static IResult LinkNotValid() => Results.Text("{\"error\":\"link_not_valid\"}", "application/json", statusCode: 400);
+
+    // The same empty 202 for every email and every body, so the answer never says
+    // whether an email is known. The email itself goes out after the response.
+    private static async Task<IResult> RequestLinkAsync(
+        HttpContext http, AppDbContext db, SignInLinks links, TimeProvider clock, EmailQueue queue,
+        ILogger<SignInLinks> log)
+    {
+        var accepted = Results.Accepted();
+        var ip = http.Connection.RemoteIpAddress?.ToString();
+
+        string? email = null;
+        try { if (http.Request.HasJsonContentType()) email = (await http.Request.ReadFromJsonAsync<RequestLinkRequest>())?.Email; }
+        catch (JsonException) { }
+        catch (BadHttpRequestException) { }
+        if (string.IsNullOrWhiteSpace(email) || email.Length > MaxEmailLength) return accepted;
+        email = Emails.Normalise(email);
+
+        try
+        {
+            var user = await db.Users.AsNoTracking()
+                .Where(u => u.Email == email
+                    && (u.IsConsultant || db.ProjectMembers.Any(m => m.UserId == u.Id)))
+                .SingleOrDefaultAsync();
+            if (user is null) return accepted;
+
+            var now = clock.GetUtcNow().UtcDateTime;
+            var since = now - TimeSpan.FromHours(1);
+            var recent = await db.AuditEvents.CountAsync(a =>
+                a.Action == "sign_in_link_requested" && a.ActorUserId == user.Id && a.CreatedAt > since);
+            if (recent >= MaxLinkRequestsPerEmailPerHour)
+            {
+                AuditLog.Add(db, clock, "sign_in_link_limited", user.Id, ip);
+                await db.SaveChangesAsync();
+                return accepted;
+            }
+
+            string link;
+            await using (var tx = await db.Database.BeginTransactionAsync())
+            {
+                // Only the newest emailed link works. Invitation links stay.
+                await db.SignInTokens
+                    .Where(t => t.UserId == user.Id && t.Purpose == TokenPurpose.SignIn
+                        && t.UsedAt == null && t.RevokedAt == null && t.ExpiresAt > now)
+                    .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, (DateTime?)now));
+                link = await links.ForUserAsync(user.Id);
+                AuditLog.Add(db, clock, "sign_in_link_requested", user.Id, ip);
+                await db.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+
+            if (!queue.Enqueue(new SignInEmailJob(user.Email, user.UiLanguage, link)))
+                log.LogWarning("The email queue is full, so a sign-in email was dropped.");
+        }
+        catch (Exception ex) when (ex is DbUpdateException or SqliteException)
+        {
+            log.LogWarning(ex, "A sign-in link could not be requested.");
+        }
+        return accepted;
+    }
 
     private static async Task<IResult> RedeemAsync(
         HttpContext http, AppDbContext db, TokenHasher hasher, TimeProvider clock, ILogger<SignInLinks> log)
