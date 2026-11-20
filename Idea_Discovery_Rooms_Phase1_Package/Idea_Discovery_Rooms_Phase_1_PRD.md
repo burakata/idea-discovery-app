@@ -1,7 +1,7 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.2 — Scope baseline, with the v1 brief carried over  
+**Version:** 0.3 — Scope baseline, with the v1 brief carried over and the Milestone 0 decisions recorded  
 **Prepared:** 19 November 2026; updated 20 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
@@ -43,7 +43,7 @@ The app is **not** the clients' business software, a marketplace, a general proj
 |---|---|
 | Purpose | Discover and clarify the intended business, not validate commercial success or design its final software yet. |
 | Generic product | Neutral default dashboard; project-specific introductions, visual references and AI instructions. No pallet-related global branding. |
-| Participants | Variable number of owners/stakeholders plus consultant(s); not hardcoded to three. |
+| Participants | Variable number of owners/stakeholders plus one consultant; not hardcoded to three. More than one consultant per project is F14. |
 | Access | Email invitation with secure sign-in link; project membership determines visibility. |
 | Timing | Asynchronous: members can join, leave and return without losing messages. |
 | Conversation lifecycle | Consultant marks a conversation finished; its discussion and outputs remain saved; subsequent work starts a new conversation in the project. |
@@ -74,9 +74,9 @@ The app is **not** the clients' business software, a marketplace, a general proj
 
 ### 2.3 Still to decide before production deployment
 
-- Hosting provider, domain, backups, rough monthly budget and AI-provider choice.
-- Invitation expiry, account recovery and whether strong sign-in is mandatory for every return visit.
-- Retention, deletion/export policy, owner privacy notice and any required data-processing terms.
+- Hosting provider, domain, backups and rough monthly budget. (Decided on 20 November 2026: a small Linux VPS with Docker, and the Claude API behind a swappable server-side provider adapter. See `docs/decisions.md`.)
+- Invitation expiry, account recovery and whether strong sign-in is mandatory for every return visit. (Decided on 20 November 2026: sign-in by the app's own one-time, expiring email links; the email service is still open.)
+- Export policy, owner privacy notice wording and any required data-processing terms. (Retention decided on 20 November 2026: kept until the consultant deletes the project or an owner asks for deletion; backups roll off after 30 days.)
 - Whether paper feedback enters the room as attributed consultant transcription or stays as a linked reference document.
 - Exact notification channels and opt-out/digest settings; initial email approach is agreed, delivery rules remain to specify.
 - What triggers a specialist automatically and whether the Lead needs explicit consultant approval before invoking a costlier specialist.
@@ -434,7 +434,7 @@ The private pilot is ready when **all** are true:
 
 ## 15. Source materials and change management
 
-This PRD draws on the product choices in the conversation through **19 November 2026**, plus the existing `decisions.md`, the React prototype v2 documentation and the **AI Discovery Playbook v1.1**. Earlier `Proposed` entries remain proposals unless explicitly confirmed by later choices. The supplied pallet-specific documents inform *one pilot project's context*, not the core product specification.
+This PRD draws on the product choices in the conversation through **19 November 2026**, plus the existing `decisions.md`, the React prototype v2 documentation and the **AI Discovery Playbook v1.1** (`docs/playbook/`). Earlier `Proposed` entries remain proposals unless explicitly confirmed by later choices. The supplied pallet-specific documents inform *one pilot project's context*, not the core product specification.
 
 When an item changes, record: decision date, who confirmed it, the old and new scope, why, affected acceptance tests and whether it moves between P0, P1 and the future backlog. Maintain the PRD and feature register together, rather than keeping future ideas in scattered chats.
 
@@ -443,3 +443,4 @@ When an item changes, record: decision date, who confirmed it, the old and new s
 | Version | Date | Confirmed by | Change | Why | Acceptance tests | Priority moves |
 |---|---|---|---|---|---|---|
 | 0.2 | 20 November 2026 | Burak | This PRD replaces the v1 brief (`docs/brief.md`, now kept as `docs/archive/brief-v1.md`) as the single source of scope. Carried over from the brief: the problem, purpose and limits (including working alongside paper and meetings, and no analysis, scoring or pricing of the idea), §4.4 What owners see, the owner experience success criteria in §8, R27, F23, F24 and the note on F09. Brief items this PRD reverses are superseded; see `docs/decisions.md`. | One scope source instead of two that disagree, without losing the brief's owner-experience criteria. | None changed. The owner experience success criteria are added to §8. | R27 added as P1. F23 and F24 added to the future feature register. |
+| 0.3 | 20 November 2026 | Burak | §2.1: Phase 1 has one (human) consultant; more consultants per project stay in F14. §2.3: hosting (small Linux VPS with Docker), AI provider (Claude API behind a swappable adapter), sign-in (the app's own one-time email links; a no-link sign-in only in demo or local configurations) and retention decided. §9: the prototype client evolves into the real client, keeping a demo configuration that is off in real deployments. The AI Discovery Playbook v1.1 is added at `docs/playbook/`. Details in `docs/decisions.md`. | §2.1 contradicted F14; Milestone 0 asks for these provisional choices. | None changed. | None. |
