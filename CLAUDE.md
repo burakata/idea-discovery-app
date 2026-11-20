@@ -117,5 +117,10 @@ other endpoints yet.
 - Build and type-check: `npm --prefix src/web run build`
 - Web tests (Vitest): `npm --prefix src/web test`
 - API build and tests (.NET 10 SDK): `dotnet test src/api`
+- New database migration: `dotnet tool restore`, then
+  `dotnet ef migrations add <Name> --project src/api/IdeaDiscovery.Api`
+- Outside Development the API needs `ConnectionStrings:Default` (it refuses
+  to start without it) and `Consultant:Email`, as environment variables or
+  server settings, never committed.
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.
