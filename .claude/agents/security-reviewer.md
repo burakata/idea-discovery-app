@@ -34,8 +34,9 @@ without permission, or leak a secret.
    notification email (PRD §3, A05, A09).
 4. **Sign-in and invitations** (PRD §10, A15): links are one-time, expire,
    can be revoked and are bound to the invited email; tokens are random and
-   stored hashed; a forwarded link alone grants nothing. A no-link sign-in is
-   refused outside demo and local configurations (engineering §12).
+   stored hashed; a forwarded link alone grants nothing. The API has no
+   sign-in without a link, and development-only settings are refused outside
+   Development (decisions, "links only"; engineering §12).
 5. **Secrets and configuration:** no API key, password, token or connection
    string in code, committed settings, logs or the client bundle. The Claude
    API is called only from the server.

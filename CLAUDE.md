@@ -80,11 +80,11 @@ Read before planning: the Phase 1 PRD,
 ## Security (real build)
 - The Claude API key stays on the server. Never in the browser, never
   committed.
-- Read the model ID, the AI provider and the sign-in method from
+- Read the model ID, the AI provider and the email service from
   configuration.
-- People sign in with one-time, expiring email links, and see only the
-  projects they are members of. Signing in without a link exists only in
-  demo or local configurations.
+- People sign in with one-time, expiring links (emailed or copied by Burak),
+  and see only the projects they are members of. The API has no way to sign
+  in without a link; only the browser demo simulates sign-in.
 
 ## Stack
 - Client: React + Vite + TypeScript in `src/web`. Today it is the prototype,
