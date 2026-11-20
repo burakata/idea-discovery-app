@@ -14,7 +14,7 @@ This is NOT the owners' business app. It only collects business requirements.
 No technical details and no deep detail at this stage.
 
 Read before planning: the Phase 1 PRD,
-`Idea_Discovery_Rooms_Phase1_Package/Idea_Discovery_Rooms_Phase_1_PRD.md`
+`docs/prd/Idea_Discovery_Rooms_Phase_1_PRD.md`
 (the single source of scope), and @docs/design.md
 
 ## Users
