@@ -6,6 +6,9 @@ browser.
 
 ## Run it
 
+Try it online at https://burakata.github.io/idea-discovery-app/ (deployed
+from `main` by `.github/workflows/pages.yml`), or run it locally:
+
 ```
 npm --prefix src/web install
 npm --prefix src/web run dev
@@ -13,6 +16,14 @@ npm --prefix src/web run dev
 
 Open http://localhost:5173. It opens on the pallet room's idea page as Murat
 Kaya, an owner who has not joined yet and whose app is still in English.
+
+To preview the online build locally under the same sub-path, build it from
+PowerShell (Git Bash rewrites the path), then start the `pages-preview`
+configuration in `.claude/launch.json`:
+
+```
+npm --prefix src/web run build -- --base=/idea-discovery-app/
+```
 
 ## How to use it
 

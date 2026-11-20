@@ -60,7 +60,8 @@ export interface Project {
   similarQuestion: Bilingual
   participants: Participant[]
   statements: StartingStatement[]
-  // Address of the printable document, per language. Missing means not ready yet.
+  // File name of the printable document in src/web/public/, per language,
+  // resolved against the base URL. Missing means not ready yet.
   printVersion: Partial<Record<Lang, string>>
 }
 
