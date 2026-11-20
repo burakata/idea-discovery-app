@@ -14,7 +14,6 @@ public static class AuthEndpoints
     public const string RedeemRateLimit = "redeem";
     public const string RequestLinkRateLimit = "request-link";
     private const int MaxDeviceLength = 200;
-    private const int MaxLinkRequestsPerEmailPerHour = 3;
     private const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);
@@ -48,13 +47,12 @@ public static class AuthEndpoints
     private static IResult LinkNotValid() => Results.Text("{\"error\":\"link_not_valid\"}", "application/json", statusCode: 400);
 
     // The same empty 202 for every email and every body, so the answer never says
-    // whether an email is known. The email itself goes out after the response.
+    // whether an email is known. The request touches no database: it only checks
+    // the shape and queues the work, which the email dispatcher does afterwards.
     private static async Task<IResult> RequestLinkAsync(
-        HttpContext http, AppDbContext db, SignInLinks links, TimeProvider clock, EmailQueue queue,
-        ILogger<SignInLinks> log)
+        HttpContext http, EmailQueue queue, ILogger<SignInLinks> log)
     {
         var accepted = Results.Accepted();
-        var ip = http.Connection.RemoteIpAddress?.ToString();
 
         string? email = null;
         try { if (http.Request.HasJsonContentType()) email = (await http.Request.ReadFromJsonAsync<RequestLinkRequest>())?.Email; }
@@ -62,48 +60,19 @@ public static class AuthEndpoints
         catch (BadHttpRequestException) { }
         if (string.IsNullOrWhiteSpace(email) || email.Length > MaxEmailLength) return accepted;
         email = Emails.Normalise(email);
+        if (!LooksLikeEmail(email)) return accepted;
 
-        try
-        {
-            var user = await db.Users.AsNoTracking()
-                .Where(u => u.Email == email
-                    && (u.IsConsultant || db.ProjectMembers.Any(m => m.UserId == u.Id)))
-                .SingleOrDefaultAsync();
-            if (user is null) return accepted;
-
-            var now = clock.GetUtcNow().UtcDateTime;
-            var since = now - TimeSpan.FromHours(1);
-            var recent = await db.AuditEvents.CountAsync(a =>
-                a.Action == "sign_in_link_requested" && a.ActorUserId == user.Id && a.CreatedAt > since);
-            if (recent >= MaxLinkRequestsPerEmailPerHour)
-            {
-                AuditLog.Add(db, clock, "sign_in_link_limited", user.Id, ip);
-                await db.SaveChangesAsync();
-                return accepted;
-            }
-
-            string link;
-            await using (var tx = await db.Database.BeginTransactionAsync())
-            {
-                // Only the newest emailed link works. Invitation links stay.
-                await db.SignInTokens
-                    .Where(t => t.UserId == user.Id && t.Purpose == TokenPurpose.SignIn
-                        && t.UsedAt == null && t.RevokedAt == null && t.ExpiresAt > now)
-                    .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, (DateTime?)now));
-                link = await links.ForUserAsync(user.Id);
-                AuditLog.Add(db, clock, "sign_in_link_requested", user.Id, ip);
-                await db.SaveChangesAsync();
-                await tx.CommitAsync();
-            }
-
-            if (!queue.Enqueue(new SignInEmailJob(user.Email, user.UiLanguage, link)))
-                log.LogWarning("The email queue is full, so a sign-in email was dropped.");
-        }
-        catch (Exception ex) when (ex is DbUpdateException or SqliteException)
-        {
-            log.LogWarning(ex, "A sign-in link could not be requested.");
-        }
+        if (!queue.Enqueue(new SignInLinkRequest(email, http.Connection.RemoteIpAddress?.ToString())))
+            log.LogWarning("The sign-in link queue is full, so a request was dropped.");
         return accepted;
+    }
+
+    // Cheap shape check: one "@" with something on both sides, and no spaces.
+    private static bool LooksLikeEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        return at > 0 && at == email.LastIndexOf('@') && at < email.Length - 1
+            && !email.Any(c => char.IsWhiteSpace(c) || char.IsControl(c));
     }
 
     private static async Task<IResult> RedeemAsync(

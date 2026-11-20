@@ -2,18 +2,32 @@ using System.Threading.Channels;
 
 namespace IdeaDiscovery.Api.Mail;
 
-// What the request leaves behind: who, in which language, and the link. The
-// dispatcher renders and sends it after the response.
-public sealed record SignInEmailJob(string To, string Language, string Link);
+// What the request leaves behind: the normalised email and the caller's IP.
+// Whether the email is known, the limit, the link and the email itself are all
+// handled by the dispatcher, so the request takes the same time for everyone.
+public sealed record SignInLinkRequest(string Email, string? Ip);
 
 // In-process queue. A job lost in a restart is simply asked for again.
 public sealed class EmailQueue
 {
-    private readonly Channel<SignInEmailJob> _channel = Channel.CreateBounded<SignInEmailJob>(
+    private readonly Channel<SignInLinkRequest> _channel = Channel.CreateBounded<SignInLinkRequest>(
         new BoundedChannelOptions(1000) { FullMode = BoundedChannelFullMode.DropWrite });
 
-    public bool Enqueue(SignInEmailJob job) => _channel.Writer.TryWrite(job);
+    private int _unfinished;
 
-    public IAsyncEnumerable<SignInEmailJob> ReadAllAsync(CancellationToken cancellationToken) =>
+    // Jobs queued or being handled. Tests wait for it to reach zero.
+    public int Unfinished => Volatile.Read(ref _unfinished);
+
+    public bool Enqueue(SignInLinkRequest job)
+    {
+        Interlocked.Increment(ref _unfinished);
+        if (_channel.Writer.TryWrite(job)) return true;
+        Interlocked.Decrement(ref _unfinished);
+        return false;
+    }
+
+    public void Finished() => Interlocked.Decrement(ref _unfinished);
+
+    public IAsyncEnumerable<SignInLinkRequest> ReadAllAsync(CancellationToken cancellationToken) =>
         _channel.Reader.ReadAllAsync(cancellationToken);
 }

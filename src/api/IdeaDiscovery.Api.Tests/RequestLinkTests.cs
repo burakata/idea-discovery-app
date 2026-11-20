@@ -6,6 +6,7 @@ using IdeaDiscovery.Api.Mail;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -15,8 +16,6 @@ namespace IdeaDiscovery.Api.Tests;
 // and the email goes out after the response.
 public class RequestLinkTests
 {
-    private const string ProbeAddress = "probe@probe.test";
-
     private sealed record Sent(string To, string Subject, string Body)
     {
         public string Link => Body.Split('\n').Single(l => l.StartsWith(RoomsFactory.BaseUrl)).Trim();
@@ -27,10 +26,16 @@ public class RequestLinkTests
     {
         public ConcurrentQueue<Sent> Messages { get; } = new();
         public int FailNext;
+        public string? LastFailedBody;
 
         public Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
         {
-            if (Interlocked.Exchange(ref FailNext, 0) == 1) throw new IOException("disk full: " + body);
+            if (Interlocked.Exchange(ref FailNext, 0) == 1)
+            {
+                LastFailedBody = body;
+                // Deliberately holds the body, and so the link: logging the message would leak it.
+                throw new IOException("disk full: " + body);
+            }
             Messages.Enqueue(new Sent(to, subject, body));
             return Task.CompletedTask;
         }
@@ -41,11 +46,16 @@ public class RequestLinkTests
     {
         public RoomsFactory F { get; } = new();
         public CapturingSender Sender { get; } = new();
+        public WarningLog Log { get; } = new();
         private readonly WebApplicationFactory<Program> _app;
 
         public Harness()
         {
-            _app = F.WithWebHostBuilder(b => b.ConfigureServices(s => s.AddSingleton<IEmailSender>(Sender)));
+            _app = F.WithWebHostBuilder(b =>
+            {
+                b.ConfigureServices(s => s.AddSingleton<IEmailSender>(Sender));
+                b.ConfigureLogging(l => l.AddProvider(Log));
+            });
         }
 
         public Person NewPerson() => new(_app.CreateClient(new WebApplicationFactoryClientOptions
@@ -70,20 +80,15 @@ public class RequestLinkTests
 
         public Task<HttpResponseMessage> Ask(Person person, string email) => person.Post("/auth/request-link", new { email });
 
-        // The queue is in order, so once a probe has been sent, everything asked
-        // before it has been sent or dropped. Returns what was sent for real.
-        private int _probes;
-
+        // Waits until the dispatcher has handled everything asked so far (each
+        // request is queued before it is answered). Returns what was sent.
         public async Task<List<Sent>> Settled()
         {
-            // Each call waits for its own probe, not one left by an earlier call.
-            var expected = ++_probes;
-            _app.Services.GetRequiredService<EmailQueue>()
-                .Enqueue(new SignInEmailJob(ProbeAddress, "en", RoomsFactory.BaseUrl + "/sign-in#t=probe"));
-            for (var i = 0; i < 500 && Sender.Messages.Count(m => m.To == ProbeAddress) < expected; i++)
+            var queue = _app.Services.GetRequiredService<EmailQueue>();
+            for (var i = 0; i < 1000 && queue.Unfinished > 0; i++)
                 await Task.Delay(10);
-            Assert.Equal(expected, Sender.Messages.Count(m => m.To == ProbeAddress));
-            return Sender.Messages.Where(m => m.To != ProbeAddress).ToList();
+            Assert.Equal(0, queue.Unfinished);
+            return Sender.Messages.ToList();
         }
 
         public void Dispose() { _app.Dispose(); F.Dispose(); }
@@ -334,6 +339,21 @@ public class RequestLinkTests
         Assert.Equal(0, h.F.WithDb(db => db.SignInTokens.Count()));
     }
 
+    [Fact]
+    public async Task Parallel_requests_for_one_email_still_send_exactly_three()
+    {
+        using var h = new Harness();
+        h.Member();
+        var people = Enumerable.Range(0, 8).Select(_ => h.NewPerson()).ToList();
+
+        var answers = await Task.WhenAll(people.Select(p => h.Ask(p, "owner@example.com")));
+
+        foreach (var answer in answers) await AssertEmptyAccepted(answer);
+        Assert.Equal(3, (await h.Settled()).Count);
+        Assert.Equal(3, h.F.WithDb(db => db.AuditEvents.Count(a => a.Action == "sign_in_link_requested")));
+        Assert.Equal(5, h.F.WithDb(db => db.AuditEvents.Count(a => a.Action == "sign_in_link_limited")));
+    }
+
     // ---- Sending ----
     [Fact]
     public async Task A_send_failure_is_survived_and_the_next_email_still_goes_out()
@@ -347,6 +367,48 @@ public class RequestLinkTests
         await h.Ask(h.NewPerson(), "b@example.com");
 
         Assert.Equal("b@example.com", Assert.Single(await h.Settled()).To);
+    }
+
+    [Fact]
+    public async Task A_failed_send_logs_a_warning_that_holds_no_link_token_or_address()
+    {
+        using var h = new Harness();
+        h.Member("a@example.com");
+        h.Sender.FailNext = 1;
+
+        await h.Ask(h.NewPerson(), "a@example.com");
+        await h.Settled();
+
+        Assert.Contains(h.Log.Lines, l => l.Contains("could not be sent"));
+        var failed = Assert.IsType<string>(h.Sender.LastFailedBody);
+        var token = new Sent("a@example.com", "", failed).Token;
+        AssertNothingSecretLogged(h, token, "a@example.com");
+    }
+
+    [Fact]
+    public async Task A_failed_database_step_logs_a_warning_without_secrets_and_the_dispatcher_carries_on()
+    {
+        using var h = new Harness();
+        h.Member("a@example.com");
+        h.F.WithDb(db => db.Database.ExecuteSqlRaw("ALTER TABLE SignInTokens RENAME TO SignInTokensGone"));
+
+        await h.Ask(h.NewPerson(), "a@example.com");
+        await h.Settled();
+
+        Assert.Contains(h.Log.Lines, l => l.Contains("could not be handled"));
+        Assert.Empty(h.Sender.Messages);
+        AssertNothingSecretLogged(h, null, "a@example.com");
+
+        h.F.WithDb(db => db.Database.ExecuteSqlRaw("ALTER TABLE SignInTokensGone RENAME TO SignInTokens"));
+        h.Member("b@example.com");
+        await h.Ask(h.NewPerson(), "b@example.com");
+        Assert.Equal("b@example.com", Assert.Single(await h.Settled()).To);
+    }
+
+    private static void AssertNothingSecretLogged(Harness h, string? token, string email)
+    {
+        Assert.DoesNotContain(h.Log.Lines, l => l.Contains("#t=") || l.Contains("/sign-in") || l.Contains(email));
+        if (token is not null) Assert.DoesNotContain(h.Log.Lines, l => l.Contains(token));
     }
 
     [Fact]
@@ -389,7 +451,8 @@ public class RequestLinkTests
         public bool IsEnabled(LogLevel logLevel) => true;
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            if (logLevel >= LogLevel.Warning) Lines.Enqueue(formatter(state, exception));
+            // The exception is part of the line, so a logged exception cannot hide a leak.
+            if (logLevel >= LogLevel.Warning) Lines.Enqueue(formatter(state, exception) + exception);
         }
         public void Dispose() { }
     }
