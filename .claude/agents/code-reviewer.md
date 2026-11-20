@@ -45,7 +45,9 @@ implementer worked from and the changed files, or a commit range.
      expected value changed to match the output is **must-fix**, unless the
      brief asked for it;
    - for each new test, check it would actually fail if the behaviour broke
-     (for example, that it cannot pass on an empty result).
+     (for example, that it cannot pass on an empty result);
+   - acceptance tests committed before the code (dev loop, "Acceptance tests
+     first") are untouched by the code commits, or each change is justified.
 8. **Security basics:**
    - secrets or API keys anywhere;
    - raw HTML built from user text;

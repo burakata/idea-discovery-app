@@ -72,6 +72,20 @@ Done when: <checks the implementer can run itself>
 - The implementer never commits. When it reports, the lead commits its change
   to the task branch, with a message that says why.
 
+**Acceptance tests first.** When a pull request closes an acceptance-test
+issue (A01 to A16):
+1. A separate implementer run writes the black-box tests first. Brief it
+   only with the issue's wording from the PRD and the endpoints or screens
+   involved, never the planned code.
+2. The lead commits those tests on their own and confirms they fail.
+3. The implementer run that writes the code is told not to edit those test
+   files.
+4. code-reviewer checks they are untouched, or that any change is justified
+   (docs/engineering.md §13).
+
+A separate run already starts with its own context, so no extra agent is
+needed. Propose one only if this proves not to be enough.
+
 ## 4. Review
 
 Run these in parallel, as the change requires:
