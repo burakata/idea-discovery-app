@@ -144,6 +144,18 @@ endpoints at all, and PR 2's prompt-reader test proved two lines when the
 demo seeds three. Reviewers caught both; this rule makes catching them
 routine.
 
+## 14. Every UI change works in demo mode
+
+Every screen and feature works with no API and no database: it comes with
+demo data, and anything that needs the server (sign-in, AI, email) has a
+simulated stand-in in demo mode. This holds in every phase, not only for the
+prototype. See the GitHub Pages row in docs/decisions.md.
+
+**Why:** friends and reviewers try the app through the published demo
+(https://burakata.github.io/idea-discovery-app/), and Burak wants the UI to
+keep working without any API or database. A screen that only renders when the
+API answers breaks the demo silently: the build passes and the page is empty.
+
 ## 10. Deny by default
 
 Every API endpoint needs a signed-in user, and checks on the server that the

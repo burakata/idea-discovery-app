@@ -34,6 +34,9 @@ docs/engineering.md.
   - how we will know it is done.
 - For new UI, order the work: tokens and shared components first, then the
   screens.
+- A change that adds or changes a screen or a feature includes its demo
+  data, and a simulated version of anything that needs the server (sign-in,
+  AI, email), so it works in demo mode (docs/engineering.md §14).
 - Run scope-guard on any plan that adds or changes behaviour. Fold its
   verdicts into the plan.
 - Show Burak the plan and wait for approval.
@@ -128,7 +131,8 @@ The lead checks the result itself:
   - in the demo configuration, `?as=<person>&lang=<en|tr>` switches person
     and language, and Reset demo gives fresh data;
   - against the API, sign in as each role the change involves, and as
-    someone who must be refused.
+    someone who must be refused;
+  - every UI change also in demo mode, with no API or database running.
 - Look at every screenshot before using it. Do not trust exit codes.
 - Reset the demo afterwards so Burak starts from fresh data.
 - After the pull request is open (step 8), its required CI checks must be
