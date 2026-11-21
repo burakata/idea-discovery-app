@@ -124,6 +124,12 @@ namespace IdeaDiscovery.Api.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("en");
+
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("TEXT");
 

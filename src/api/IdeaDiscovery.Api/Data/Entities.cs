@@ -82,6 +82,8 @@ public class Invitation
     public string Email { get; set; } = "";
     // Entered by Burak; owners cannot change it.
     public string DisplayName { get; set; } = "";
+    // "en" or "tr": the language of the email and of the account it creates.
+    public string Language { get; set; } = "en";
     // No role: an invitation can only make an owner.
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }

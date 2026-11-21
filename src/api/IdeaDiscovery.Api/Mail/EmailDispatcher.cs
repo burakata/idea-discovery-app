@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IdeaDiscovery.Api.Mail;
 
-// Handles sign-in link requests one at a time, after the response: looks the
-// person up, applies the per-email limit, issues the link and sends the email.
+// Handles email jobs one at a time, after the response: looks the person up,
+// applies the per-email limit, issues the link and sends the email. Each job
+// gets a fresh scope.
 // One reader means parallel requests cannot slip past the limit. A failure is
 // logged without the email address, link or token and never stops the service.
 public sealed class EmailDispatcher(
@@ -27,7 +28,7 @@ public sealed class EmailDispatcher(
                 catch (Exception ex)
                 {
                     // The type only: messages can hold the email body, and so the link.
-                    log.LogWarning("A sign-in link request could not be handled ({Error}).", ex.GetType().Name);
+                    log.LogWarning("An email job ({Job}) could not be handled ({Error}).", job.GetType().Name, ex.GetType().Name);
                 }
                 finally
                 {
@@ -36,6 +37,84 @@ public sealed class EmailDispatcher(
             }
         }
         catch (OperationCanceledException) { }
+    }
+
+    private Task HandleAsync(EmailJob job, CancellationToken cancellationToken) => job switch
+    {
+        SignInLinkRequest request => HandleAsync(request, cancellationToken),
+        InvitationEmail invitation => HandleInvitationAsync(invitation, cancellationToken),
+        AddedEmail added => HandleAddedAsync(added, cancellationToken),
+        _ => Task.CompletedTask,
+    };
+
+    // A new person's invitation, if it is still open when the worker gets to it.
+    private async Task HandleInvitationAsync(InvitationEmail job, CancellationToken cancellationToken)
+    {
+        string to, subject, body;
+        await using (var scope = scopes.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+            var links = scope.ServiceProvider.GetRequiredService<SignInLinks>();
+            var now = clock.GetUtcNow().UtcDateTime;
+
+            var invitation = await db.Invitations.AsNoTracking()
+                .Where(i => i.Id == job.InvitationId && i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (invitation is null) return;
+            var project = await db.Projects.AsNoTracking()
+                .SingleOrDefaultAsync(p => p.Id == invitation.ProjectId, cancellationToken);
+            var inviter = await db.Users.AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Id == invitation.CreatedById, cancellationToken);
+            if (project is null || inviter is null) return;
+
+            var link = await links.ForInvitationAsync(invitation.Id);
+            var title = invitation.Language == "tr" ? project.TitleTr : project.TitleEn;
+            (subject, body) = EmailTexts.Invitation(invitation.Language, invitation.DisplayName, inviter.DisplayName, title, link);
+            to = invitation.Email;
+        }
+        await SendAsync(to, subject, body, cancellationToken);
+    }
+
+    // An existing account added to a project, if it is still a member.
+    private async Task HandleAddedAsync(AddedEmail job, CancellationToken cancellationToken)
+    {
+        string to, subject, body;
+        await using (var scope = scopes.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var links = scope.ServiceProvider.GetRequiredService<SignInLinks>();
+
+            var row = await (from m in db.ProjectMembers
+                             join u in db.Users on m.UserId equals u.Id
+                             join p in db.Projects on m.ProjectId equals p.Id
+                             where m.ProjectId == job.ProjectId && m.UserId == job.UserId && u.Email != null
+                             select new { u.Email, u.DisplayName, u.UiLanguage, p.TitleEn, p.TitleTr })
+                .AsNoTracking().SingleOrDefaultAsync(cancellationToken);
+            if (row is null) return;
+            var inviter = await db.Users.AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Id == job.AddedById, cancellationToken);
+            if (inviter is null) return;
+
+            var link = await links.ForUserAsync(job.UserId);
+            var title = row.UiLanguage == "tr" ? row.TitleTr : row.TitleEn;
+            (subject, body) = EmailTexts.Added(row.UiLanguage, row.DisplayName, inviter.DisplayName, title, link);
+            to = row.Email!; // the query matched on a non-null email
+        }
+        await SendAsync(to, subject, body, cancellationToken);
+    }
+
+    private async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await sender.SendAsync(to, subject, body, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (Exception ex)
+        {
+            log.LogWarning("An email could not be sent ({Error}).", ex.GetType().Name);
+        }
     }
 
     private async Task HandleAsync(SignInLinkRequest job, CancellationToken cancellationToken)
