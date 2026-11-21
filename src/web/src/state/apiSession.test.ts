@@ -39,25 +39,31 @@ describe('a 401 on the project list', () => {
     expect(state.notice).toBe('signedOut')
   })
 
-  it('keeps the notice through a later render, not only until the screen unmounts', async () => {
+  it('survives other changes, such as the visitor switching language', async () => {
     const s = session((url) => (url === '/api/auth/me' ? json(owner) : json({}, 401)))
     await s.start()
     expect(s.getState().notice).toBe('signedOut')
+    s.setLanguage('en')
     expect(s.getState().notice).toBe('signedOut')
   })
 
-  it('is cleared by the next sign-in', async () => {
-    let signedIn = false
+  it('is cleared by the sign-in itself, before any project reload could clear it', async () => {
+    let listAnswers: Response = json({}, 401)
     const s = session((url) => {
-      if (url === '/api/auth/me') return signedIn ? json(owner) : json({}, 401)
-      if (url === '/api/auth/redeem') return json(owner)
-      return signedIn ? json([]) : json({}, 401)
+      if (url === '/api/auth/me' || url === '/api/auth/redeem') return json(owner)
+      return listAnswers
     })
     await s.start()
-    signedIn = true
+    expect(s.getState().status).toBe('signedOut')
+    expect(s.getState().notice).toBe('signedOut')
+
+    // The first change redeem announces must already have the notice gone.
+    const seen: Array<string | null> = []
+    s.subscribe(() => seen.push(s.getState().notice))
+    listAnswers = json([])
     await s.redeem('a-token', null)
+    expect(seen[0]).toBeNull()
     expect(s.getState().status).toBe('signedIn')
-    expect(s.getState().notice).toBeNull()
   })
 })
 

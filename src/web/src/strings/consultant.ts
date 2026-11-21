@@ -27,7 +27,6 @@ export const consultant = {
     answeredQuestion: 'Summary · Answers an open question',
     proposedQuestion: 'Summary · Open question',
     jobFlowChange: 'Job-flow change',
-    scripted: 'Scripted example',
     replyTo: 'Reply to',
     restsOn: 'Rests on',
     now: 'Now',
@@ -58,10 +57,7 @@ export const consultant = {
   notes: {
     title: 'Private notes',
     sub: 'What the discussion may mean for the software. Owners never see this.',
-    sample: 'Sample note',
     written: 'Written',
-    simulated:
-      'This note is a hand-written sample. In the real app the assistant writes a new one when you ask.',
     empty: 'No notes for this room yet.',
   },
   projects: {

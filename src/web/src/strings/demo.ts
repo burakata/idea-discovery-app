@@ -52,6 +52,10 @@ const demoStrings: Record<Lang, DemoStrings> = { en, tr }
 // English only: Burak's demo screens.
 export const demoConsultant = {
   scriptDone: 'The scripted replies have run out. Use Reset demo to start again.',
+  scripted: 'Scripted example',
+  noteSample: 'Sample note',
+  noteSimulated:
+    'This note is a hand-written sample. In the real app the assistant writes a new one when you ask.',
 }
 
 export function useDemoT(): DemoStrings {

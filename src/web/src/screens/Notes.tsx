@@ -6,6 +6,7 @@ import { sampleNotes } from '../demo/seed'
 import type { Project } from '../projects/types'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
+import { demoConsultant } from '../strings/demo'
 import styles from './Notes.module.css'
 
 export default function Notes() {
@@ -20,7 +21,7 @@ export default function Notes() {
         <>
           <Card>
             <div className={styles.head}>
-              <Pill tone="amber">{c.notes.sample}</Pill>
+              <Pill tone="amber">{demoConsultant.noteSample}</Pill>
               <span>
                 {c.notes.written} {time(note.written)}
               </span>
@@ -40,7 +41,7 @@ export default function Notes() {
             </ol>
           </Card>
           <div className={styles.notice}>
-            <NoticeBox tone="amber">{c.notes.simulated}</NoticeBox>
+            <NoticeBox tone="amber">{demoConsultant.noteSimulated}</NoticeBox>
           </div>
         </>
       ) : (

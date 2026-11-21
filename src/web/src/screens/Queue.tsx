@@ -155,7 +155,7 @@ export default function Queue() {
         <Card>
           <div className={styles.pills}>
             <Pill>{label}</Pill>
-            {item.kind === 'message' && <Pill tone="amber">{c.queue.scripted}</Pill>}
+            {item.kind === 'message' && <Pill tone="amber">{demoConsultant.scripted}</Pill>}
           </div>
           {editing === item.id ? (
             <div className={styles.form}>
