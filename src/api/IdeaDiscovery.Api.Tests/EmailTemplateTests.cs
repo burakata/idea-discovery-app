@@ -156,6 +156,15 @@ public sealed class EmailTemplateTests
         Assert.Equal(("Shop", "About"), (project.Title("fr"), project.Intro(null)));
     }
 
+    // Project.Title and Intro return the Turkish column for any language that is not the default.
+    [Fact]
+    public void Project_texts_still_fit_the_two_columns()
+    {
+        Assert.True(Languages.All.SequenceEqual(["en", "tr"]),
+            "Add a per-language translations table for project texts before adding a language "
+            + "(decisions: F24): Project.Title and Project.Intro only know the TitleEn/TitleTr pair.");
+    }
+
     [Fact]
     public void Languages_knows_the_supported_codes_and_falls_back()
     {

@@ -7,9 +7,10 @@ export type Lang = (typeof LANGS)[number]
 
 // Each language is named in its own language, so these labels are not translated.
 // The language switch is drawn from this, one entry per code in LANGS.
-export const LANG_LABELS: Record<Lang, { short: string; full: string }> = {
-  en: { short: 'EN', full: 'English' },
-  tr: { short: 'TR', full: 'Türkçe' },
+// `locale` is the browser locale used to format dates and times.
+export const LANG_LABELS: Record<Lang, { short: string; full: string; locale: string }> = {
+  en: { short: 'EN', full: 'English', locale: 'en-GB' },
+  tr: { short: 'TR', full: 'Türkçe', locale: 'tr-TR' },
 }
 
 // The source language, and the fallback for anything unsupported.

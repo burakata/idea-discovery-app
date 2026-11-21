@@ -1,13 +1,12 @@
 import { useLocation } from 'react-router-dom'
 import en, { type Strings } from './en'
 import tr from './tr'
-import { DEFAULT_LANG, otherLang, type Lang } from '../languages'
+import { DEFAULT_LANG, LANG_LABELS, otherLang, type Lang } from '../languages'
 import type { Text } from '../projects/types'
 import { useStore } from '../state/store'
 import type { Person, Written } from '../state/types'
 
 const stringsByLang: Record<Lang, Strings> = { en, tr }
-const localeByLang: Record<Lang, string> = { en: 'en-GB', tr: 'tr-TR' }
 
 // Burak's own screens (queue, private notes, rooms) are English only, so the
 // whole screen stays in English there, whatever his language setting is.
@@ -45,7 +44,7 @@ export function useT() {
   const englishOnly = isEnglishOnly(pathname)
   const lang = screenLang(pathname, viewer.language)
   const t = stringsByLang[lang]
-  const time = new Intl.DateTimeFormat(localeByLang[lang], {
+  const time = new Intl.DateTimeFormat(LANG_LABELS[lang].locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',

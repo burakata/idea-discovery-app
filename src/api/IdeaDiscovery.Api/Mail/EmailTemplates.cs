@@ -59,7 +59,7 @@ public sealed partial class EmailTemplates
         }
     }
 
-    // The templates are copied next to the build output, like the prompts.
+    // The templates are copied next to the build output.
     public static EmailTemplates LoadFromBuildOutput() =>
         new(Path.Combine(AppContext.BaseDirectory, "Mail", "Templates"));
 
