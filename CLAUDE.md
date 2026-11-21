@@ -111,7 +111,7 @@ Read before planning: the Phase 1 PRD,
 ## Commands
 The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
 has deny-by-default access, a health endpoint, the M1 database, sign-in
-with one-time links and server-side sessions (`/auth/*`, `/consultant/*`)
+with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
 asking to join (`/join/*`), and projects and members (`/projects`,
 `/consultant/projects`, `/me/language`), but no invitations or
 conversations yet.
