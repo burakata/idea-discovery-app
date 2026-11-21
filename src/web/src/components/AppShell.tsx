@@ -4,6 +4,8 @@ import type { Project } from '../projects/types'
 import { useStore } from '../state/store'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
+import { useDemoT } from '../strings/demo'
+import { Button } from './Button'
 import { Icon, type IconName } from './Icon'
 import { LanguageSwitch } from './LanguageSwitch'
 import { CountBadge, Pill } from './Pill'
@@ -17,6 +19,7 @@ interface NavItem {
   short?: string
   end?: boolean
   count?: number
+  countLabel?: string
 }
 
 function NavList({ items, className, compact }: { items: NavItem[]; className: string; compact?: boolean }) {
@@ -31,19 +34,39 @@ function NavList({ items, className, compact }: { items: NavItem[]; className: s
         >
           <Icon name={item.icon} />
           <span>{compact ? (item.short ?? item.label) : item.label}</span>
-          {item.count !== undefined && <CountBadge count={item.count} label={c.nav.waiting} />}
+          {item.count !== undefined && <CountBadge count={item.count} label={item.countLabel ?? ''} />}
         </NavLink>
       ))}
     </nav>
   )
 }
 
+function DemoNote() {
+  const { preview } = useDemoT()
+  return (
+    <div className={styles.sideNote}>
+      <strong>{preview.label}</strong>
+      <p>{preview.explain}</p>
+    </div>
+  )
+}
+
+interface ShellProps {
+  // A room (demo only until M1 PR 8). Without one, the shell shows the person's project list.
+  project?: Project
+  // Burak's waiting count for the room; demo only.
+  queueCount?: number
+  // The title when there is no room; the project list by default.
+  title?: string
+  children: ReactNode
+}
+
 // Navy sidebar on desktop; compact header and bottom navigation on phones.
-export function AppShell({ project, children }: { project?: Project; children: ReactNode }) {
-  const { state, viewer, dispatch } = useStore()
+export function AppShell({ project, queueCount = 0, title: pageTitle, children }: ShellProps) {
+  const { me, setLanguage, signOut } = useStore()
   const { t, lang, englishOnly, pick } = useT()
   const { pathname } = useLocation()
-  const isConsultant = viewer.role === 'consultant'
+  const isConsultant = me?.isConsultant === true
   const base = project ? `/rooms/${project.id}` : ''
 
   const sections: NavItem[] = project
@@ -52,9 +75,10 @@ export function AppShell({ project, children }: { project?: Project; children: R
         { to: `${base}/discussion`, icon: 'discussion', label: t.nav.discussion },
         { to: `${base}/summary`, icon: 'summary', label: t.nav.summary },
       ]
-    : []
+    : [{ to: '/', icon: 'rooms', label: t.nav.projects, end: true }]
 
-  const consultantItems: NavItem[] = [
+  // Burak's own screens are the demo's until M1 PR 7b.
+  const consultantItems: NavItem[] = !__DEMO__ ? [] : [
     ...(project
       ? [
           {
@@ -62,7 +86,8 @@ export function AppShell({ project, children }: { project?: Project; children: R
             icon: 'queue' as const,
             label: c.nav.queue,
             short: c.nav.queueShort,
-            count: state.rooms[project.id].queue.length,
+            count: queueCount,
+            countLabel: c.nav.waiting,
           },
           { to: `${base}/notes`, icon: 'notes' as const, label: c.nav.notes, short: c.nav.notesShort },
         ]
@@ -70,7 +95,7 @@ export function AppShell({ project, children }: { project?: Project; children: R
     { to: '/rooms', icon: 'rooms', label: c.nav.rooms, short: c.nav.roomsShort, end: true },
   ]
 
-  const title = project ? pick(project.name).text : c.rooms.title
+  const title = project ? pick(project.name).text : (pageTitle ?? t.projects.title)
   // The draft pill belongs to the room's three sections, not to Join or Burak's screens.
   const onSection = sections.some((section) => section.to === pathname)
 
@@ -103,17 +128,14 @@ export function AppShell({ project, children }: { project?: Project; children: R
           </div>
         )}
 
-        {isConsultant && (
+        {isConsultant && __DEMO__ && (
           <div>
             <div className={styles.label}>{c.nav.group}</div>
             <NavList items={consultantItems} className={styles.nav} />
           </div>
         )}
 
-        <div className={styles.sideNote}>
-          <strong>{t.preview.label}</strong>
-          <p>{t.preview.explain}</p>
-        </div>
+        {__DEMO__ && <DemoNote />}
       </aside>
 
       <div className={styles.main}>
@@ -135,14 +157,24 @@ export function AppShell({ project, children }: { project?: Project; children: R
             {!englishOnly && (
               <LanguageSwitch
                 value={lang}
-                onChange={(next) => dispatch({ type: 'language', lang: next })}
+                onChange={setLanguage}
                 label={t.language.label}
               />
             )}
+            <Button
+              variant="quiet"
+              size="sm"
+              icon="signOut"
+              className={styles.signOut}
+              aria-label={t.auth.signOut}
+              onClick={() => void signOut()}
+            >
+              {t.auth.signOut}
+            </Button>
           </div>
         </header>
 
-        {isConsultant && project && <NavList items={consultantItems} className={styles.strip} compact />}
+        {isConsultant && __DEMO__ && project && <NavList items={consultantItems} className={styles.strip} compact />}
 
         <div className={styles.content}>{children}</div>
 

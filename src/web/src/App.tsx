@@ -1,83 +1,53 @@
-import type { ReactNode } from 'react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { PrototypeBar } from './components/PrototypeBar'
-import { findProject } from './projects'
-import Discussion from './screens/Discussion'
-import Idea from './screens/Idea'
-import Join from './screens/Join'
-import Notes from './screens/Notes'
-import Queue from './screens/Queue'
-import Rooms from './screens/Rooms'
-import Summary from './screens/Summary'
+import { demoRoutes } from './DemoRoutes'
+import Home from './screens/Home'
+import Projects from './screens/Projects'
+import SignIn from './screens/SignIn'
 import { StoreProvider, useStore } from './state/store'
+import { useT } from './strings'
 
-function Home() {
-  const { viewer } = useStore()
-  return <Navigate to={viewer.roomId ? `/rooms/${viewer.roomId}` : '/rooms'} replace />
-}
+function AppRoutes() {
+  const { status } = useStore()
+  const { lang } = useT()
 
-// Owners see only their own room.
-function RoomLayout() {
-  const { roomId } = useParams()
-  const { viewer } = useStore()
-  const project = findProject(roomId)
-  if (!project) return <Navigate to="/" replace />
-  if (viewer.role === 'owner' && viewer.roomId !== project.id) return <Navigate to="/" replace />
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  // Until the app knows whether anyone is signed in, it shows nothing: not the
+  // home, and certainly not a project.
+  if (status === 'checking') return null
+
   return (
-    <AppShell project={project}>
-      <Outlet context={project} />
-    </AppShell>
+    <Routes>
+      <Route path="/sign-in" element={<SignIn />} />
+      <Route
+        path="/"
+        element={
+          status === 'signedIn' ? (
+            <AppShell>
+              <Projects />
+            </AppShell>
+          ) : (
+            <Home />
+          )
+        }
+      />
+      {__DEMO__ && demoRoutes}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
-}
-
-function ConsultantOnly({ children }: { children: ReactNode }) {
-  const { viewer } = useStore()
-  const { roomId } = useParams()
-  if (viewer.role !== 'consultant') return <Navigate to={roomId ? `/rooms/${roomId}` : '/'} replace />
-  return children
 }
 
 export default function App() {
   return (
     <StoreProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <PrototypeBar />
-        <Routes>
-          <Route
-            path="/rooms"
-            element={
-              <ConsultantOnly>
-                <AppShell>
-                  <Rooms />
-                </AppShell>
-              </ConsultantOnly>
-            }
-          />
-          <Route path="/rooms/:roomId" element={<RoomLayout />}>
-            <Route index element={<Idea />} />
-            <Route path="join" element={<Join />} />
-            <Route path="discussion" element={<Discussion />} />
-            <Route path="summary" element={<Summary />} />
-            <Route
-              path="queue"
-              element={
-                <ConsultantOnly>
-                  <Queue />
-                </ConsultantOnly>
-              }
-            />
-            <Route
-              path="notes"
-              element={
-                <ConsultantOnly>
-                  <Notes />
-                </ConsultantOnly>
-              }
-            />
-          </Route>
-          <Route path="*" element={<Home />} />
-        </Routes>
+        {__DEMO__ && <PrototypeBar />}
+        <AppRoutes />
       </BrowserRouter>
     </StoreProvider>
   )

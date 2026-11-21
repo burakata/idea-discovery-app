@@ -10,7 +10,7 @@ import { Pill } from '../components/Pill'
 import { scriptLine } from '../demo/script'
 import { otherLang } from '../languages'
 import type { Project, Text } from '../projects/types'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import type { QueueItem, Source } from '../state/types'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
@@ -18,7 +18,7 @@ import styles from './Queue.module.css'
 
 export default function Queue() {
   const project = useOutletContext<Project>()
-  const { state, dispatch } = useStore()
+  const { state, dispatch } = useDemoStore()
   const { t, lang, pick, personName, translationOf } = useT()
   const [editing, setEditing] = useState<string | null>(null)
   const [text, setText] = useState('')

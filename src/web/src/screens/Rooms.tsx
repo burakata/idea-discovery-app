@@ -4,13 +4,13 @@ import { Card } from '../components/Card'
 import { Icon } from '../components/Icon'
 import { Pill } from '../components/Pill'
 import { projects } from '../projects'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import styles from './Rooms.module.css'
 
 export default function Rooms() {
-  const { state } = useStore()
+  const { state } = useDemoStore()
   const { pick } = useT()
 
   return (

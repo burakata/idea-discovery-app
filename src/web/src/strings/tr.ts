@@ -16,6 +16,7 @@ const tr: Strings = {
     idea: 'Fikir',
     discussion: 'Sohbet',
     summary: 'Ortak özet',
+    projects: 'Projeler',
   },
   status: {
     draft: 'Taslak · Teyit bekliyor',
@@ -25,13 +26,43 @@ const tr: Strings = {
   language: {
     label: 'Dil',
   },
-  preview: {
-    label: 'Etkileşimli önizleme',
-    short: 'Önizleme',
-    explain: 'Yardımcı ve paylaşım gerçek değil, örnektir. Her şey bu tarayıcıda kalır.',
-    viewAs: 'Kimin gözünden',
-    notJoined: 'henüz katılmadı',
-    reset: 'Demoyu sıfırla',
+  auth: {
+    signOut: 'Çıkış yap',
+    home: {
+      title: 'Fikrinizi birlikte netleştirin',
+      intro:
+        'Yazılım danışmanınızla bir iş fikrini birlikte netleştirdiğiniz ortak bir alan. Yapay zekâ yardımcısı sorularda size destek olur.',
+      emailLabel: 'E-posta adresiniz',
+      emailMissing: 'Devam etmek için e-posta adresinizi yazın.',
+      submit: 'Bana giriş bağlantısı gönder',
+      sentTitle: 'E-postanızı kontrol edin',
+      sent: 'Bu e-posta davet edilmiş birine aitse, bir bağlantı yolda.',
+      sentHint: 'Bağlantı kısa süre geçerlidir. Bir şey gelmezse istenmeyen postaları kontrol edin ya da yeniden isteyin.',
+      askAgain: 'Yeniden iste',
+      invitationNote: 'Giriş yapabilmek için danışmanınızın sizi davet etmiş olması gerekir.',
+    },
+    signIn: {
+      title: 'Giriş yap',
+      explain: 'Bir giriş bağlantısı açtınız. Bu cihazda giriş yapmak için düğmeye basın.',
+      button: 'Giriş yap',
+      invalidTitle: 'Bu bağlantı çalışmıyor',
+    },
+  },
+  errors: {
+    linkNotValid: 'Bu bağlantı artık çalışmıyor. Yenisini isteyin.',
+    tooManyTries: 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.',
+    network: 'Bağlantı kesildi. Tekrar deneyin.',
+    generic: 'Bir şeyler ters gitti. Tekrar deneyin.',
+  },
+  notices: {
+    signedOut: 'Oturumunuz kapandı. Devam etmek için yeniden giriş yapın.',
+    projectGone: 'Bu projeyi bulamadık. Dahil olduğunuz projeler burada.',
+  },
+  projects: {
+    title: 'Projeleriniz',
+    sub: 'Danışmanınızla birlikte üzerinde çalıştığınız fikirler.',
+    empty: 'Henüz hiçbir projede değilsiniz. Danışmanınız sizi davet edebilir.',
+    open: 'Projeyi aç',
   },
   idea: {
     join: 'Sohbete katıl',

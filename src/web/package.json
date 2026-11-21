@@ -3,9 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode demo",
+    "dev:api": "vite --mode api",
     "build": "tsc --noEmit && vite build",
+    "build:demo": "tsc --noEmit && vite build --mode demo",
+    "build:api": "tsc --noEmit && vite build --mode api",
     "preview": "vite preview",
     "test": "vitest run"
   },

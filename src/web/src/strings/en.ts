@@ -14,6 +14,7 @@ const en = {
     idea: 'The idea',
     discussion: 'Discussion',
     summary: 'Shared summary',
+    projects: 'Projects',
   },
   status: {
     draft: 'Draft · Needs confirmation',
@@ -23,13 +24,43 @@ const en = {
   language: {
     label: 'Language',
   },
-  preview: {
-    label: 'Interactive preview',
-    short: 'Preview',
-    explain: 'The assistant and sharing are simulated. Everything stays in this browser.',
-    viewAs: 'View as',
-    notJoined: 'not joined yet',
-    reset: 'Reset demo',
+  auth: {
+    signOut: 'Sign out',
+    home: {
+      title: 'Work out your idea together',
+      intro:
+        'A shared place where you and your software consultant clarify a business idea, with an AI assistant to help with the questions.',
+      emailLabel: 'Your email address',
+      emailMissing: 'Write your email address to continue.',
+      submit: 'Email me a sign-in link',
+      sentTitle: 'Check your email',
+      sent: 'If this email belongs to someone invited, a link is on its way.',
+      sentHint: 'The link works for a short time. If nothing arrives, check your spam folder or ask again.',
+      askAgain: 'Ask again',
+      invitationNote: 'You can only sign in if your consultant has invited you.',
+    },
+    signIn: {
+      title: 'Sign in',
+      explain: 'You opened a sign-in link. Press the button to sign in on this device.',
+      button: 'Sign in',
+      invalidTitle: 'This link does not work',
+    },
+  },
+  errors: {
+    linkNotValid: 'This link no longer works. Ask for a new one.',
+    tooManyTries: 'Too many tries. Wait a little, then try again.',
+    network: 'Connection lost. Try again.',
+    generic: 'Something went wrong. Try again.',
+  },
+  notices: {
+    signedOut: 'You have been signed out. Sign in again to carry on.',
+    projectGone: 'We could not find that project. Here are the projects you are in.',
+  },
+  projects: {
+    title: 'Your projects',
+    sub: 'The ideas you are working on with your consultant.',
+    empty: "You're not in any project yet. Your consultant can invite you.",
+    open: 'Open project',
   },
   idea: {
     join: 'Join discussion',

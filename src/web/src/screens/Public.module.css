@@ -1,0 +1,40 @@
+/* Shared by the signed-out home and the sign-in page. */
+.card {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card h1 {
+  font-size: var(--text-xl);
+  letter-spacing: -0.5px;
+}
+
+.card h2 {
+  font-size: var(--text-lg);
+}
+
+.lead {
+  max-width: var(--size-reading);
+  color: var(--color-muted-strong);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--size-form);
+}
+
+.form label {
+  font-weight: var(--weight-medium);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--color-red);
+}
+
+.small {
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+

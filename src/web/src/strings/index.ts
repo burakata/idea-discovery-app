@@ -39,10 +39,10 @@ export function translationLine(written: Written, lang: Lang, t: Strings) {
 }
 
 export function useT() {
-  const { viewer } = useStore()
+  const { language } = useStore()
   const { pathname } = useLocation()
   const englishOnly = isEnglishOnly(pathname)
-  const lang = screenLang(pathname, viewer.language)
+  const lang = screenLang(pathname, language)
   const t = stringsByLang[lang]
   const time = new Intl.DateTimeFormat(LANG_LABELS[lang].locale, {
     day: 'numeric',

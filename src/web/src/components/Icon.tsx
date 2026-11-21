@@ -16,6 +16,7 @@ import {
   Languages,
   LayoutGrid,
   Lightbulb,
+  LogOut,
   MessagesSquare,
   NotebookPen,
   Pencil,
@@ -57,6 +58,7 @@ const icons = {
   assistant: Sparkles,
   translate: Languages,
   reset: RotateCcw,
+  signOut: LogOut,
   confirmed: CircleCheck,
   early: CircleDashed,
 }

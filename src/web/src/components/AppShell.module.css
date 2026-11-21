@@ -321,3 +321,14 @@
     padding: var(--space-3) var(--space-7) var(--space-8);
   }
 }
+
+/* Phones: the icon alone, so the title and language switch keep their room. */
+.signOut span {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .signOut span {
+    display: inline;
+  }
+}
