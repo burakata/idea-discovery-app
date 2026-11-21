@@ -67,7 +67,8 @@ public static class ConsultantEndpoints
             if (invitation.RevokedAt is not null || invitation.AcceptedAt is not null || invitation.ExpiresAt <= now)
                 return Results.Conflict(new { error = "invitation_not_open" });
 
-            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email && u.IsConsultant))
+            // An address that already has an account is added, not invited.
+            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email))
                 return Results.Conflict(new { error = "invitation_not_open" });
 
             var link = await links.ForInvitationAsync(invitationId);

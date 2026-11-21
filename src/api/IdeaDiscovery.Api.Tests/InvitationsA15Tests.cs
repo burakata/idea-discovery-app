@@ -330,6 +330,7 @@ public class InvitationsA15Tests
         for (var i = 0; i < 3; i++)
         {
             var id = await burak.InviteNew(project, "new.owner@example.com");
+            await h.Settled();
             Assert.Equal(HttpStatusCode.NoContent, (await burak.Revoke(id)).StatusCode);
         }
 

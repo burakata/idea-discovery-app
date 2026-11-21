@@ -593,4 +593,81 @@ public class InvitationsTests
             Assert.Contains(e.Metadata.GetOrderedMetadata<IAuthorizeData>(), a => a.Policy == SessionValidation.ConsultantPolicy);
         });
     }
+
+    // ---- Other open invitations once the account exists ----
+
+    [Fact]
+    public async Task Accepting_one_invitation_accepts_the_same_persons_other_open_ones_and_the_older_link_is_refused()
+    {
+        using var r = new Rig();
+        var burak = await r.Burak();
+        var a = await burak.CreateProject("A");
+        var b = await burak.CreateProject("B");
+        var invA = await burak.InviteNew(a, "x@example.com");
+        var invB = await burak.InviteNew(b, "x@example.com");
+        var mails = await r.Settled();
+        var linkA = mails.First(m => m.Body.Contains("\"A\""));
+        var linkB = mails.First(m => m.Body.Contains("\"B\""));
+        var copiedA = await burak.Post($"/consultant/invitations/{invA}/link");
+        var copiedToken = RoomsFactory.TokenOf((await burak.Json(copiedA)).GetProperty("link").GetString()!);
+
+        var x = r.NewPerson();
+        Assert.Equal(HttpStatusCode.OK, (await x.Redeem(linkB.Token)).StatusCode);
+
+        Assert.Equal(new[] { a, b }.OrderBy(i => i), (await x.ListedProjectIds()).OrderBy(i => i));
+        Assert.Equal("accepted", await burak.StateOf(a, invA));
+        Assert.Equal("accepted", await burak.StateOf(b, invB));
+        var other = r.NewPerson();
+        await (await other.Redeem(linkA.Token)).AssertRefused(other);
+        var other2 = r.NewPerson();
+        await (await other2.Redeem(copiedToken)).AssertRefused(other2);
+        Assert.Equal(1, r.F.WithDb(db => db.Users.Count(u => u.Email == "x@example.com")));
+        // Ids only in the audit row.
+        var audit = Assert.Single(Audit(r.F, "member_added"));
+        Assert.Equal($"invitation:{invA}", audit.Details);
+        Assert.Equal(a, audit.ProjectId);
+    }
+
+    [Fact]
+    public async Task Copying_an_open_invitations_link_is_a_409_once_its_address_has_an_account()
+    {
+        using var r = new Rig();
+        var burak = await r.Burak();
+        var a = await burak.CreateProject("A");
+        var b = await burak.CreateProject("B");
+        var invA = await burak.InviteNew(a, "x@example.com");
+        await burak.InviteNew(b, "x@example.com");
+        // The account appears some other way, leaving A's invitation open.
+        r.F.SeedOwner("x@example.com", "X");
+
+        Assert.Equal(HttpStatusCode.Conflict, (await burak.Post($"/consultant/invitations/{invA}/link")).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_queued_invitation_email_is_skipped_when_the_account_appeared_before_the_worker_ran()
+    {
+        using var r = new Rig();
+        var project = r.F.SeedProject();
+        var id = Seed(r, project, "x@example.com");
+        r.F.SeedOwner("x@example.com", "X");
+
+        r.Queue.Enqueue(new InvitationEmail(id));
+
+        Assert.Empty(await r.Settled());
+        Assert.Equal(0, r.F.WithDb(db => db.SignInTokens.Count()));
+    }
+
+    [Fact]
+    public async Task Adding_an_existing_account_answers_with_the_accounts_own_name()
+    {
+        using var r = new Rig();
+        var burak = await r.Burak();
+        var project = await burak.CreateProject();
+        var userId = r.F.SeedOwner("existing@example.com", "Existing Name");
+
+        var json = await burak.Json(await burak.Invite(project, "existing@example.com", "Typed Name"));
+
+        Assert.Equal(userId, json.GetProperty("userId").GetGuid());
+        Assert.Equal("Existing Name", json.GetProperty("displayName").GetString());
+    }
 }

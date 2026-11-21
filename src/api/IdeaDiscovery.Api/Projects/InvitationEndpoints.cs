@@ -105,7 +105,7 @@ public static class InvitationEndpoints
 
         var existing = await db.Users.AsNoTracking()
             .Where(u => u.Email != null && u.Email == email)
-            .Select(u => new { u.Id, u.IsConsultant })
+            .Select(u => new { u.Id, u.IsConsultant, u.DisplayName })
             .SingleOrDefaultAsync();
         if (existing is { IsConsultant: true })
             return Results.Conflict(new { error = "cannot_invite_consultant" });
@@ -138,7 +138,7 @@ public static class InvitationEndpoints
             });
             AuditLog.Add(db, clock, "member_added", actor, Ip(http), pid, $"user:{existing.Id}{addressTag}");
             job = new AddedEmail(existing.Id, pid, actor);
-            result = new { kind = "added", userId = existing.Id };
+            result = new { kind = "added", userId = existing.Id, displayName = existing.DisplayName };
         }
         else
         {

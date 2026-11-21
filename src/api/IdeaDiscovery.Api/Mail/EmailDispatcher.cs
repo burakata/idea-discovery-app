@@ -62,6 +62,8 @@ public sealed class EmailDispatcher(
                 .Where(i => i.Id == job.InvitationId && i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now)
                 .SingleOrDefaultAsync(cancellationToken);
             if (invitation is null) return;
+            // The account appeared since: its sign-in goes through the added email.
+            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email, cancellationToken)) return;
             var project = await db.Projects.AsNoTracking()
                 .SingleOrDefaultAsync(p => p.Id == invitation.ProjectId, cancellationToken);
             var inviter = await db.Users.AsNoTracking()

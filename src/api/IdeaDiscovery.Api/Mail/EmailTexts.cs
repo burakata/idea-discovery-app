@@ -26,8 +26,8 @@ public static class EmailTexts
     public static (string Subject, string Body) Invitation(
         string language, string name, string inviter, string project, string link) =>
         language == "tr"
-            ? ("Idea Discovery Rooms'a davetlisiniz",
-               $"Merhaba {name},\n\n{inviter}, sizi Idea Discovery Rooms'ta \"{project}\" konusunu konuşmaya davet etti. "
+            ? ("Idea Discovery Rooms'a davet edildiniz",
+               $"Merhaba {name},\n\n{inviter}, sizi Idea Discovery Rooms'ta \"{project}\" hakkında konuşmaya davet etti. "
                + "Fikrinizi kendi sözlerinizle anlatabileceğiniz ortak bir alan.\n\n"
                + $"Katılmak için bu bağlantıyı kullanın:\n\n{link}\n\n"
                + $"Bağlantı yalnızca bir kez çalışır ve {InvitationDays} gün sonra geçerliliğini yitirir.\n\n"
@@ -51,7 +51,7 @@ public static class EmailTexts
                + "Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz.\n")
             : ("You have been added to a project on Idea Discovery Rooms",
                $"Hello {name},\n\n{inviter} has added you to \"{project}\" on Idea Discovery Rooms.\n\n"
-               + $"Use this sign-in link to go in:\n\n{link}\n\n"
+               + $"Use this link to sign in:\n\n{link}\n\n"
                + $"It works once and expires in {Minutes} minutes. "
                + "If it has expired, you can ask for a new link on the sign-in page.\n");
 }

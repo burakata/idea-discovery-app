@@ -197,6 +197,30 @@ public static class AuthEndpoints
                     Role = MemberRole.Owner,
                     JoinedAt = now,
                 });
+
+            // The person's other open invitations (same address) are accepted here
+            // too, so no older link can sign into this account later.
+            var others = await db.Invitations
+                .Where(i => i.Id != invitation.Id && i.Email == invitation.Email
+                    && i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now)
+                .ToListAsync();
+            foreach (var other in others)
+            {
+                if (!await db.ProjectMembers.AnyAsync(m => m.ProjectId == other.ProjectId && m.UserId == user.Id))
+                    db.ProjectMembers.Add(new ProjectMember
+                    {
+                        Id = Guid.NewGuid(), ProjectId = other.ProjectId, UserId = user.Id,
+                        Role = MemberRole.Owner, JoinedAt = now,
+                    });
+                other.AcceptedAt = now;
+                other.AcceptedUserId = user.Id;
+                AuditLog.Add(db, clock, "member_added", user.Id, ip, other.ProjectId, $"invitation:{other.Id}");
+            }
+            var otherIds = others.Select(o => o.Id).ToList();
+            await db.SignInTokens
+                .Where(t => t.InvitationId != null && otherIds.Contains(t.InvitationId.Value)
+                    && t.UsedAt == null && t.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, (DateTime?)now));
             await db.SaveChangesAsync();
 
             var accepted = await db.Invitations
