@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useReducer, type ReactNode } from
 import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
-import type { Lang } from '../projects/types'
+import { isLang, otherLang, type Lang } from '../languages'
 import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
@@ -72,15 +72,11 @@ function loadState(): AppState {
     state = { ...state, viewAs: as }
   }
   const lang = params.get('lang')
-  if (lang === 'en' || lang === 'tr') {
+  if (isLang(lang)) {
     const viewer = state.people[state.viewAs]
     state = { ...state, people: { ...state.people, [viewer.id]: { ...viewer, language: lang } } }
   }
   return state
-}
-
-function otherLang(lang: Lang): Lang {
-  return lang === 'en' ? 'tr' : 'en'
 }
 
 function updateRoom(state: AppState, roomId: string, change: (room: Room) => Room, used = 0): AppState {

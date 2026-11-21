@@ -179,7 +179,7 @@ public static class ConsultantEndpoints
                     Id = Guid.NewGuid(),
                     Email = null,
                     DisplayName = corrected ?? request.Name,
-                    UiLanguage = "en",
+                    UiLanguage = Languages.Default,
                     CreatedAt = now,
                 };
                 db.Users.Add(user);

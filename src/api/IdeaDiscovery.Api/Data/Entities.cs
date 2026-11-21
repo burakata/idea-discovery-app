@@ -9,7 +9,7 @@ public enum ConversationState { Active, Finished }
 public enum TokenPurpose { Invitation, SignIn }
 
 // Times are UTC DateTime, because SQLite cannot order DateTimeOffset.
-// Languages are "en" or "tr".
+// Languages are the codes in Languages.All.
 public class User
 {
     public Guid Id { get; set; }
@@ -18,7 +18,7 @@ public class User
     // address. A null email never matches any email lookup.
     public string? Email { get; set; }
     public string DisplayName { get; set; } = "";
-    public string UiLanguage { get; set; } = "en";
+    public string UiLanguage { get; set; } = Languages.Default;
     public bool IsConsultant { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -30,6 +30,12 @@ public class Project
     public string TitleTr { get; set; } = "";
     public string IntroEn { get; set; } = "";
     public string IntroTr { get; set; } = "";
+    // The only way to read a bilingual field by language: callers never pick a
+    // column. Phase 1 stores the English and Turkish pair in these columns; a third
+    // language needs a translations table behind this lookup. An unsupported
+    // language gets the English text.
+    public string Title(string? language) => Languages.Resolve(language) == Languages.Default ? TitleEn : TitleTr;
+    public string Intro(string? language) => Languages.Resolve(language) == Languages.Default ? IntroEn : IntroTr;
     public string Status { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public Guid CreatedById { get; set; }
@@ -82,8 +88,8 @@ public class Invitation
     public string Email { get; set; } = "";
     // Entered by Burak; owners cannot change it.
     public string DisplayName { get; set; } = "";
-    // "en" or "tr": the language of the email and of the account it creates.
-    public string Language { get; set; } = "en";
+    // A code from Languages.All: the language of the email and of the account it creates.
+    public string Language { get; set; } = Languages.Default;
     // No role: an invitation can only make an owner.
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -140,7 +146,7 @@ public class Message
     public Guid AuthorId { get; set; }
     // Stored as written and never changed.
     public string Text { get; set; } = "";
-    public string Language { get; set; } = "en";
+    public string Language { get; set; } = Languages.Default;
     public DateTime CreatedAt { get; set; }
 }
 
@@ -148,7 +154,7 @@ public class MessageTranslation
 {
     public Guid Id { get; set; }
     public Guid MessageId { get; set; }
-    public string Language { get; set; } = "en";
+    public string Language { get; set; } = Languages.Default;
     public string Text { get; set; } = "";
     public DateTime CreatedAt { get; set; }
 }

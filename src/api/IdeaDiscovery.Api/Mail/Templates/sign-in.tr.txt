@@ -1,0 +1,11 @@
+Subject: Idea Discovery Rooms giriş bağlantınız
+
+Merhaba,
+
+Idea Discovery Rooms için giriş bağlantınız burada:
+
+{link}
+
+Bağlantı yalnızca bir kez çalışır ve {minutes} dakika sonra geçerliliğini yitirir.
+
+Bağlantıyı siz istemediyseniz bu e-postayı yok sayabilirsiniz.

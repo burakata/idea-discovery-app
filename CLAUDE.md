@@ -74,6 +74,9 @@ Read before planning: the Phase 1 PRD,
   app (PRD R01, R11).
 - AI prompts live in `prompts/` and are loaded from the files at runtime.
   Never inline or duplicate them in code.
+- Email texts live in `src/api/IdeaDiscovery.Api/Mail/Templates/`, one file
+  per email and language, checked at startup. No language checks in code:
+  one place knows the languages (docs/engineering.md §15).
 - `docs/reference/` holds the earlier prototype, screenshots and the printed
   feedback document. Reference only; do not copy its code structure.
 

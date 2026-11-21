@@ -33,7 +33,9 @@ implementer worked from and the changed files, or a commit range.
 4. **Intent:** does it do what the brief is for, not only what it says?
 5. **Structure:**
    - project text inside components;
-   - owner-facing text outside the strings files;
+   - owner-facing text outside the strings files or the email templates;
+   - language codes compared outside the languages registries
+     (engineering §15);
    - prompt text copied into code;
    - screens touching local storage or demo data instead of going through
      the store.

@@ -1,11 +1,5 @@
-import type { Lang } from '../projects/types'
+import { LANG_LABELS, LANGS, type Lang } from '../languages'
 import styles from './LanguageSwitch.module.css'
-
-// Each language is named in its own language, so these labels are not translated.
-const options: { code: Lang; short: string; full: string }[] = [
-  { code: 'en', short: 'EN', full: 'English' },
-  { code: 'tr', short: 'TR', full: 'Türkçe' },
-]
 
 interface Props {
   value: Lang
@@ -16,17 +10,17 @@ interface Props {
 export function LanguageSwitch({ value, onChange, label }: Props) {
   return (
     <div className={styles.switch} role="group" aria-label={label}>
-      {options.map((option) => (
+      {LANGS.map((code) => (
         <button
-          key={option.code}
+          key={code}
           type="button"
-          lang={option.code}
-          title={option.full}
-          aria-label={option.full}
-          aria-pressed={value === option.code}
-          onClick={() => onChange(option.code)}
+          lang={code}
+          title={LANG_LABELS[code].full}
+          aria-label={LANG_LABELS[code].full}
+          aria-pressed={value === code}
+          onClick={() => onChange(code)}
         >
-          {option.short}
+          {LANG_LABELS[code].short}
         </button>
       ))}
     </div>
