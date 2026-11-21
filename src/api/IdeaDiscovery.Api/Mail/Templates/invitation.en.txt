@@ -1,0 +1,13 @@
+Subject: You are invited to Idea Discovery Rooms
+
+Hello {name},
+
+{inviter} has invited you to talk about "{project}" on Idea Discovery Rooms. It is a shared space where you can describe your idea in your own words.
+
+Use this link to join:
+
+{link}
+
+It works once and expires in {days} days.
+
+If you were not expecting this, you can ignore this email.

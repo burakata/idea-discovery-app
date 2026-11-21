@@ -10,7 +10,7 @@ namespace IdeaDiscovery.Api.Mail;
 // One reader means parallel requests cannot slip past the limit. A failure is
 // logged without the email address, link or token and never stops the service.
 public sealed class EmailDispatcher(
-    EmailQueue queue, IServiceScopeFactory scopes, IEmailSender sender, ILogger<EmailDispatcher> log) : BackgroundService
+    EmailQueue queue, IServiceScopeFactory scopes, IEmailSender sender, EmailTemplates templates, ILogger<EmailDispatcher> log) : BackgroundService
 {
     private const int MaxLinkRequestsPerEmailPerHour = 3;
 
@@ -71,8 +71,8 @@ public sealed class EmailDispatcher(
             if (project is null || inviter is null) return;
 
             var link = await links.ForInvitationAsync(invitation.Id);
-            var title = invitation.Language == "tr" ? project.TitleTr : project.TitleEn;
-            (subject, body) = EmailTexts.Invitation(invitation.Language, invitation.DisplayName, inviter.DisplayName, title, link);
+            (subject, body) = templates.RenderInvitation(
+                invitation.Language, invitation.DisplayName, inviter.DisplayName, project.Title(invitation.Language), link);
             to = invitation.Email;
         }
         await SendAsync(to, subject, body, cancellationToken);
@@ -91,7 +91,7 @@ public sealed class EmailDispatcher(
                              join u in db.Users on m.UserId equals u.Id
                              join p in db.Projects on m.ProjectId equals p.Id
                              where m.ProjectId == job.ProjectId && m.UserId == job.UserId && u.Email != null
-                             select new { u.Email, u.DisplayName, u.UiLanguage, p.TitleEn, p.TitleTr })
+                             select new { u.Email, u.DisplayName, u.UiLanguage, Project = p })
                 .AsNoTracking().SingleOrDefaultAsync(cancellationToken);
             if (row is null) return;
             var inviter = await db.Users.AsNoTracking()
@@ -99,8 +99,8 @@ public sealed class EmailDispatcher(
             if (inviter is null) return;
 
             var link = await links.ForUserAsync(job.UserId);
-            var title = row.UiLanguage == "tr" ? row.TitleTr : row.TitleEn;
-            (subject, body) = EmailTexts.Added(row.UiLanguage, row.DisplayName, inviter.DisplayName, title, link);
+            (subject, body) = templates.RenderAdded(
+                row.UiLanguage, row.DisplayName, inviter.DisplayName, row.Project.Title(row.UiLanguage), link);
             to = row.Email!; // the query matched on a non-null email
         }
         await SendAsync(to, subject, body, cancellationToken);
@@ -162,7 +162,7 @@ public sealed class EmailDispatcher(
 
         try
         {
-            var (subject, body) = EmailTexts.SignIn(language, link);
+            var (subject, body) = templates.RenderSignIn(language, link);
             await sender.SendAsync(to, subject, body, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }

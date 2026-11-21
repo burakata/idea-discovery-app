@@ -89,7 +89,7 @@ public static class InvitationEndpoints
         var name = JoinEndpoints.CleanName(body?.DisplayName);
         if (string.IsNullOrEmpty(email) || email.Length > AuthEndpoints.MaxEmailLength
             || !AuthEndpoints.LooksLikeEmail(email)
-            || name is null || body?.Language is not ("en" or "tr"))
+            || name is null || !Languages.IsSupported(body?.Language))
             return Results.BadRequest(new { error = "invalid_request" });
         var language = body.Language;
 

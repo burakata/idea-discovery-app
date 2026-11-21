@@ -1,0 +1,11 @@
+Subject: You have been added to a project on Idea Discovery Rooms
+
+Hello {name},
+
+{inviter} has added you to "{project}" on Idea Discovery Rooms.
+
+Use this link to sign in:
+
+{link}
+
+It works once and expires in {minutes} minutes. If it has expired, you can ask for a new link on the sign-in page.

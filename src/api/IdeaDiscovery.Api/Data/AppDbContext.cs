@@ -36,7 +36,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         b.Entity<User>(e =>
         {
             e.HasIndex(x => x.Email).IsUnique();
-            e.Property(x => x.UiLanguage).HasDefaultValue("en");
+            e.Property(x => x.UiLanguage).HasDefaultValue(Languages.Default);
         });
 
         b.Entity<Project>(e =>
@@ -73,7 +73,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasIndex(x => x.ProjectId);
             e.HasIndex(x => x.Email);
-            e.Property(x => x.Language).HasDefaultValue("en");
+            e.Property(x => x.Language).HasDefaultValue(Languages.Default);
             e.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.AcceptedUserId).OnDelete(DeleteBehavior.Restrict);

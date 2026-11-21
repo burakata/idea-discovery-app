@@ -1,4 +1,6 @@
-export type Lang = 'en' | 'tr'
+import type { Lang } from '../languages'
+
+export type { Lang }
 
 // Project content always has both languages.
 export type Bilingual = Record<Lang, string>

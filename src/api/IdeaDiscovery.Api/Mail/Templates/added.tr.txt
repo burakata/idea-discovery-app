@@ -1,0 +1,11 @@
+Subject: Idea Discovery Rooms'ta bir projeye eklendiniz
+
+Merhaba {name},
+
+{inviter}, sizi Idea Discovery Rooms'ta "{project}" projesine ekledi.
+
+Giriş yapmak için bu bağlantıyı kullanın:
+
+{link}
+
+Bağlantı yalnızca bir kez çalışır ve {minutes} dakika sonra geçerliliğini yitirir. Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz.

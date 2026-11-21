@@ -28,7 +28,9 @@ Before writing a component, hook, helper, token or string, look for one that
 exists:
 - components: `src/web/src/components/`
 - tokens: `src/web/src/styles/tokens.css`
-- strings: `src/web/src/strings/`
+- strings: `src/web/src/strings/`; email texts:
+  `src/api/IdeaDiscovery.Api/Mail/Templates/`; languages:
+  `src/web/src/languages.ts` and the API's `Languages`
 - data changes: actions in `src/web/src/state/store.tsx`
 
 Two similar pieces of code are fine. Extract a shared one on the third, and
@@ -195,3 +197,25 @@ is §1.
 **Why:** Burak asked for things to be configurable (decisions, 2026-11-20),
 so that providers can change and the demo can run without code changes. A
 setting nobody changes is untested code.
+
+## 15. One place knows the languages; text lives in files
+
+Only one module knows which languages exist, the default and the fallback:
+`Languages` in the API and `src/web/src/languages.ts` in the client. No
+other code compares language codes (`== "tr"`, `'en' | 'tr'` checks) or
+picks a column by language: bilingual project fields are read through one
+lookup (`project.Title(language)`). Owner-facing text lives in files, not
+in code: the web strings in `src/web/src/strings/`, the AI prompts in
+`prompts/`, the email texts in `src/api/IdeaDiscovery.Api/Mail/Templates/`.
+Adding a language means adding files and one entry in the list.
+
+Prefer a data-driven lookup (a registry plus a template provider) to a
+class per language: languages differ in text, not in behaviour, so a
+Strategy class per language would be code holding text.
+
+**Why:** Burak's review of the API (2026-11-21): "What if we want to add
+more languages? … These contents should be in files." A language check
+copied into many places breaks silently when a language is added.
+
+**Seen here:** `language == "tr"` in five places in the email code, and
+the `"en" or "tr"` check in two endpoints.
