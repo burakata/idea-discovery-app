@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
 using IdeaDiscovery.Api.Auth;
 using IdeaDiscovery.Api.Data;
 using IdeaDiscovery.Api.Projects;
@@ -15,6 +16,8 @@ public static partial class ConversationEndpoints
 {
     public const string PostRateLimit = "post-message";
     public const int MaxTextLength = 4000;
+    // Far above 4000 characters in any script, far below anything worth buffering.
+    public const long MaxBodyBytes = 64 * 1024;
 
     private sealed record MessageRequest(string? Text);
 
@@ -58,6 +61,9 @@ public static partial class ConversationEndpoints
         app.MapPost("/projects/{projectId:guid}/conversations/active/messages", async (
             Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
+            // Refused before the body is read. The request-size metadata below
+            // enforces it for bodies with no declared length.
+            if (http.Request.ContentLength > MaxBodyBytes) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
             var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
             var text = Clean((await ReadBody(http))?.Text);
@@ -66,6 +72,7 @@ public static partial class ConversationEndpoints
             var author = SessionValidation.UserId(http.User)!.Value;
             var language = Languages.Resolve(
                 await db.Users.Where(u => u.Id == author).Select(u => u.UiLanguage).SingleAsync());
+            var isConsultant = ProjectAccess.IsConsultant(http.User);
             var id = Guid.NewGuid();
             var now = clock.GetUtcNow().UtcDateTime;
 
@@ -78,12 +85,21 @@ public static partial class ConversationEndpoints
                        COALESCE((SELECT MAX(m."Sequence") FROM "Messages" m WHERE m."ConversationId" = c."Id"), 0) + 1
                 FROM "Conversations" c
                 WHERE c."ProjectId" = {project.Id} AND c."State" = 'Active'
+                  AND ({isConsultant} OR EXISTS (
+                      SELECT 1 FROM "ProjectMembers" pm WHERE pm."ProjectId" = {project.Id} AND pm."UserId" = {author}))
                 """));
-            if (inserted == 0) return Results.Conflict(new { error = "no_active_conversation" });
+            if (inserted == 0)
+            {
+                // Removed after the access check: refuse like any non-member.
+                var stillMember = isConsultant || await db.ProjectMembers
+                    .AnyAsync(m => m.ProjectId == project.Id && m.UserId == author);
+                return stillMember ? Results.Conflict(new { error = "no_active_conversation" }) : Results.NotFound();
+            }
 
             var message = (await ReadMessages(db, project.Id, null, 0, id)).Single();
             return Results.Created($"/projects/{project.Id}/conversations/active/messages/{id}", message.Body);
-        }).RequireRateLimiting(PostRateLimit);
+        }).RequireRateLimiting(PostRateLimit)
+          .WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
 
         var consultant = app.MapGroup("/consultant").RequireAuthorization(SessionValidation.ConsultantPolicy);
 
@@ -228,7 +244,7 @@ public static partial class ConversationEndpoints
     {
         try { return http.Request.HasJsonContentType() ? await http.Request.ReadFromJsonAsync<MessageRequest>() : null; }
         catch (System.Text.Json.JsonException) { return null; }
-        catch (BadHttpRequestException) { return null; }
+        catch (BadHttpRequestException ex) when (ex.StatusCode != StatusCodes.Status413PayloadTooLarge) { return null; }
     }
 
     // SQLite reports a busy or locked database at once under shared access; a

@@ -187,11 +187,85 @@ public class ConversationsTests
     private static Task<Guid> UserIdOf(RoomsFactory f, string email) =>
         Task.FromResult(f.WithDb(db => db.Users.Single(u => u.Email == email).Id));
 
+    // ---- Request size and membership at the insert ----
+
+    [Fact]
+    public async Task A_post_body_over_64_KB_is_413_and_nothing_is_stored()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+
+        // Sent with a declared length, as browsers do. (The test server does not
+        // enforce the request-size metadata for bodies without one; Kestrel does.)
+        var request = new HttpRequestMessage(HttpMethod.Post, ActiveMessagesUrl(r.ProjectId))
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(new { text = new string('a', 70 * 1024) }), System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.TryAddWithoutValidation("Origin", RoomsFactory.BaseUrl);
+        request.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", await r.Owner1.CsrfToken());
+        var response = await r.Owner1.Http.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+        Assert.Empty((await r.Owner1.Read(r.ProjectId, 1)).Messages);
+        Assert.Equal(HttpStatusCode.Created, (await Post(r.Owner1, r.ProjectId, new { text = "ok" })).StatusCode);
+    }
+
+    // Deletes a membership just before the message INSERT runs, which is after
+    // the route's access check: the insert itself must refuse.
+    private sealed class RemoveBeforeInsert(string connectionString, Guid userId)
+        : Microsoft.EntityFrameworkCore.Diagnostics.DbCommandInterceptor
+    {
+        public override async ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> NonQueryExecutingAsync(
+            System.Data.Common.DbCommand command,
+            Microsoft.EntityFrameworkCore.Diagnostics.CommandEventData eventData,
+            Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result,
+            CancellationToken cancellationToken = default)
+        {
+            if (command.CommandText.Contains("INSERT INTO \"Messages\""))
+            {
+                await using var other = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+                await other.OpenAsync(cancellationToken);
+                await using var delete = other.CreateCommand();
+                delete.CommandText = "DELETE FROM \"ProjectMembers\" WHERE \"UserId\" = $u";
+                delete.Parameters.AddWithValue("$u", userId.ToString().ToUpperInvariant());
+                await delete.ExecuteNonQueryAsync(cancellationToken);
+            }
+            return result;
+        }
+    }
+
+    [Fact]
+    public async Task A_person_removed_between_the_access_check_and_the_insert_stores_nothing()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+        var ownerId = f.WithDb(db => db.Users.Single(u => u.Email == "one@example.com").Id);
+        using var hooked = f.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.ConfigureDbContext<AppDbContext>(o =>
+                o.AddInterceptors(new RemoveBeforeInsert(f.ConnectionString, ownerId)))));
+        var http = hooked.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri(RoomsFactory.BaseUrl), AllowAutoRedirect = false, HandleCookies = true,
+        });
+        var person = new Person(http);
+        Assert.Equal(HttpStatusCode.OK, (await person.Redeem(await f.UserToken(ownerId))).StatusCode);
+
+        var response = await Post(person, r.ProjectId, new { text = "Sneaking in." });
+
+        // The membership was really gone by the insert, and nothing was stored.
+        Assert.Equal(0, f.WithDb(db => db.ProjectMembers.Count(m => m.UserId == ownerId)));
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Empty(f.WithDb(db => db.Messages.ToList()));
+    }
+
     // ---- Races ----
 
     [Fact]
-    public async Task Finishing_while_people_post_never_stores_a_message_that_was_refused_or_after_the_finish()
+    public async Task Racing_a_finish_every_201_is_stored_once_in_order_and_a_post_after_the_finish_is_409()
     {
+        // The atomicity itself comes from the single INSERT ... SELECT statement
+        // that checks the Active conversation; this test checks its visible results.
         using var f = new RoomsFactory();
         var r = await NewRoom(f);
         var third = await f.SignedIn(f.SeedOwnerMember(r.ProjectId, "three@example.com", "Third Owner"));
