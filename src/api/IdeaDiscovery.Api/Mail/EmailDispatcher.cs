@@ -48,7 +48,7 @@ public sealed class EmailDispatcher(
             var links = scope.ServiceProvider.GetRequiredService<SignInLinks>();
 
             var user = await db.Users.AsNoTracking()
-                .Where(u => u.Email == job.Email
+                .Where(u => u.Email != null && u.Email == job.Email
                     && (u.IsConsultant || db.ProjectMembers.Any(m => m.UserId == u.Id)))
                 .SingleOrDefaultAsync(cancellationToken);
             if (user is null) return;
@@ -76,7 +76,7 @@ public sealed class EmailDispatcher(
             AuditLog.Add(db, clock, "sign_in_link_requested", user.Id, job.Ip);
             await db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
-            (to, language) = (user.Email, user.UiLanguage);
+            (to, language) = (user.Email!, user.UiLanguage); // the query above matched on a non-null email
         }
 
         try

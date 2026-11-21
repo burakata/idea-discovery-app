@@ -14,7 +14,9 @@ public class User
 {
     public Guid Id { get; set; }
     // Lower-case and trimmed; use Emails.Normalise before storing or comparing.
-    public string Email { get; set; } = "";
+    // Null for a person who joined by asking: nothing they typed becomes an
+    // address. A null email never matches any email lookup.
+    public string? Email { get; set; }
     public string DisplayName { get; set; } = "";
     public string UiLanguage { get; set; } = "en";
     public bool IsConsultant { get; set; }
@@ -31,6 +33,35 @@ public class Project
     public string Status { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public Guid CreatedById { get; set; }
+    // Ask to join: switched on by Burak per project.
+    public bool AskToJoinEnabled { get; set; }
+    // Random 128-bit base64url code in the project link. Not a credential, so it
+    // is stored as is and Burak can see the link again. Null until first switched on.
+    public string? JoinCode { get; set; }
+}
+
+public enum JoinRequestState { Pending, Approved, Rejected }
+
+// A person's request to join a project. Nothing typed here is a verified fact.
+public class JoinRequest
+{
+    public Guid Id { get; set; }
+    public Guid ProjectId { get; set; }
+    public string Name { get; set; } = "";
+    // Never used to send anything and never copied to the account.
+    public string? UncheckedEmail { get; set; }
+    // HMAC of the secret in the asking browser's cookie.
+    public string SecretHash { get; set; } = "";
+    public string? Device { get; set; }
+    public string? IpAddress { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public JoinRequestState State { get; set; }
+    public DateTime? DecidedAt { get; set; }
+    public Guid? DecidedById { get; set; }
+    public Guid? UserId { get; set; }
+    public DateTime? ApprovedUntil { get; set; }
+    public DateTime? ClaimedAt { get; set; }
 }
 
 public class ProjectMember

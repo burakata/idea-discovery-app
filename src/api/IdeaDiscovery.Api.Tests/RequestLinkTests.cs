@@ -427,8 +427,10 @@ public class RequestLinkTests
             }));
 
             await AssertEmptyAccepted(await person.Post("/auth/request-link", new { email = "owner@example.com" }));
-            for (var i = 0; i < 500 && !(Directory.Exists(folder) && Directory.GetFiles(folder).Length > 0); i++)
-                await Task.Delay(10);
+            // The file may be half-written until the queue has finished with the email.
+            var queue = app.Services.GetRequiredService<EmailQueue>();
+            for (var i = 0; i < 1000 && queue.Unfinished > 0; i++) await Task.Delay(10);
+            Assert.Equal(0, queue.Unfinished);
 
             var file = Assert.Single(Directory.GetFiles(folder, "*.eml"));
             var text = await File.ReadAllTextAsync(file);

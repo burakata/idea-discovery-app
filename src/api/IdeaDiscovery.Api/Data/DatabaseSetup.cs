@@ -53,7 +53,7 @@ public static class DatabaseSetup
         }
         SetConsultant(db, user, true);
 
-        foreach (var other in db.Users.Where(u => u.IsConsultant && u.Email != email).ToList())
+        foreach (var other in db.Users.Where(u => u.IsConsultant && (u.Email == null || u.Email != email)).ToList())
             SetConsultant(db, other, false);
         db.SaveChanges();
     }

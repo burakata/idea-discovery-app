@@ -13,7 +13,7 @@ public static class AuthEndpoints
 {
     public const string RedeemRateLimit = "redeem";
     public const string RequestLinkRateLimit = "request-link";
-    private const int MaxDeviceLength = 200;
+    internal const int MaxDeviceLength = 200;
     private const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);
@@ -105,7 +105,31 @@ public static class AuthEndpoints
             return LinkNotValid();
         }
 
-        await http.SignInAsync(
+        await SignInWithSessionAsync(http, session);
+        return Results.Ok(await ReadMeAsync(db, session.UserId));
+    }
+
+    // Shared with the join claim: one place makes a session row and its cookie.
+    // The row is added to the context; the caller saves it.
+    internal static UserSession NewSession(AppDbContext db, DateTime now, Guid userId, HttpContext http, string? ip)
+    {
+        var userAgent = http.Request.Headers.UserAgent.ToString();
+        var session = new UserSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CreatedAt = now,
+            ExpiresAt = now + SessionValidation.SessionLifetime,
+            LastSeenAt = now,
+            Device = userAgent.Length > MaxDeviceLength ? userAgent[..MaxDeviceLength] : userAgent,
+            IpAddress = ip,
+        };
+        db.UserSessions.Add(session);
+        return session;
+    }
+
+    internal static Task SignInWithSessionAsync(HttpContext http, UserSession session) =>
+        http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             SessionValidation.NewPrincipal(session.UserId, session.Id),
             new AuthenticationProperties
@@ -114,8 +138,6 @@ public static class AuthEndpoints
                 AllowRefresh = false,
                 ExpiresUtc = new DateTimeOffset(session.ExpiresAt, TimeSpan.Zero),
             });
-        return Results.Ok(await ReadMeAsync(db, session.UserId));
-    }
 
     // One transaction: the token is spent, the person and membership exist, the
     // invitation is accepted and the session is created, or none of it happens.
@@ -150,7 +172,7 @@ public static class AuthEndpoints
                 || invitation.ExpiresAt <= now)
                 return null;
 
-            user = await db.Users.SingleOrDefaultAsync(u => u.Email == invitation.Email);
+            user = await db.Users.SingleOrDefaultAsync(u => u.Email != null && u.Email == invitation.Email);
             // An invitation must never sign anyone in as the consultant. Nothing
             // has been committed, so leaving here rolls the spent token back.
             if (user is { IsConsultant: true }) return null;
@@ -188,18 +210,7 @@ public static class AuthEndpoints
             AuditLog.Add(db, clock, "invitation_accepted", user.Id, ip, projectId, details);
         }
 
-        var userAgent = http.Request.Headers.UserAgent.ToString();
-        var session = new UserSession
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            CreatedAt = now,
-            ExpiresAt = now + SessionValidation.SessionLifetime,
-            LastSeenAt = now,
-            Device = userAgent.Length > MaxDeviceLength ? userAgent[..MaxDeviceLength] : userAgent,
-            IpAddress = ip,
-        };
-        db.UserSessions.Add(session);
+        var session = NewSession(db, now, user.Id, http, ip);
         AuditLog.Add(db, clock, "sign_in", user.Id, ip, projectId, $"session:{session.Id}");
         await db.SaveChangesAsync();
         await tx.CommitAsync();
@@ -226,7 +237,7 @@ public static class AuthEndpoints
         return me is null ? Results.Unauthorized() : Results.Ok(me);
     }
 
-    private static Task<object?> ReadMeAsync(AppDbContext db, Guid userId) =>
+    internal static Task<object?> ReadMeAsync(AppDbContext db, Guid userId) =>
         db.Users.AsNoTracking()
             .Where(u => u.Id == userId)
             .Select(u => (object?)new { id = u.Id, displayName = u.DisplayName, email = u.Email, uiLanguage = u.UiLanguage, isConsultant = u.IsConsultant })

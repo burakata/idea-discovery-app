@@ -192,7 +192,7 @@ public sealed class DatabaseTests : IDisposable
         DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "first@example.test")), NullLogger.Instance);
         DatabaseSetup.SyncConsultant(_db, Config(("Consultant:Email", "second@example.test"), ("Consultant:DisplayName", "Second")), NullLogger.Instance);
 
-        var users = _db.Users.ToDictionary(u => u.Email);
+        var users = _db.Users.ToDictionary(u => u.Email!);
         Assert.False(users["first@example.test"].IsConsultant);
         Assert.True(users["second@example.test"].IsConsultant);
         Assert.Equal("Second", users["second@example.test"].DisplayName);

@@ -66,7 +66,7 @@ public static class ConsultantEndpoints
             if (invitation.RevokedAt is not null || invitation.AcceptedAt is not null || invitation.ExpiresAt <= now)
                 return Results.Conflict(new { error = "invitation_not_open" });
 
-            if (await db.Users.AnyAsync(u => u.Email == invitation.Email && u.IsConsultant))
+            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email && u.IsConsultant))
                 return Results.Conflict(new { error = "invitation_not_open" });
 
             var link = await links.ForInvitationAsync(invitationId);
@@ -75,7 +75,168 @@ public static class ConsultantEndpoints
             await db.SaveChangesAsync();
             return Results.Ok(new { link });
         });
+
+        MapJoin(group);
     }
+
+    private sealed record ApproveRequest(string? DisplayName);
+
+    // Ask to join, Burak's side. Every query names the project or the request.
+    private static void MapJoin(RouteGroupBuilder group)
+    {
+        group.MapPost("/projects/{projectId:guid}/join-link", async (
+            Guid projectId, HttpContext http, AppDbContext db, AuthSettings settings, TimeProvider clock) =>
+        {
+            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            if (project is null) return Results.NotFound();
+            project.AskToJoinEnabled = true;
+            project.JoinCode ??= JoinEndpoints.NewCode();
+            AuditLog.Add(db, clock, "join_link_on", SessionValidation.UserId(http.User), Ip(http), projectId);
+            await db.SaveChangesAsync();
+            return Results.Ok(new { link = JoinLink(settings, project.JoinCode) });
+        });
+
+        group.MapPost("/projects/{projectId:guid}/join-link/off", async (
+            Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
+        {
+            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            if (project is null) return Results.NotFound();
+            project.AskToJoinEnabled = false;
+            AuditLog.Add(db, clock, "join_link_off", SessionValidation.UserId(http.User), Ip(http), projectId);
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        });
+
+        // A new code; the old one stops working. Whether asking is on stays as it was.
+        group.MapPost("/projects/{projectId:guid}/join-link/renew", async (
+            Guid projectId, HttpContext http, AppDbContext db, AuthSettings settings, TimeProvider clock) =>
+        {
+            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            if (project is null) return Results.NotFound();
+            project.JoinCode = JoinEndpoints.NewCode();
+            AuditLog.Add(db, clock, "join_link_renewed", SessionValidation.UserId(http.User), Ip(http), projectId);
+            await db.SaveChangesAsync();
+            return Results.Ok(new { link = JoinLink(settings, project.JoinCode) });
+        });
+
+        group.MapGet("/projects/{projectId:guid}/join-requests", async (
+            Guid projectId, AppDbContext db, TimeProvider clock) =>
+        {
+            if (!await db.Projects.AnyAsync(p => p.Id == projectId)) return Results.NotFound();
+            var now = clock.GetUtcNow().UtcDateTime;
+
+            var memberNames = await (from m in db.ProjectMembers
+                                     join u in db.Users on m.UserId equals u.Id
+                                     where m.ProjectId == projectId
+                                     select u.DisplayName).ToListAsync();
+            var taken = memberNames.Select(JoinEndpoints.NameKey).ToHashSet();
+
+            var waiting = await db.JoinRequests.AsNoTracking()
+                .Where(r => r.ProjectId == projectId && r.State == JoinRequestState.Pending && r.ExpiresAt > now)
+                .OrderBy(r => r.CreatedAt)
+                .ToListAsync();
+            return Results.Ok(waiting.Select(r => new
+            {
+                id = r.Id,
+                name = r.Name,
+                uncheckedEmail = r.UncheckedEmail,
+                device = r.Device,
+                createdAt = r.CreatedAt,
+                expiresAt = r.ExpiresAt,
+                nameMatchesMember = taken.Contains(JoinEndpoints.NameKey(r.Name)),
+            }));
+        });
+
+        group.MapPost("/join-requests/{requestId:guid}/approve", async (
+            Guid requestId, HttpContext http, AppDbContext db, TimeProvider clock) =>
+        {
+            string? typed = null;
+            try
+            {
+                if (http.Request.HasJsonContentType())
+                    typed = (await http.Request.ReadFromJsonAsync<ApproveRequest>())?.DisplayName;
+            }
+            catch (System.Text.Json.JsonException) { return Results.BadRequest(new { error = "invalid_request" }); }
+            catch (BadHttpRequestException) { return Results.BadRequest(new { error = "invalid_request" }); }
+            var corrected = JoinEndpoints.CleanName(typed);
+            if (typed is not null && corrected is null)
+                return Results.BadRequest(new { error = "invalid_request" });
+
+            var request = await db.JoinRequests.AsNoTracking().SingleOrDefaultAsync(r => r.Id == requestId);
+            if (request is null) return Results.NotFound();
+
+            var actor = SessionValidation.UserId(http.User);
+            var now = clock.GetUtcNow().UtcDateTime;
+            try
+            {
+                // One transaction: the person, the membership and the decision, or none of it.
+                await using var tx = await db.Database.BeginTransactionAsync();
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = null,
+                    DisplayName = corrected ?? request.Name,
+                    UiLanguage = "en",
+                    CreatedAt = now,
+                };
+                db.Users.Add(user);
+                db.ProjectMembers.Add(new ProjectMember
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = request.ProjectId,
+                    UserId = user.Id,
+                    Role = MemberRole.Owner,
+                    JoinedAt = now,
+                });
+                await db.SaveChangesAsync();
+
+                var decided = await db.JoinRequests
+                    .Where(r => r.Id == requestId && r.State == JoinRequestState.Pending && r.ExpiresAt > now)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(r => r.State, JoinRequestState.Approved)
+                        .SetProperty(r => r.DecidedAt, (DateTime?)now)
+                        .SetProperty(r => r.DecidedById, actor)
+                        .SetProperty(r => r.UserId, (Guid?)user.Id)
+                        .SetProperty(r => r.ApprovedUntil, (DateTime?)(now + JoinEndpoints.ApprovalWindow)));
+                // Leaving here rolls the new person back.
+                if (decided != 1) return Results.Conflict(new { error = "request_not_waiting" });
+
+                AuditLog.Add(db, clock, "join_approved", actor, Ip(http), request.ProjectId,
+                    $"request:{requestId} user:{user.Id}");
+                await db.SaveChangesAsync();
+                await tx.CommitAsync();
+                return Results.Ok(new { userId = user.Id, displayName = user.DisplayName });
+            }
+            catch (Exception ex) when (ex is DbUpdateException or Microsoft.Data.Sqlite.SqliteException)
+            {
+                // The loser of two parallel decisions.
+                return Results.Conflict(new { error = "request_not_waiting" });
+            }
+        });
+
+        group.MapPost("/join-requests/{requestId:guid}/reject", async (
+            Guid requestId, HttpContext http, AppDbContext db, TimeProvider clock) =>
+        {
+            var request = await db.JoinRequests.AsNoTracking().SingleOrDefaultAsync(r => r.Id == requestId);
+            if (request is null) return Results.NotFound();
+
+            var actor = SessionValidation.UserId(http.User);
+            var now = clock.GetUtcNow().UtcDateTime;
+            var decided = await db.JoinRequests
+                .Where(r => r.Id == requestId && r.State == JoinRequestState.Pending && r.ExpiresAt > now)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.State, JoinRequestState.Rejected)
+                    .SetProperty(r => r.DecidedAt, (DateTime?)now)
+                    .SetProperty(r => r.DecidedById, actor));
+            if (decided != 1) return Results.Conflict(new { error = "request_not_waiting" });
+
+            AuditLog.Add(db, clock, "join_rejected", actor, Ip(http), request.ProjectId, $"request:{requestId}");
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        });
+    }
+
+    private static string JoinLink(AuthSettings settings, string? code) => $"{settings.LinkBase}/join/{code}";
 
     private static string? Ip(HttpContext http) => http.Connection.RemoteIpAddress?.ToString();
 }
