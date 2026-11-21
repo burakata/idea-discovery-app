@@ -239,27 +239,61 @@ public static class JoinEndpoints
         IsEssential = true,
     };
 
-    // A name as stored: NFKC, trimmed, runs of whitespace as one space. Null when
-    // it is empty, too long, or holds a control or invisible (Format) character,
-    // which could make one person look like another. Turkish letters are
+    // A name as stored: NFKC, runs of whitespace as one space, trimmed. Null when
+    // it is empty, too long, or holds anything but letters, combining marks, a
+    // space, an apostrophe, a hyphen or a full stop. Some invisible characters
+    // are letters or marks, so those are refused by name. Turkish letters are
     // untouched by NFKC.
     public static string? CleanName(string? raw)
     {
         if (raw is null) return null;
         string name;
-        try { name = raw.Normalize(NormalizationForm.FormKC).Trim(); }
+        try { name = raw.Normalize(NormalizationForm.FormKC); }
         catch (ArgumentException) { return null; } // not valid Unicode
-        if (name.Length == 0 || HasControlCharacters(name)
-            || name.Any(c => char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format))
+        // A tab or line break inside a name is refused, not turned into a space.
+        if (name.EnumerateRunes().Any(r => Rune.GetUnicodeCategory(r) == System.Globalization.UnicodeCategory.Control))
             return null;
-        name = System.Text.RegularExpressions.Regex.Replace(name, @"\s+", " ");
-        return name.Length > MaxNameLength ? null : name;
+        name = System.Text.RegularExpressions.Regex.Replace(name, @"\s+", " ").Trim();
+        if (name.Length == 0 || name.Length > MaxNameLength || !name.EnumerateRunes().All(IsAllowedInName)) return null;
+        return name;
     }
 
-    // What two names are compared by. ToLowerInvariant leaves the Turkish dotted
-    // and dotless I as they are, so "Işıl" and "İşil" stay different names.
-    public static string NameKey(string name) =>
-        (CleanName(name) ?? name.Trim()).ToLowerInvariant();
+    // Whole code points, so characters outside the BMP are judged too, not their
+    // surrogate halves.
+    private static bool IsAllowedInName(Rune rune)
+    {
+        var v = rune.Value;
+        if (v is 0x115F or 0x1160 or 0x3164 or 0xFFA0 // letters that draw nothing
+            || v is 0x034F or 0x17B4 or 0x17B5 // marks that draw nothing
+            || v is >= 0x180B and <= 0x180D
+            || v is >= 0xFE00 and <= 0xFE0F
+            || v is >= 0xE0100 and <= 0xE01EF)
+            return false;
+        if (v is ' ' or '\'' or '’' or '-' or '.') return true;
+        return Rune.GetUnicodeCategory(rune) is
+            System.Globalization.UnicodeCategory.UppercaseLetter or System.Globalization.UnicodeCategory.LowercaseLetter
+            or System.Globalization.UnicodeCategory.TitlecaseLetter or System.Globalization.UnicodeCategory.ModifierLetter
+            or System.Globalization.UnicodeCategory.OtherLetter or System.Globalization.UnicodeCategory.NonSpacingMark
+            or System.Globalization.UnicodeCategory.SpacingCombiningMark or System.Globalization.UnicodeCategory.EnclosingMark;
+    }
+
+    // What two names are compared by, so the warning fires generously: without
+    // accents or combining marks, the Turkish dotted and dotless I as plain i,
+    // in lower case. Only for comparing; names are stored as typed.
+    public static string NameKey(string name)
+    {
+        var text = (CleanName(name) ?? name.Trim()).Replace('ı', 'i').Replace('İ', 'i');
+        var key = new StringBuilder();
+        foreach (var c in text.Normalize(NormalizationForm.FormD))
+        {
+            var category = char.GetUnicodeCategory(c);
+            if (category is System.Globalization.UnicodeCategory.NonSpacingMark
+                or System.Globalization.UnicodeCategory.SpacingCombiningMark
+                or System.Globalization.UnicodeCategory.EnclosingMark) continue;
+            key.Append(c);
+        }
+        return key.ToString().ToLowerInvariant();
+    }
 
     private static bool HasControlCharacters(string text) => text.Any(char.IsControl);
 

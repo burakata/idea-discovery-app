@@ -500,6 +500,11 @@ public class AskToJoinTests
     [InlineData("﻿Ayse Yilmaz")] // byte order mark
     [InlineData("‮Ayse Yilmaz")] // right-to-left override
     [InlineData("Ayse ⁦Yilmaz⁩")] // bidi isolate
+    [InlineData("Ayse\U000E0041Yilmaz")] // tag character, outside the BMP
+    [InlineData("Ayse͏Yilmaz")] // combining grapheme joiner
+    [InlineData("Ayse️Yilmaz")] // variation selector
+    [InlineData("AyseㅤYilmaz")] // Hangul filler
+    [InlineData("Ayse⠀Yilmaz")] // braille blank
     public async Task A_name_with_an_invisible_character_is_refused_when_asking_and_when_approving(string name)
     {
         using var r = new Rig();
@@ -516,6 +521,54 @@ public class AskToJoinTests
         var id = await r.Asked(r.NewBrowser(), code);
         Assert.Equal(HttpStatusCode.BadRequest, (await r.TryApprove(id, new { displayName = name })).StatusCode);
         Assert.Equal(JoinRequestState.Pending, r.Row(id).State);
+    }
+
+    [Theory]
+    [InlineData("AyseㅤYilmaz")] // Hangul filler (a letter)
+    [InlineData("AyseﾠYilmaz")] // halfwidth Hangul filler (a letter)
+    [InlineData("AyseᅟYilmaz")] // Hangul choseong filler (a letter)
+    [InlineData("AyseᅠYilmaz")] // Hangul jungseong filler (a letter)
+    [InlineData("Ayse឴Yilmaz")] // Khmer inherent vowel (a mark)
+    [InlineData("Ayse᠋Yilmaz")] // Mongolian free variation selector (a mark)
+    [InlineData("Ayse\U000E0100Yilmaz")] // variation selector supplement (a mark)
+    [InlineData("Ayse 2")] // digit
+    [InlineData("Ayse\U0001F600")] // emoji
+    [InlineData("Ayse@Yilmaz")]
+    [InlineData("Ayse\tYilmaz")]
+    public void Names_with_anything_but_letters_marks_spaces_apostrophes_hyphens_and_full_stops_are_refused(string name)
+    {
+        Assert.Null(JoinEndpoints.CleanName(name));
+    }
+
+    [Theory]
+    [InlineData("O'Brien", "O'Brien")]
+    [InlineData("O’Brien", "O’Brien")]
+    [InlineData("Anne-Marie", "Anne-Marie")]
+    [InlineData("J. Smith", "J. Smith")]
+    [InlineData(TurkishName, TurkishName)]
+    // "s" followed by a combining cedilla becomes the single letter "ş" under NFKC.
+    [InlineData("Ay" + "ş" + "e", "Ayşe")]
+    [InlineData("  Ayse   Yilmaz ", "Ayse Yilmaz")]
+    public void Ordinary_names_pass_and_are_normalised(string typed, string stored)
+    {
+        Assert.Equal(stored, JoinEndpoints.CleanName(typed));
+    }
+
+    [Fact]
+    public async Task The_warning_fires_without_accents_and_without_dots_but_not_for_another_name()
+    {
+        using var r = new Rig();
+        AddMember(r.F, r.ProjectA, r.F.SeedOwner("sukru@example.com", "Şükrü"));
+        AddMember(r.F, r.ProjectA, r.F.SeedOwner("hasan@example.com", "Hasan"));
+        var code = await r.Enable();
+        var sukru = await r.Asked(r.NewBrowser(), code, "Sukru");
+        var elif = await r.Asked(r.NewBrowser(), code, "Elif");
+
+        var flags = (await r.Waiting()).EnumerateArray()
+            .ToDictionary(e => e.GetProperty("id").GetGuid(), e => e.GetProperty("nameMatchesMember").GetBoolean());
+        Assert.True(flags[sukru]);
+        Assert.False(flags[elif]);
+        Assert.Equal("Sukru", r.Row(sukru).Name); // stored as typed
     }
 
     [Fact]
@@ -550,24 +603,24 @@ public class AskToJoinTests
     }
 
     [Fact]
-    public async Task Turkish_letters_are_stored_as_typed_and_match_only_the_same_name()
+    public async Task Turkish_letters_are_stored_as_typed_and_the_warning_fires_for_look_alike_spellings()
     {
         using var r = new Rig();
         AddMember(r.F, r.ProjectA, r.F.SeedOwner("isil@example.com", TurkishName));
         var code = await r.Enable();
         var same = await r.Asked(r.NewBrowser(), code, "  " + TurkishName + " ");
-        // Look-alikes: a dotted capital I, plain Latin letters, a dotless i turned dotted.
+        // Decided: the warning fires generously, so these all flag.
         var dotted = await r.Asked(r.NewBrowser(), code, "İşıl Güneş Çağlar Öztürk");
-        var plainI = await r.Asked(r.NewBrowser(), code, "Isil Gunes Caglar Ozturk");
-        var dotless = await r.Asked(r.NewBrowser(), code, "Işıl Güneş Çağlar Öztürk ".Replace('ı', 'i'));
+        var lower = await r.Asked(r.NewBrowser(), code, "ışıl güneş çağlar öztürk");
+        var plain = await r.Asked(r.NewBrowser(), code, "Isil Gunes Caglar Ozturk");
 
         Assert.Equal(TurkishName, r.Row(same).Name);
         var flags = (await r.Waiting()).EnumerateArray()
             .ToDictionary(e => e.GetProperty("id").GetGuid(), e => e.GetProperty("nameMatchesMember").GetBoolean());
         Assert.True(flags[same]);
-        Assert.False(flags[dotted]);
-        Assert.False(flags[plainI]);
-        Assert.False(flags[dotless]);
+        Assert.True(flags[dotted]);
+        Assert.True(flags[lower]);
+        Assert.True(flags[plain]);
 
         await r.Approve(same);
         Assert.Equal(TurkishName, r.F.WithDb(db => db.Users.Single(u => u.Id == r.Row(same).UserId)).DisplayName);
@@ -924,10 +977,10 @@ public class AskToJoinTests
         using var r = new Rig();
         var code = await r.Enable();
         for (var i = 0; i < 5; i++)
-            Assert.Equal(HttpStatusCode.Accepted, (await r.Ask(r.NewBrowser(), code, $"Person {i}")).StatusCode);
+            Assert.Equal(HttpStatusCode.Accepted, (await r.Ask(r.NewBrowser(), code, $"Person {(char)('A' + i)}")).StatusCode);
 
         var sixth = r.NewBrowser();
-        var limited = await r.Ask(sixth, code, "Person 6");
+        var limited = await r.Ask(sixth, code, "Person F");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
         Assert.Null(sixth.Cookie(JoinEndpoints.CookieName));
