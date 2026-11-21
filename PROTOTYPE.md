@@ -1,8 +1,10 @@
 # Prototype: Idea Discovery Rooms
 
-A clickable front-end prototype. It shows how the app would look and feel.
-There is no backend, no database, no login and no AI. Nothing leaves the
-browser.
+The demo build of the client: a clickable version that shows how the app
+looks and feels. It has no backend, no database, no real sign-in and no AI.
+Nothing leaves the browser. The same client also builds against the real
+API (`npm --prefix src/web run dev:api`, see CLAUDE.md); this file is about
+the demo.
 
 ## Run it
 
@@ -14,7 +16,8 @@ npm --prefix src/web install
 npm --prefix src/web run dev
 ```
 
-Open http://localhost:5173. It opens as Burak on the project list. The sample
+Open http://localhost:5173. It opens on the signed-out home page, as the
+real app does; press **Try the demo** to go in as Burak. The sample
 project, "Home-cooked meals" / "Ev yemekleri", is **invented**: its owners,
 messages and reactions are sample data, not a real idea.
 
@@ -23,20 +26,22 @@ PowerShell (Git Bash rewrites the path), then start the `pages-preview`
 configuration in `.claude/launch.json`:
 
 ```
-npm --prefix src/web run build -- --base=/idea-discovery-app/
+npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
 ```
 
 ## How to use it
 
 - **The amber strip at the top** is the prototype's own controls. It is not
   part of the app.
-  - **View as** switches between the three owners and Burak. The real app is
-    asynchronous, so this is how you see every side from one browser.
-  - **Reset demo** puts everything back to the start.
+  - **View as** switches between the three owners and Burak once you are
+    signed in. The real app is asynchronous, so this is how you see every
+    side from one browser.
+  - **Reset demo** puts everything back to the start, signed out.
 - **EN | TR** is the real language switch. It is per person: switch View as
   and you get that person's language.
 - Things to try:
-  1. As Burak, open "Home-cooked meals" from the project list.
+  1. Press **Try the demo**, then open "Home-cooked meals" from the project
+     list.
   2. Switch View as to Hasan, switch to TR, tap "Sohbete katıl", enter a name
      and send a message. You see "Yanıt gelecek." and no reply.
   3. Switch back to Burak and open "Waiting for you". The draft reply is
@@ -83,12 +88,12 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
 | Translations of the seeded messages are hand-written. Anything typed in the demo shows "A translation appears here in the real app." | Translations from `prompts/translate.md` for every message, correction and statement |
 | The language of a typed message is taken to be the writer's language setting | Detect the language actually written |
 | The seeded discussion, reactions and proposals are **invented**. No owner said any of it. Nothing starts as confirmed | Real messages and reactions from the real owners |
-| "View as" decides who you are | An invite link per room and each person's own device |
+| "View as" decides who you are | Each person signs in on their own device with a one-time link from their email, a link Burak copies, or an approved request to join |
 | `?as=burak&lang=tr` in the address sets the viewer and language | Must not exist. It would expose Burak's queue to anyone |
 | Everything is saved in this browser's local storage | A server and database shared by everyone in the room |
 | Rooms come from config files in the code | The consultant creates projects in the app (PRD R01) |
 | No Print version link | Generated from the idea page and shared summary, in the reader's language (M3) |
-| No sign-in of any kind | One-time email sign-in links, a copied link or an approved join request (M1) |
+| "Try the demo" signs in as Burak; the email form sends nothing, and the sign-in link page is a labelled sample | One-time email sign-in links, a copied link or an approved join request (built in M1) |
 
 ## What the real build needs
 
@@ -119,6 +124,6 @@ npm --prefix src/web run build -- --base=/idea-discovery-app/
 
 ## Not built
 
-Everything in the PRD's future feature register. Also sign-in, sharing between
-devices, creating a project in the app, notifications, exporting the
-discussion, and a "request a note" button.
+Everything in the PRD's future feature register. In the demo also sharing
+between devices, creating a project in the app, notifications, exporting
+the discussion, and a "request a note" button.
