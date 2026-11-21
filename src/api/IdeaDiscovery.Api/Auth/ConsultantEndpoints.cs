@@ -1,4 +1,5 @@
 using IdeaDiscovery.Api.Data;
+using IdeaDiscovery.Api.Projects;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdeaDiscovery.Api.Auth;
@@ -66,7 +67,8 @@ public static class ConsultantEndpoints
             if (invitation.RevokedAt is not null || invitation.AcceptedAt is not null || invitation.ExpiresAt <= now)
                 return Results.Conflict(new { error = "invitation_not_open" });
 
-            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email && u.IsConsultant))
+            // An address that already has an account is added, not invited.
+            if (await db.Users.AnyAsync(u => u.Email != null && u.Email == invitation.Email))
                 return Results.Conflict(new { error = "invitation_not_open" });
 
             var link = await links.ForInvitationAsync(invitationId);
@@ -77,6 +79,7 @@ public static class ConsultantEndpoints
         });
 
         MapJoin(group);
+        group.MapInvitations();
     }
 
     private sealed record ApproveRequest(string? DisplayName);
@@ -87,7 +90,7 @@ public static class ConsultantEndpoints
         group.MapPost("/projects/{projectId:guid}/join-link", async (
             Guid projectId, HttpContext http, AppDbContext db, AuthSettings settings, TimeProvider clock) =>
         {
-            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
             project.AskToJoinEnabled = true;
             project.JoinCode ??= JoinEndpoints.NewCode();
@@ -99,7 +102,7 @@ public static class ConsultantEndpoints
         group.MapPost("/projects/{projectId:guid}/join-link/off", async (
             Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
-            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
             project.AskToJoinEnabled = false;
             AuditLog.Add(db, clock, "join_link_off", SessionValidation.UserId(http.User), Ip(http), projectId);
@@ -111,7 +114,7 @@ public static class ConsultantEndpoints
         group.MapPost("/projects/{projectId:guid}/join-link/renew", async (
             Guid projectId, HttpContext http, AppDbContext db, AuthSettings settings, TimeProvider clock) =>
         {
-            var project = await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
+            var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
             project.JoinCode = JoinEndpoints.NewCode();
             AuditLog.Add(db, clock, "join_link_renewed", SessionValidation.UserId(http.User), Ip(http), projectId);
@@ -120,9 +123,9 @@ public static class ConsultantEndpoints
         });
 
         group.MapGet("/projects/{projectId:guid}/join-requests", async (
-            Guid projectId, AppDbContext db, TimeProvider clock) =>
+            Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
-            if (!await db.Projects.AnyAsync(p => p.Id == projectId)) return Results.NotFound();
+            if (await ProjectAccess.FindAsync(db, http.User, projectId) is null) return Results.NotFound();
             var now = clock.GetUtcNow().UtcDateTime;
 
             var memberNames = await (from m in db.ProjectMembers

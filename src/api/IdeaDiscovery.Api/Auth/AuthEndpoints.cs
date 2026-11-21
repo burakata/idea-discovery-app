@@ -14,7 +14,7 @@ public static class AuthEndpoints
     public const string RedeemRateLimit = "redeem";
     public const string RequestLinkRateLimit = "request-link";
     internal const int MaxDeviceLength = 200;
-    private const int MaxEmailLength = 254;
+    internal const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);
     private sealed record RequestLinkRequest(string? Email);
@@ -68,7 +68,7 @@ public static class AuthEndpoints
     }
 
     // Cheap shape check: one "@" with something on both sides, and no spaces.
-    private static bool LooksLikeEmail(string email)
+    internal static bool LooksLikeEmail(string email)
     {
         var at = email.IndexOf('@');
         return at > 0 && at == email.LastIndexOf('@') && at < email.Length - 1
@@ -183,6 +183,7 @@ public static class AuthEndpoints
                     Id = Guid.NewGuid(),
                     Email = invitation.Email,
                     DisplayName = invitation.DisplayName,
+                    UiLanguage = invitation.Language,
                     CreatedAt = now,
                 };
                 db.Users.Add(user);
@@ -196,6 +197,30 @@ public static class AuthEndpoints
                     Role = MemberRole.Owner,
                     JoinedAt = now,
                 });
+
+            // The person's other open invitations (same address) are accepted here
+            // too, so no older link can sign into this account later.
+            var others = await db.Invitations
+                .Where(i => i.Id != invitation.Id && i.Email == invitation.Email
+                    && i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now)
+                .ToListAsync();
+            foreach (var other in others)
+            {
+                if (!await db.ProjectMembers.AnyAsync(m => m.ProjectId == other.ProjectId && m.UserId == user.Id))
+                    db.ProjectMembers.Add(new ProjectMember
+                    {
+                        Id = Guid.NewGuid(), ProjectId = other.ProjectId, UserId = user.Id,
+                        Role = MemberRole.Owner, JoinedAt = now,
+                    });
+                other.AcceptedAt = now;
+                other.AcceptedUserId = user.Id;
+                AuditLog.Add(db, clock, "member_added", user.Id, ip, other.ProjectId, $"invitation:{other.Id}");
+            }
+            var otherIds = others.Select(o => o.Id).ToList();
+            await db.SignInTokens
+                .Where(t => t.InvitationId != null && otherIds.Contains(t.InvitationId.Value)
+                    && t.UsedAt == null && t.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, (DateTime?)now));
             await db.SaveChangesAsync();
 
             var accepted = await db.Invitations

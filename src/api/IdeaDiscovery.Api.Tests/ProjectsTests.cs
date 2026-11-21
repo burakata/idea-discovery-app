@@ -203,7 +203,7 @@ public class ProjectsTests
         var removed = await f.SignedIn(removedId);
 
         var byEmail = f.SeedInvitation(a, "removed@example.com", "Removed Owner");
-        var byAccount = f.SeedInvitation(a, "old-address@example.com", "Removed Owner");
+        var byAccount = f.SeedInvitation(a, "removed@example.com", "Removed Owner"); // the same address, but already accepted
         f.Change(byAccount, i => { i.AcceptedAt = f.Now; i.AcceptedUserId = removedId; });
         var otherPerson = f.SeedInvitation(a, "someone.else@example.com", "Someone Else");
         var otherProject = f.SeedInvitation(b, "removed@example.com", "Removed Owner");
