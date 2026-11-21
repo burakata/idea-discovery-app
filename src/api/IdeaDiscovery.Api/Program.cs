@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using IdeaDiscovery.Api.Auth;
 using IdeaDiscovery.Api.Data;
 using IdeaDiscovery.Api.Mail;
+using IdeaDiscovery.Api.Projects;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -139,6 +140,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
 app.MapAuth();
 app.MapJoin();
 app.MapConsultant();
+app.MapProjects();
 
 app.Run();
 
