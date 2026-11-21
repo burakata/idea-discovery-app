@@ -152,6 +152,12 @@ DatabaseSetup.Initialise(app.Services);
 if (emailSettings.Provider == EmailProvider.None)
     app.Logger.LogWarning("Email:Provider is not set. Sign-in emails are dropped, not sent.");
 
+// The browser reaches the API at /api/... on its own origin, so the client's
+// pages never clash with API routes. The root paths keep working too. Routing
+// is explicit so that it sees the path after the base is removed.
+app.UsePathBase("/api");
+app.UseRouting();
+
 app.UseAuthentication();
 // After authentication, so the message limit can be counted per person.
 app.UseRateLimiter();

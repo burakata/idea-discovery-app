@@ -8,6 +8,6 @@ Katılmak için bu bağlantıyı kullanın:
 
 {link}
 
-Bağlantı yalnızca bir kez çalışır ve {days} gün sonra geçerliliğini yitirir.
+Bağlantı yalnızca bir kez çalışır ve {days} gün sonra geçerliliğini yitirir. Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir.
 
 Bu daveti beklemiyorsanız bu e-postayı yok sayabilirsiniz.

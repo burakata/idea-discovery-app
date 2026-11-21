@@ -1,6 +1,7 @@
 // Owner-facing text. English is the source; every key must also exist in tr.ts.
 const en = {
   app: {
+    loading: 'Loading…',
     name: 'Idea Discovery Rooms',
     tagline: 'Understanding an idea together',
   },
@@ -14,6 +15,7 @@ const en = {
     idea: 'The idea',
     discussion: 'Discussion',
     summary: 'Shared summary',
+    projects: 'Projects',
   },
   status: {
     draft: 'Draft · Needs confirmation',
@@ -23,13 +25,49 @@ const en = {
   language: {
     label: 'Language',
   },
-  preview: {
-    label: 'Interactive preview',
-    short: 'Preview',
-    explain: 'The assistant and sharing are simulated. Everything stays in this browser.',
-    viewAs: 'View as',
-    notJoined: 'not joined yet',
-    reset: 'Reset demo',
+  auth: {
+    signOut: 'Sign out',
+    home: {
+      title: 'Work out your idea together',
+      intro:
+        'A shared place where you and your software consultant work out a business idea together. An AI assistant helps by asking questions.',
+      emailLabel: 'Your email address',
+      emailMissing: 'Write your email address to continue.',
+      submit: 'Email me a sign-in link',
+      sentTitle: 'Check your email',
+      sent: 'If you were invited with {email}, a sign-in link will arrive there in a few minutes.',
+      sentHint:
+        'The link works for 30 minutes. If you ask more than once, use the newest email. Nothing after a few minutes? Check your spam folder.',
+      askAgain: 'Ask again',
+      invitationNote:
+        'There is no password: each time, we email you a link. Only people your consultant has invited can sign in. First time here? Use the link in your invitation email.',
+    },
+    signIn: {
+      title: 'Sign in',
+      explain: 'Press the button to continue. Only do this if the link was sent to you.',
+      button: 'Sign in',
+      invalidTitle: 'This link does not work',
+      invalidHelp:
+        'If you have signed in before, ask for a new link below. If this was your invitation, or you think someone else opened it, tell your consultant.',
+    },
+    signedInAs: 'Signed in as {name}',
+  },
+  errors: {
+    linkNotValid: 'This link no longer works. It may have been used already or be too old.',
+    tooManyTries: 'Too many tries. Wait a little, then try again.',
+    network: 'Connection lost. Check your internet and try again.',
+    generic: 'Something went wrong. Try again.',
+  },
+  notices: {
+    signedOut: 'You have been signed out. Ask for a new link below to carry on.',
+    signedOutByYou: 'You have signed out.',
+    projectGone: 'We could not find that project. Here are the projects you are in.',
+  },
+  projects: {
+    title: 'Your projects',
+    sub: 'The ideas you are working on with your consultant.',
+    empty: 'There are no projects to show. If you expected one, ask your consultant.',
+    open: 'Open project',
   },
   idea: {
     join: 'Join discussion',

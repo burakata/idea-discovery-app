@@ -8,13 +8,13 @@ import { JobFlow } from '../components/JobFlow'
 import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
 import type { Project } from '../projects/types'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import { useT } from '../strings'
 import styles from './Idea.module.css'
 
 export default function Idea() {
   const project = useOutletContext<Project>()
-  const { state } = useStore()
+  const { state } = useDemoStore()
   const { t, pick } = useT()
 
   const base = `/rooms/${project.id}`

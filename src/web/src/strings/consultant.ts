@@ -4,11 +4,11 @@ export const consultant = {
     group: 'For you',
     queue: 'Waiting for you',
     notes: 'Private notes',
-    rooms: 'All rooms',
+    rooms: 'Projects',
     // Short labels for the link strip on phones.
     queueShort: 'Waiting',
     notesShort: 'Notes',
-    roomsShort: 'Rooms',
+    roomsShort: 'Projects',
     waiting: 'waiting for you',
   },
   languages: {
@@ -27,7 +27,6 @@ export const consultant = {
     answeredQuestion: 'Summary · Answers an open question',
     proposedQuestion: 'Summary · Open question',
     jobFlowChange: 'Job-flow change',
-    scripted: 'Scripted example',
     replyTo: 'Reply to',
     restsOn: 'Rests on',
     now: 'Now',
@@ -41,7 +40,6 @@ export const consultant = {
     cancel: 'Cancel',
     empty: 'Nothing is waiting for you.',
     emptyHint: 'When an owner sends a message, the assistant’s draft reply appears here.',
-    scriptDone: 'The scripted replies have run out. Use Reset demo to start again.',
   },
   summary: {
     confirm: 'Confirm',
@@ -59,19 +57,12 @@ export const consultant = {
   notes: {
     title: 'Private notes',
     sub: 'What the discussion may mean for the software. Owners never see this.',
-    sample: 'Sample note',
     written: 'Written',
-    simulated:
-      'This note is a hand-written sample. In the real app the assistant writes a new one when you ask.',
     empty: 'No notes for this room yet.',
   },
-  rooms: {
-    title: 'Rooms',
-    sub: 'One room for each idea.',
-    open: 'Open room',
-    messages: 'messages',
-    waiting: 'waiting for you',
-    owners: 'owners',
-    empty: 'Nothing here yet',
+  projects: {
+    title: 'Projects',
+    sub: 'Every idea you are helping with',
+    empty: 'No projects yet.',
   },
 }

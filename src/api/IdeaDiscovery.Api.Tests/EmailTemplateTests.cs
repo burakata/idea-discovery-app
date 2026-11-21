@@ -17,12 +17,14 @@ public sealed class EmailTemplateTests
             ("Your sign-in link for Idea Discovery Rooms",
              "Hello,\n\nHere is your sign-in link for Idea Discovery Rooms:\n\nhttps://example.test/sign-in#token\n\n"
              + "It works once and expires in 30 minutes.\n\n"
+             + "Do not forward this email: anyone who opens the link can sign in as you. If you asked more than once, only the newest link works.\n\n"
              + "If you did not ask for it, you can ignore this email.\n"),
             Render.SignIn("en"));
         Assert.Equal(
             ("Idea Discovery Rooms giriş bağlantınız",
              "Merhaba,\n\nIdea Discovery Rooms için giriş bağlantınız burada:\n\nhttps://example.test/sign-in#token\n\n"
              + "Bağlantı yalnızca bir kez çalışır ve 30 dakika sonra geçerliliğini yitirir.\n\n"
+             + "Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir. Birden fazla kez istediyseniz yalnızca en son bağlantı çalışır.\n\n"
              + "Bağlantıyı siz istemediyseniz bu e-postayı yok sayabilirsiniz.\n"),
             Render.SignIn("tr"));
         Assert.Equal(
@@ -30,7 +32,7 @@ public sealed class EmailTemplateTests
              "Hello Ayse,\n\nBurak has invited you to talk about \"Corner Shop\" on Idea Discovery Rooms. "
              + "It is a shared space where you can describe your idea in your own words.\n\n"
              + "Use this link to join:\n\nhttps://example.test/sign-in#token\n\n"
-             + "It works once and expires in 7 days.\n\n"
+             + "It works once and expires in 7 days. Do not forward this email: anyone who opens the link can sign in as you.\n\n"
              + "If you were not expecting this, you can ignore this email.\n"),
             Render.Invitation("en"));
         Assert.Equal(
@@ -38,7 +40,7 @@ public sealed class EmailTemplateTests
              "Merhaba Ayse,\n\nBurak, sizi Idea Discovery Rooms'ta \"Corner Shop\" hakkında konuşmaya davet etti. "
              + "Fikrinizi kendi sözlerinizle anlatabileceğiniz ortak bir alan.\n\n"
              + "Katılmak için bu bağlantıyı kullanın:\n\nhttps://example.test/sign-in#token\n\n"
-             + "Bağlantı yalnızca bir kez çalışır ve 7 gün sonra geçerliliğini yitirir.\n\n"
+             + "Bağlantı yalnızca bir kez çalışır ve 7 gün sonra geçerliliğini yitirir. Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir.\n\n"
              + "Bu daveti beklemiyorsanız bu e-postayı yok sayabilirsiniz.\n"),
             Render.Invitation("tr"));
         Assert.Equal(
@@ -46,14 +48,14 @@ public sealed class EmailTemplateTests
              "Hello Ayse,\n\nBurak has added you to \"Corner Shop\" on Idea Discovery Rooms.\n\n"
              + "Use this link to sign in:\n\nhttps://example.test/sign-in#token\n\n"
              + "It works once and expires in 30 minutes. "
-             + "If it has expired, you can ask for a new link on the sign-in page.\n"),
+             + "If it has expired, you can ask for a new link on the sign-in page. Do not forward this email: anyone who opens the link can sign in as you.\n"),
             Render.Added("en"));
         Assert.Equal(
             ("Idea Discovery Rooms'ta bir projeye eklendiniz",
              "Merhaba Ayse,\n\nBurak, sizi Idea Discovery Rooms'ta \"Corner Shop\" projesine ekledi.\n\n"
              + "Giriş yapmak için bu bağlantıyı kullanın:\n\nhttps://example.test/sign-in#token\n\n"
              + "Bağlantı yalnızca bir kez çalışır ve 30 dakika sonra geçerliliğini yitirir. "
-             + "Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz.\n"),
+             + "Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz. Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir.\n"),
             Render.Added("tr"));
     }
 

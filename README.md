@@ -55,21 +55,29 @@ npm --prefix src/web install
 npm --prefix src/web run dev
 ```
 
-Open http://localhost:5173. **View as**, in the strip at the top, switches
-between the owners and the consultant; **Reset demo** starts again.
-[PROTOTYPE.md](PROTOTYPE.md) lists what is simulated.
+Open http://localhost:5173 and press **Try the demo**. Once in, **View
+as**, in the strip at the top, switches between the owners and the
+consultant; **Reset demo** starts again. [PROTOTYPE.md](PROTOTYPE.md) lists
+what is simulated.
 
-**The API** needs the .NET 10 SDK. It is a skeleton so far:
+**The API** needs the .NET 10 SDK. It has sign-in by email link, projects,
+invitations, asking to join, and conversations:
 
 ```
 dotnet test src/api
+dotnet run --project src/api/IdeaDiscovery.Api --launch-profile http
+npm --prefix src/web run dev:api
 ```
+
+The last two run the real client against a local API; sign in with a link
+from the emails saved in `src/api/IdeaDiscovery.Api/emails/`. The room
+screens use the API from M1 PR 8; until then they are demo-only.
 
 ## What is where
 
 | Path | Contents |
 |---|---|
-| `src/web/` | The client: React, Vite and TypeScript. Today the prototype |
+| `src/web/` | The client: React, Vite and TypeScript, built as the demo or against the API |
 | `src/api/` | The API: ASP.NET Core on .NET 10, with its tests |
 | `prompts/` | The AI assistant's prompts, read from these files |
 | `docs/prd/` | The Phase 1 PRD, the single source of scope, with its milestones (§11) and future feature register (§12) |

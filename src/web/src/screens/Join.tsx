@@ -6,13 +6,13 @@ import { Card } from '../components/Card'
 import { TextInput } from '../components/Field'
 import { Icon } from '../components/Icon'
 import type { Project } from '../projects/types'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import { useT } from '../strings'
 import styles from './Join.module.css'
 
 export default function Join() {
   const project = useOutletContext<Project>()
-  const { viewer, dispatch } = useStore()
+  const { viewer, dispatch } = useDemoStore()
   const { t, pick } = useT()
   const [params] = useSearchParams()
   const [name, setName] = useState('')

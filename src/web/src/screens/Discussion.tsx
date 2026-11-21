@@ -7,13 +7,13 @@ import { TextArea } from '../components/Field'
 import { Icon } from '../components/Icon'
 import { MessageBubble } from '../components/MessageBubble'
 import type { Project } from '../projects/types'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import { useT } from '../strings'
 import styles from './Discussion.module.css'
 
 export default function Discussion() {
   const project = useOutletContext<Project>()
-  const { state, viewer, send } = useStore()
+  const { state, viewer, send } = useDemoStore()
   const { t, time, personName, translationOf } = useT()
   const [draft, setDraft] = useState('')
   const [showPeople, setShowPeople] = useState(false)

@@ -27,9 +27,6 @@
 
 .crumb {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .crumbPath,
@@ -319,5 +316,44 @@
 
   .page {
     padding: var(--space-3) var(--space-7) var(--space-8);
+  }
+}
+
+/* Who is signed in: a line under the header on phones, in the header on desktop. */
+.who {
+  display: none;
+}
+
+.whoPhone {
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+  background: var(--color-paper);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.alert {
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+@media (min-width: 900px) {
+  .who {
+    display: inline;
+    font-size: var(--text-sm);
+    color: var(--color-muted-strong);
+  }
+
+  .whoPhone {
+    display: none;
+  }
+
+  .alert {
+    padding: 0 var(--space-7);
+  }
+
+  .crumb {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

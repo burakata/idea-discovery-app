@@ -10,15 +10,16 @@ import { Pill } from '../components/Pill'
 import { scriptLine } from '../demo/script'
 import { otherLang } from '../languages'
 import type { Project, Text } from '../projects/types'
-import { useStore } from '../state/store'
+import { useDemoStore } from '../state/demoStore'
 import type { QueueItem, Source } from '../state/types'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
+import { demoConsultant } from '../strings/demo'
 import styles from './Queue.module.css'
 
 export default function Queue() {
   const project = useOutletContext<Project>()
-  const { state, dispatch } = useStore()
+  const { state, dispatch } = useDemoStore()
   const { t, lang, pick, personName, translationOf } = useT()
   const [editing, setEditing] = useState<string | null>(null)
   const [text, setText] = useState('')
@@ -154,7 +155,7 @@ export default function Queue() {
         <Card>
           <div className={styles.pills}>
             <Pill>{label}</Pill>
-            {item.kind === 'message' && <Pill tone="amber">{c.queue.scripted}</Pill>}
+            {item.kind === 'message' && <Pill tone="amber">{demoConsultant.scripted}</Pill>}
           </div>
           {editing === item.id ? (
             <div className={styles.form}>
@@ -253,10 +254,10 @@ export default function Queue() {
         <ul className={styles.items}>{room.queue.map(renderItem)}</ul>
       ) : (
         <Empty>
-          {c.queue.empty} {scriptDone ? c.queue.scriptDone : c.queue.emptyHint}
+          {c.queue.empty} {scriptDone ? demoConsultant.scriptDone : c.queue.emptyHint}
         </Empty>
       )}
-      {room.queue.length > 0 && scriptDone && <p className={styles.done}>{c.queue.scriptDone}</p>}
+      {room.queue.length > 0 && scriptDone && <p className={styles.done}>{demoConsultant.scriptDone}</p>}
     </Page>
   )
 }

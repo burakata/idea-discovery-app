@@ -84,6 +84,10 @@ export interface Room {
 export interface AppState {
   version: number
   seq: number
+  // The demo opens signed out. "Try the demo" signs in as Burak.
+  signedIn: boolean
+  // The signed-out visitor's language choice.
+  guestLanguage: Lang
   viewAs: string
   people: Record<string, Person>
   rooms: Record<string, Room>

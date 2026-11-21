@@ -27,7 +27,20 @@ jobs:
           cache: npm
           cache-dependency-path: src/web/package-lock.json
       - run: npm --prefix src/web ci
-      - run: npm --prefix src/web run build
+      # The same client builds for the demo and for the real API (docs/engineering.md section 14).
+      - run: npm --prefix src/web run build:demo
+      - run: npm --prefix src/web run build:api
+      # The build above is the api one: it must hold no demo code.
+      - name: The api build holds no demo code
+        run: |
+          failed=0
+          for marker in "Reset demo" "Interactive preview" "Try the demo" "hand-written sample" "Home-cooked meals" "Ev yemekleri" "interviewer.md" "idea-discovery-rooms-demo"; do
+            if grep -rqF -- "$marker" src/web/dist/assets; then
+              echo "::error::The api build contains demo text: $marker"
+              failed=1
+            fi
+          done
+          exit $failed
       - run: npm --prefix src/web test
 
   docs:

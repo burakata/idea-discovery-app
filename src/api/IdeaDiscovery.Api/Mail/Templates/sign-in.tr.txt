@@ -8,4 +8,6 @@ Idea Discovery Rooms için giriş bağlantınız burada:
 
 Bağlantı yalnızca bir kez çalışır ve {minutes} dakika sonra geçerliliğini yitirir.
 
+Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir. Birden fazla kez istediyseniz yalnızca en son bağlantı çalışır.
+
 Bağlantıyı siz istemediyseniz bu e-postayı yok sayabilirsiniz.

@@ -90,9 +90,10 @@ Read before planning: the Phase 1 PRD,
   in without a link; only the browser demo simulates sign-in.
 
 ## Stack
-- Client: React + Vite + TypeScript in `src/web`. Today it is the prototype,
-  with simulated AI and data in local storage. It grows into the real client;
-  the demo stays as a configuration that is off in real deployments.
+- Client: React + Vite + TypeScript in `src/web`. One client, two data
+  sources chosen at build time by `VITE_DATA_SOURCE`: `demo` (seed data,
+  simulated sign-in and AI, local storage; GitHub Pages) and `api` (the real
+  API; real deployments). The demo is never part of an `api` build.
 - API: ASP.NET Core on .NET 10 in `src/api`, with EF Core and SQLite
   (migrations applied on startup). It alone calls the Claude API, through a
   provider adapter.
@@ -112,8 +113,10 @@ Read before planning: the Phase 1 PRD,
 - Record every product or technical decision in docs/decisions.md.
 
 ## Commands
-The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
-has deny-by-default access, a health endpoint, the M1 database, sign-in
+The client runs as the demo (see PROTOTYPE.md) or against the API. Signing
+in, signing out and the project list work against the API; the room screens
+are demo-only until M1 PR 8. The API in `src/api` answers under `/api` (and
+at its root) and has deny-by-default access, a health endpoint, the M1 database, sign-in
 with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
 asking to join (`/join/*`), projects and members (`/projects`,
 `/consultant/projects`, `/me/language`), and invitations
@@ -122,8 +125,16 @@ and conversations and messages (`/projects/{id}/conversations`, its
 `{number}/messages` and `active/messages`, and Burak's
 `/consultant/projects/{id}/conversations` start and `active/finish`).
 - Install: `npm --prefix src/web install`
-- Run: `npm --prefix src/web run dev` (http://localhost:5173)
-- Build and type-check: `npm --prefix src/web run build`
+- Run the demo: `npm --prefix src/web run dev` (http://localhost:5173)
+- Run against the API: start the API (`dotnet run --project
+  src/api/IdeaDiscovery.Api --launch-profile http`, port 5270), then
+  `npm --prefix src/web run dev:api`; Vite forwards `/api` to it
+  (`API_PROXY_TARGET` overrides the address). Sign in with a link from
+  `src/api/IdeaDiscovery.Api/emails/`. The `.claude/launch.json`
+  configurations `api-dev` and `web-api` do the same.
+- Build and type-check: `npm --prefix src/web run build:demo` and
+  `npm --prefix src/web run build:api` (a plain `build` needs
+  `VITE_DATA_SOURCE` and fails without it)
 - Web tests (Vitest): `npm --prefix src/web test`
 - API build and tests (.NET 10 SDK): `dotnet test src/api`
 - New database migration: `dotnet tool restore`, then
