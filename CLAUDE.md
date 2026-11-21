@@ -118,7 +118,9 @@ with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
 asking to join (`/join/*`), projects and members (`/projects`,
 `/consultant/projects`, `/me/language`), and invitations
 (`/consultant/projects/{id}/invitations`, `/consultant/invitations/{id}/revoke`),
-but no conversations yet.
+and conversations and messages (`/projects/{id}/conversations`, its
+`{number}/messages` and `active/messages`, and Burak's
+`/consultant/projects/{id}/conversations` start and `active/finish`).
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
