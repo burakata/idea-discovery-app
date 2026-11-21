@@ -22,6 +22,8 @@ builder.Services.AddScoped<SignInLinks>();
 var emailSettings = EmailSettings.Read(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton(emailSettings);
 builder.Services.AddSingleton<EmailQueue>();
+// Refuses to start if a supported language has no email template, or its placeholders differ.
+builder.Services.AddSingleton(EmailTemplates.LoadFromBuildOutput());
 if (emailSettings.Provider == EmailProvider.Folder) builder.Services.AddSingleton<IEmailSender, FolderEmailSender>();
 else builder.Services.AddSingleton<IEmailSender, NoEmailSender>();
 builder.Services.AddHostedService<EmailDispatcher>();

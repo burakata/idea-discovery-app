@@ -1,7 +1,8 @@
 import { useLocation } from 'react-router-dom'
 import en, { type Strings } from './en'
 import tr from './tr'
-import type { Lang, Text } from '../projects/types'
+import { DEFAULT_LANG, otherLang, type Lang } from '../languages'
+import type { Text } from '../projects/types'
 import { useStore } from '../state/store'
 import type { Person, Written } from '../state/types'
 
@@ -17,14 +18,14 @@ export function isEnglishOnly(pathname: string): boolean {
 }
 
 export function screenLang(pathname: string, viewerLang: Lang): Lang {
-  return isEnglishOnly(pathname) ? 'en' : viewerLang
+  return isEnglishOnly(pathname) ? DEFAULT_LANG : viewerLang
 }
 
 // Text in the reader's language. "missing" means only the other language exists.
 export function pickText(text: Text, lang: Lang): { text: string; missing: boolean } {
   const own = text[lang]
   if (own) return { text: own, missing: false }
-  return { text: text[lang === 'en' ? 'tr' : 'en'] ?? '', missing: true }
+  return { text: text[otherLang(lang)] ?? '', missing: true }
 }
 
 // The translation line for something written in another language, if one is needed.

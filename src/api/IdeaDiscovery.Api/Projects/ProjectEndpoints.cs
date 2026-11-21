@@ -38,7 +38,7 @@ public static class ProjectEndpoints
         app.MapPut("/me/language", async (HttpContext http, AppDbContext db) =>
         {
             var body = await ReadBody<LanguageRequest>(http);
-            if (body?.Language is not ("en" or "tr")) return Invalid();
+            if (!Languages.IsSupported(body?.Language)) return Invalid();
             var userId = SessionValidation.UserId(http.User)!.Value;
             var language = body.Language;
             await db.Users.Where(u => u.Id == userId)

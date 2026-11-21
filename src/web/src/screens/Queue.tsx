@@ -8,7 +8,8 @@ import { JobFlowStep } from '../components/JobFlow'
 import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
 import { scriptLine } from '../demo/script'
-import type { Project } from '../projects/types'
+import { otherLang } from '../languages'
+import type { Project, Text } from '../projects/types'
 import { useStore } from '../state/store'
 import type { QueueItem, Source } from '../state/types'
 import { useT } from '../strings'
@@ -47,11 +48,11 @@ export default function Queue() {
   )
 
   // The other language of a proposal, so Burak can check both before approving.
-  const otherLanguage = (value: { en?: string; tr?: string }) => {
-    const other = value[lang === 'en' ? 'tr' : 'en']
+  const otherLanguage = (value: Text) => {
+    const other = value[otherLang(lang)]
     if (pick(value).missing || !other) return placeholderLine
     // The assistant wrote both versions, so this one is named, not called a translation.
-    return <TranslationLine label={c.languages[lang === 'en' ? 'tr' : 'en']} text={other} placeholder="" />
+    return <TranslationLine label={c.languages[otherLang(lang)]} text={other} placeholder="" />
   }
 
   const renderItem = (item: QueueItem) => {

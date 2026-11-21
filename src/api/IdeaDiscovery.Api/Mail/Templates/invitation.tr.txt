@@ -1,0 +1,13 @@
+Subject: Idea Discovery Rooms'a davet edildiniz
+
+Merhaba {name},
+
+{inviter}, sizi Idea Discovery Rooms'ta "{project}" hakkında konuşmaya davet etti. Fikrinizi kendi sözlerinizle anlatabileceğiniz ortak bir alan.
+
+Katılmak için bu bağlantıyı kullanın:
+
+{link}
+
+Bağlantı yalnızca bir kez çalışır ve {days} gün sonra geçerliliğini yitirir.
+
+Bu daveti beklemiyorsanız bu e-postayı yok sayabilirsiniz.
