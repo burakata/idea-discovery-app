@@ -28,7 +28,9 @@ Before writing a component, hook, helper, token or string, look for one that
 exists:
 - components: `src/web/src/components/`
 - tokens: `src/web/src/styles/tokens.css`
-- strings: `src/web/src/strings/`
+- strings: `src/web/src/strings/`; email texts:
+  `src/api/IdeaDiscovery.Api/Mail/Templates/`; languages:
+  `src/web/src/languages.ts` and the API's `Languages`
 - data changes: actions in `src/web/src/state/store.tsx`
 
 Two similar pieces of code are fine. Extract a shared one on the third, and
