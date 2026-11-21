@@ -144,6 +144,8 @@ public class Message
     public Guid Id { get; set; }
     public Guid ConversationId { get; set; }
     public Guid AuthorId { get; set; }
+    // 1, 2, 3 ... within the conversation: the exact order and the polling cursor.
+    public int Sequence { get; set; }
     // Stored as written and never changed.
     public string Text { get; set; } = "";
     public string Language { get; set; } = Languages.Default;

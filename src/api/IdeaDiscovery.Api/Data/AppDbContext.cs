@@ -116,7 +116,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<Message>(e =>
         {
-            e.HasIndex(x => new { x.ConversationId, x.CreatedAt });
+            e.HasIndex(x => new { x.ConversationId, x.Sequence }).IsUnique();
             e.HasOne<Conversation>().WithMany().HasForeignKey(x => x.ConversationId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.AuthorId).OnDelete(DeleteBehavior.Restrict);
         });

@@ -235,6 +235,9 @@ namespace IdeaDiscovery.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Sequence")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -243,7 +246,8 @@ namespace IdeaDiscovery.Api.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.HasIndex("ConversationId", "CreatedAt");
+                    b.HasIndex("ConversationId", "Sequence")
+                        .IsUnique();
 
                     b.ToTable("Messages");
                 });

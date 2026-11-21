@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using IdeaDiscovery.Api.Auth;
+using IdeaDiscovery.Api.Conversations;
 using IdeaDiscovery.Api.Data;
 using IdeaDiscovery.Api.Mail;
 using IdeaDiscovery.Api.Projects;
@@ -108,6 +109,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1),
                 QueueLimit = 0,
             }));
+    // Posting a message: 30 a minute per signed-in person.
+    options.AddPolicy(ConversationEndpoints.PostRateLimit, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            SessionValidation.UserId(context.User)?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
     options.AddPolicy(AuthEndpoints.RedeemRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -141,8 +152,9 @@ DatabaseSetup.Initialise(app.Services);
 if (emailSettings.Provider == EmailProvider.None)
     app.Logger.LogWarning("Email:Provider is not set. Sign-in emails are dropped, not sent.");
 
-app.UseRateLimiter();
 app.UseAuthentication();
+// After authentication, so the message limit can be counted per person.
+app.UseRateLimiter();
 app.UseMiddleware<CsrfProtection>();
 app.UseAuthorization();
 
@@ -153,6 +165,7 @@ app.MapAuth();
 app.MapJoin();
 app.MapConsultant();
 app.MapProjects();
+app.MapConversations();
 
 app.Run();
 
