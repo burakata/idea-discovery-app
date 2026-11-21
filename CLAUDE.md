@@ -112,9 +112,10 @@ Read before planning: the Phase 1 PRD,
 The client is still the prototype (see PROTOTYPE.md). The API in `src/api`
 has deny-by-default access, a health endpoint, the M1 database, sign-in
 with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
-asking to join (`/join/*`), and projects and members (`/projects`,
-`/consultant/projects`, `/me/language`), but no invitations or
-conversations yet.
+asking to join (`/join/*`), projects and members (`/projects`,
+`/consultant/projects`, `/me/language`), and invitations
+(`/consultant/projects/{id}/invitations`, `/consultant/invitations/{id}/revoke`),
+but no conversations yet.
 - Install: `npm --prefix src/web install`
 - Run: `npm --prefix src/web run dev` (http://localhost:5173)
 - Build and type-check: `npm --prefix src/web run build`
