@@ -220,7 +220,8 @@ public class ProjectsTests
             db.UserSessions.Where(s => s.UserId == removedId).ToList(),
             db.ProjectMembers.Where(m => m.UserId == removedId).Select(m => m.ProjectId).ToList()));
         Assert.NotNull(invitations[byEmail].RevokedAt);
-        Assert.NotNull(invitations[byAccount].RevokedAt);
+        // An accepted invitation is not open: removal leaves it as it was.
+        Assert.Null(invitations[byAccount].RevokedAt);
         Assert.Null(invitations[otherPerson].RevokedAt);
         Assert.Null(invitations[otherProject].RevokedAt);
         Assert.All(tokens.Where(t => t.InvitationId == byEmail), t => Assert.NotNull(t.RevokedAt));
@@ -250,6 +251,27 @@ public class ProjectsTests
         var visitor = f.NewPerson();
         Assert.NotEqual(HttpStatusCode.OK, (await visitor.Redeem(token)).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.Me()).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_sign_in_link_issued_before_the_removal_no_longer_signs_the_person_in()
+    {
+        using var f = new RoomsFactory();
+        var burak = await f.ConsultantSignedIn();
+        var a = await burak.CreateProject("A");
+        var removedId = f.SeedOwner("removed@example.com", "Removed Owner");
+        var stayingId = f.SeedOwner("staying@example.com", "Staying Owner");
+        f.AddOwnerMember(a, removedId);
+        var link = await f.UserToken(removedId);
+        var stayingLink = await f.UserToken(stayingId);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await burak.Post($"/consultant/projects/{a}/members/{removedId}/remove")).StatusCode);
+
+        var visitor = f.NewPerson();
+        Assert.NotEqual(HttpStatusCode.OK, (await visitor.Redeem(link)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.Me()).StatusCode);
+        // Someone else's link is untouched.
+        Assert.Equal(HttpStatusCode.OK, (await f.NewPerson().Redeem(stayingLink)).StatusCode);
     }
 
     [Fact]

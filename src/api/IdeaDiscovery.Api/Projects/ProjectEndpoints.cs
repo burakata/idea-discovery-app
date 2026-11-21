@@ -19,13 +19,7 @@ public static class ProjectEndpoints
         // Deny by default: the fallback policy needs a signed-in user.
         app.MapGet("/projects", async (HttpContext http, AppDbContext db) =>
         {
-            var userId = SessionValidation.UserId(http.User)!.Value;
-            var query = http.User.HasClaim(SessionValidation.ConsultantClaim, "true")
-                ? db.Projects.AsNoTracking()
-                : from p in db.Projects.AsNoTracking()
-                  join m in db.ProjectMembers on p.Id equals m.ProjectId
-                  where m.UserId == userId
-                  select p;
+            var query = ProjectAccess.Visible(db, http.User).AsNoTracking();
             var projects = await query.OrderBy(p => p.CreatedAt).ThenBy(p => p.Id).ToListAsync();
             return Results.Ok(projects.Select(p => new
             {
@@ -37,7 +31,7 @@ public static class ProjectEndpoints
         {
             var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
-            var withEmail = http.User.HasClaim(SessionValidation.ConsultantClaim, "true");
+            var withEmail = ProjectAccess.IsConsultant(http.User);
             return Results.Ok(await Describe(db, project, withEmail));
         });
 
@@ -126,16 +120,22 @@ public static class ProjectEndpoints
             await db.UserSessions.Where(s => s.UserId == userId && s.RevokedAt == null)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, (DateTime?)now));
 
-            // Their invitations to this project, by the account that accepted or by the address.
+            // Their open invitations to this project, by the address.
             var invitationIds = await db.Invitations
-                .Where(i => i.ProjectId == pid && i.RevokedAt == null
-                    && (i.AcceptedUserId == userId || (email != null && i.Email == email)))
+                .Where(i => i.ProjectId == pid && i.RevokedAt == null && i.AcceptedAt == null
+                    && email != null && i.Email == email)
                 .Select(i => i.Id).ToListAsync();
             await db.Invitations.Where(i => invitationIds.Contains(i.Id))
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, (DateTime?)now));
             await db.SignInTokens
                 .Where(t => t.InvitationId != null && invitationIds.Contains(t.InvitationId.Value)
                     && t.UsedAt == null && t.RevokedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, (DateTime?)now));
+
+            // Sign-in links already sent to them stop working too.
+            await db.SignInTokens
+                .Where(t => t.Purpose == TokenPurpose.SignIn && t.UserId == userId
+                    && t.UsedAt == null && t.RevokedAt == null && t.ExpiresAt > now)
                 .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAt, (DateTime?)now));
 
             AuditLog.Add(db, clock, "member_removed", SessionValidation.UserId(http.User), Ip(http), pid, $"user:{userId}");

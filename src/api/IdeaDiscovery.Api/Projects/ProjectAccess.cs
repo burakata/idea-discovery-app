@@ -16,15 +16,22 @@ public static class ProjectAccess
     // a project the caller is not in give the same null, so ids reveal nothing.
     public static async Task<Project?> FindAsync(AppDbContext db, ClaimsPrincipal caller, Guid projectId)
     {
+        return await Visible(db, caller).Where(p => p.Id == projectId).SingleOrDefaultAsync();
+    }
+
+    // Burak's powers come only from the per-request claim, never from a membership row.
+    public static bool IsConsultant(ClaimsPrincipal caller) =>
+        caller.HasClaim(SessionValidation.ConsultantClaim, "true");
+
+    // The projects the caller may see: all for Burak, otherwise the ones they belong to.
+    public static IQueryable<Project> Visible(AppDbContext db, ClaimsPrincipal caller)
+    {
         var userId = SessionValidation.UserId(caller);
-        if (userId is null) return null;
-
-        if (caller.HasClaim(SessionValidation.ConsultantClaim, "true"))
-            return await db.Projects.SingleOrDefaultAsync(p => p.Id == projectId);
-
-        return await (from p in db.Projects
-                      join m in db.ProjectMembers on p.Id equals m.ProjectId
-                      where p.Id == projectId && m.UserId == userId
-                      select p).SingleOrDefaultAsync();
+        if (userId is null) return db.Projects.Where(_ => false);
+        if (IsConsultant(caller)) return db.Projects;
+        return from p in db.Projects
+               join m in db.ProjectMembers on p.Id equals m.ProjectId
+               where m.UserId == userId
+               select p;
     }
 }
