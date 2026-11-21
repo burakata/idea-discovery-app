@@ -33,7 +33,7 @@ public static class JoinEndpoints
         // Anonymous on purpose: the person opening the project link has no session.
         // The literal routes win over {code}, and no code can be that short.
         join.MapGet("/request", StatusAsync).AllowAnonymous();
-        join.MapPost("/claim", ClaimAsync).AllowAnonymous();
+        join.MapPost("/claim", ClaimAsync).AllowAnonymous().RequireRateLimiting(AuthEndpoints.RedeemRateLimit);
         join.MapGet("/{code}", CanAskAsync).AllowAnonymous();
         join.MapPost("/{code}", AskAsync).AllowAnonymous().RequireRateLimiting(AskRateLimit);
     }
@@ -74,15 +74,19 @@ public static class JoinEndpoints
         var existing = await FindOwnRequestAsync(http, db, hasher);
         if (existing is { State: JoinRequestState.Pending } && existing.ProjectId == projectId && existing.ExpiresAt > now)
             return Results.Json(new { state = "pending" }, statusCode: StatusCodes.Status202Accepted);
+        // An approval this browser has not claimed yet is not lost by asking again.
+        if (existing is { State: JoinRequestState.Approved, ClaimedAt: null } && existing.ProjectId == projectId
+            && existing.ApprovedUntil >= now)
+            return Results.Json(new { state = "approved" }, statusCode: StatusCodes.Status202Accepted);
 
         AskRequest? body = null;
         try { if (http.Request.HasJsonContentType()) body = await http.Request.ReadFromJsonAsync<AskRequest>(); }
         catch (JsonException) { }
         catch (BadHttpRequestException) { }
-        var name = body?.Name?.Trim();
+        var name = CleanName(body?.Name);
         var email = body?.Email?.Trim();
         if (string.IsNullOrEmpty(email)) email = null;
-        if (string.IsNullOrEmpty(name) || name.Length > MaxNameLength || HasControlCharacters(name)
+        if (name is null
             || (email is not null && (email.Length > MaxEmailLength || HasControlCharacters(email))))
             return Invalid();
 
@@ -95,7 +99,7 @@ public static class JoinEndpoints
             Name = name,
             UncheckedEmail = email,
             SecretHash = hasher.Hash(secret),
-            Device = Truncate(http.Request.Headers.UserAgent.ToString(), 200),
+            Device = Truncate(http.Request.Headers.UserAgent.ToString(), AuthEndpoints.MaxDeviceLength),
             IpAddress = ip,
             CreatedAt = now,
             ExpiresAt = now + RequestLifetime,
@@ -107,7 +111,12 @@ public static class JoinEndpoints
             var waiting = await db.JoinRequests.CountAsync(r =>
                 r.ProjectId == projectId && r.State == JoinRequestState.Pending && r.ExpiresAt > now);
             if (waiting >= MaxWaitingPerProject)
+            {
+                AuditLog.Add(db, clock, "join_ask_capped", null, ip, projectId);
+                await db.SaveChangesAsync();
+                await tx.CommitAsync();
                 return Results.Text("{\"error\":\"try_later\"}", "application/json", statusCode: 429);
+            }
 
             db.JoinRequests.Add(request);
             // No name or email in the audit row.
@@ -229,6 +238,28 @@ public static class JoinEndpoints
         Path = "/",
         IsEssential = true,
     };
+
+    // A name as stored: NFKC, trimmed, runs of whitespace as one space. Null when
+    // it is empty, too long, or holds a control or invisible (Format) character,
+    // which could make one person look like another. Turkish letters are
+    // untouched by NFKC.
+    public static string? CleanName(string? raw)
+    {
+        if (raw is null) return null;
+        string name;
+        try { name = raw.Normalize(NormalizationForm.FormKC).Trim(); }
+        catch (ArgumentException) { return null; } // not valid Unicode
+        if (name.Length == 0 || HasControlCharacters(name)
+            || name.Any(c => char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format))
+            return null;
+        name = System.Text.RegularExpressions.Regex.Replace(name, @"\s+", " ");
+        return name.Length > MaxNameLength ? null : name;
+    }
+
+    // What two names are compared by. ToLowerInvariant leaves the Turkish dotted
+    // and dotless I as they are, so "Işıl" and "İşil" stay different names.
+    public static string NameKey(string name) =>
+        (CleanName(name) ?? name.Trim()).ToLowerInvariant();
 
     private static bool HasControlCharacters(string text) => text.Any(char.IsControl);
 

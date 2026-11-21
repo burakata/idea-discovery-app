@@ -13,7 +13,7 @@ public static class AuthEndpoints
 {
     public const string RedeemRateLimit = "redeem";
     public const string RequestLinkRateLimit = "request-link";
-    private const int MaxDeviceLength = 200;
+    internal const int MaxDeviceLength = 200;
     private const int MaxEmailLength = 254;
 
     private sealed record RedeemRequest(string? Token);

@@ -71,7 +71,9 @@ public class AskToJoinTests
                     var pair = header.Split(';')[0];
                     var at = pair.IndexOf('=');
                     var (name, value) = (pair[..at], pair[(at + 1)..]);
-                    if (value.Length == 0 || header.Contains("1970", StringComparison.Ordinal)) _cookies.Remove(name);
+                    // A deleted cookie carries an expiry in 1970. The value alone (random text) may hold "1970".
+                    var deleted = Regex.IsMatch(header, @"expires=[^;]*1970", RegexOptions.IgnoreCase);
+                    if (value.Length == 0 || deleted) _cookies.Remove(name);
                     else _cookies[name] = value;
                 }
             return response;
@@ -340,7 +342,7 @@ public class AskToJoinTests
         using var r = new Rig();
         var code = await r.Enable();
         Assert.Equal(HttpStatusCode.NoContent, (await (await r.Burak()).Post($"/consultant/projects/{r.ProjectA}/join-link/off")).StatusCode);
-        var unknown = JoinCodeFor("some-code-nobody-has");
+        const string unknown = "some-code-nobody-has";
         var person = r.NewBrowser();
 
         var getOff = await person.Get($"/join/{code}");
@@ -361,8 +363,6 @@ public class AskToJoinTests
         Assert.Equal(0, r.F.WithDb(db => db.JoinRequests.Count()));
         Assert.Null(person.Cookie(JoinEndpoints.CookieName));
     }
-
-    private static string JoinCodeFor(string seed) => seed;
 
     [Fact]
     public async Task A_project_that_never_had_asking_switched_on_cannot_be_asked()
@@ -487,6 +487,90 @@ public class AskToJoinTests
         Assert.True(byName["AYSE yilmaz"]);
         Assert.False(byName["Mehmet Kaya"]); // a member of another project only
         Assert.False(byName["Somebody Else"]);
+    }
+
+    // ---- Names that imitate a member ----
+
+    private const string TurkishName = "Işıl Güneş Çağlar Öztürk";
+
+    [Theory]
+    [InlineData("Ayse​Yilmaz")] // zero-width space
+    [InlineData("Ayse‌Yilmaz")] // zero-width non-joiner
+    [InlineData("Ayse⁠Yilmaz")] // word joiner
+    [InlineData("﻿Ayse Yilmaz")] // byte order mark
+    [InlineData("‮Ayse Yilmaz")] // right-to-left override
+    [InlineData("Ayse ⁦Yilmaz⁩")] // bidi isolate
+    public async Task A_name_with_an_invisible_character_is_refused_when_asking_and_when_approving(string name)
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var person = r.NewBrowser();
+
+        var response = await r.Ask(person, code, name);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("{\"error\":\"invalid_request\"}", await response.Content.ReadAsStringAsync());
+        Assert.Equal(0, r.F.WithDb(db => db.JoinRequests.Count()));
+        Assert.Null(person.Cookie(JoinEndpoints.CookieName));
+
+        var id = await r.Asked(r.NewBrowser(), code);
+        Assert.Equal(HttpStatusCode.BadRequest, (await r.TryApprove(id, new { displayName = name })).StatusCode);
+        Assert.Equal(JoinRequestState.Pending, r.Row(id).State);
+    }
+
+    [Fact]
+    public async Task Extra_spaces_are_collapsed_before_storing_and_before_comparing_with_members()
+    {
+        using var r = new Rig();
+        AddMember(r.F, r.ProjectA, r.F.SeedOwner("elif@example.com", "Elif Yıldız"));
+        var code = await r.Enable();
+        var id = await r.Asked(r.NewBrowser(), code, "  Elif  Yıldız ");
+
+        Assert.Equal("Elif Yıldız", r.Row(id).Name);
+        var entry = Assert.Single((await r.Waiting()).EnumerateArray());
+        Assert.Equal("Elif Yıldız", entry.GetProperty("name").GetString());
+        Assert.True(entry.GetProperty("nameMatchesMember").GetBoolean());
+
+        // The corrected name is cleaned the same way.
+        await r.Approve(id, "  Elif   Yıldız Two ");
+        Assert.Equal("Elif Yıldız Two", r.F.WithDb(db => db.Users.Single(u => u.Id == r.Row(id).UserId)).DisplayName);
+    }
+
+    [Fact]
+    public async Task A_compatibility_form_of_a_members_name_is_stored_in_its_plain_form_and_flagged()
+    {
+        using var r = new Rig();
+        AddMember(r.F, r.ProjectA, r.F.SeedOwner("ayse@example.com", "Ayse Yilmaz"));
+        var code = await r.Enable();
+        // Fullwidth letters with an ideographic space.
+        var id = await r.Asked(r.NewBrowser(), code, "Ａｙｓｅ　Ｙｉｌｍａｚ");
+
+        Assert.Equal("Ayse Yilmaz", r.Row(id).Name);
+        Assert.True(Assert.Single((await r.Waiting()).EnumerateArray()).GetProperty("nameMatchesMember").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Turkish_letters_are_stored_as_typed_and_match_only_the_same_name()
+    {
+        using var r = new Rig();
+        AddMember(r.F, r.ProjectA, r.F.SeedOwner("isil@example.com", TurkishName));
+        var code = await r.Enable();
+        var same = await r.Asked(r.NewBrowser(), code, "  " + TurkishName + " ");
+        // Look-alikes: a dotted capital I, plain Latin letters, a dotless i turned dotted.
+        var dotted = await r.Asked(r.NewBrowser(), code, "İşıl Güneş Çağlar Öztürk");
+        var plainI = await r.Asked(r.NewBrowser(), code, "Isil Gunes Caglar Ozturk");
+        var dotless = await r.Asked(r.NewBrowser(), code, "Işıl Güneş Çağlar Öztürk ".Replace('ı', 'i'));
+
+        Assert.Equal(TurkishName, r.Row(same).Name);
+        var flags = (await r.Waiting()).EnumerateArray()
+            .ToDictionary(e => e.GetProperty("id").GetGuid(), e => e.GetProperty("nameMatchesMember").GetBoolean());
+        Assert.True(flags[same]);
+        Assert.False(flags[dotted]);
+        Assert.False(flags[plainI]);
+        Assert.False(flags[dotless]);
+
+        await r.Approve(same);
+        Assert.Equal(TurkishName, r.F.WithDb(db => db.Users.Single(u => u.Id == r.Row(same).UserId)).DisplayName);
     }
 
     // ---- Claim refusals ----
@@ -824,6 +908,11 @@ public class AskToJoinTests
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
         Assert.Equal("{\"error\":\"try_later\"}", await refused.Content.ReadAsStringAsync());
         Assert.Null(twentyFirst.Cookie(JoinEndpoints.CookieName));
+        // The refusal is audited with the project and address, and nothing typed.
+        var capped = Assert.Single(r.Audit(), a => a.Action == "join_ask_capped");
+        Assert.Equal(r.ProjectA, capped.ProjectId);
+        Assert.Null(capped.ActorUserId);
+        Assert.Null(capped.Details);
         Assert.Equal(20, r.F.WithDb(db => db.JoinRequests.Count(x => x.ProjectId == r.ProjectA && x.State == JoinRequestState.Pending && x.ExpiresAt > r.F.Now)));
         // The cap is per project.
         Assert.Equal(HttpStatusCode.Accepted, (await r.Ask(r.NewBrowser(), codeB)).StatusCode);
@@ -843,6 +932,31 @@ public class AskToJoinTests
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
         Assert.Null(sixth.Cookie(JoinEndpoints.CookieName));
         Assert.Equal(5, r.F.WithDb(db => db.JoinRequests.Count()));
+    }
+
+    [Fact]
+    public async Task Claims_from_one_address_are_limited_to_10_in_15_minutes_even_with_a_real_approval()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (person, id) = await r.ApprovedBrowser(code);
+        var stranger = r.NewBrowser();
+        // The limit is 10 in 15 minutes, shared with signing in (Burak's own sign-in used one).
+        var refused = 0;
+        while (refused < 10)
+        {
+            var response = await r.Claim(stranger);
+            if (response.StatusCode == HttpStatusCode.TooManyRequests) break;
+            await AssertCannotClaim(response);
+            refused++;
+        }
+        Assert.InRange(refused, 1, 9);
+
+        var limited = await r.Claim(person);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
+        Assert.Null(r.Row(id).ClaimedAt);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await person.Get("/auth/me")).StatusCode);
     }
 
     // ---- Input ----
@@ -954,6 +1068,80 @@ public class AskToJoinTests
         var fresh = await r.Asked(person, code, "Another Name");
         Assert.NotEqual(id, fresh);
         Assert.Equal(2, r.F.WithDb(db => db.JoinRequests.Count()));
+    }
+
+    [Fact]
+    public async Task A_browser_asking_again_after_approval_is_told_so_keeps_its_cookie_and_can_still_claim()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (person, id) = await r.ApprovedBrowser(code);
+        var cookie = person.Cookie(JoinEndpoints.CookieName);
+
+        var again = await r.Ask(person, code, "Another Name");
+
+        Assert.Equal(HttpStatusCode.Accepted, again.StatusCode);
+        Assert.Equal("{\"state\":\"approved\"}", await again.Content.ReadAsStringAsync());
+        Assert.False(again.Headers.TryGetValues("Set-Cookie", out var set) && set.Any(c => c.StartsWith("join_request=")));
+        Assert.Equal(cookie, person.Cookie(JoinEndpoints.CookieName));
+        Assert.Equal(1, r.F.WithDb(db => db.JoinRequests.Count()));
+        Assert.Equal(HttpStatusCode.OK, (await r.Claim(person)).StatusCode);
+        Assert.NotNull(r.Row(id).ClaimedAt);
+    }
+
+    [Fact]
+    public async Task Another_browser_asking_under_the_same_name_learns_nothing_of_an_approval()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (first, firstId) = await r.ApprovedBrowser(code, "Ayse Yilmaz");
+        var fresh = await r.Asked(r.NewBrowser(), code, "Pending Person");
+        var freshBody = await (await r.Ask(r.NewBrowser(), code, "Other Person")).Content.ReadAsStringAsync();
+
+        var second = r.NewBrowser();
+        var response = await r.Ask(second, code, "Ayse Yilmaz");
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal(freshBody, await response.Content.ReadAsStringAsync());
+        Assert.Equal("{\"state\":\"pending\"}", freshBody);
+        var secondId = Rig.RequestId(second);
+        Assert.NotEqual(firstId, secondId);
+        Assert.NotEqual(fresh, secondId);
+        Assert.Equal(JoinRequestState.Pending, r.Row(secondId).State);
+        Assert.Equal("pending", await r.State(second));
+        Assert.Equal(HttpStatusCode.OK, (await r.Claim(first)).StatusCode);
+    }
+
+    [Fact]
+    public async Task A_cookie_with_the_wrong_secret_for_an_approved_request_gets_the_normal_answer()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (_, id) = await r.ApprovedBrowser(code);
+        var guesser = r.NewBrowser();
+        guesser.SetCookie(JoinEndpoints.CookieName, $"{id:N}.{new string('A', 43)}");
+
+        var response = await r.Ask(guesser, code, "Guesser");
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        Assert.Equal("{\"state\":\"pending\"}", await response.Content.ReadAsStringAsync());
+        var newId = Rig.RequestId(guesser);
+        Assert.NotEqual(id, newId);
+        Assert.Equal(JoinRequestState.Pending, r.Row(newId).State);
+    }
+
+    [Fact]
+    public async Task An_approval_that_ran_out_or_was_claimed_does_not_block_asking_afresh()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (late, lateId) = await r.ApprovedBrowser(code, "Late Person");
+        r.F.Clock.Advance(TimeSpan.FromHours(49));
+
+        var fresh = await r.Asked(late, code, "Late Person");
+
+        Assert.NotEqual(lateId, fresh);
+        Assert.Equal(JoinRequestState.Pending, r.Row(fresh).State);
     }
 
     // ---- Secrets and cookie ----
@@ -1177,7 +1365,6 @@ public class AskToJoinTests
         using var r = new Rig();
         var code = await r.Enable();
         var (waitingBrowser, id) = await r.ApprovedBrowser(code);
-        var dropped = r.F.Now; // nothing below may change the approved request or project
         var burak = await r.Burak();
         var url = endpoint switch
         {
@@ -1205,7 +1392,6 @@ public class AskToJoinTests
         Assert.Null(r.Row(id).ClaimedAt);
         Assert.Equal(code, r.F.WithDb(db => db.Projects.Single(p => p.Id == r.ProjectA).JoinCode));
         Assert.Equal(0, r.F.WithDb(db => db.UserSessions.Count(s => s.Device == "Phone/1.0")));
-        _ = dropped;
     }
 
     // ---- GET changes nothing ----

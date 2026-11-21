@@ -129,7 +129,7 @@ public static class ConsultantEndpoints
                                      join u in db.Users on m.UserId equals u.Id
                                      where m.ProjectId == projectId
                                      select u.DisplayName).ToListAsync();
-            var taken = memberNames.Select(n => n.Trim().ToLowerInvariant()).ToHashSet();
+            var taken = memberNames.Select(JoinEndpoints.NameKey).ToHashSet();
 
             var waiting = await db.JoinRequests.AsNoTracking()
                 .Where(r => r.ProjectId == projectId && r.State == JoinRequestState.Pending && r.ExpiresAt > now)
@@ -143,23 +143,23 @@ public static class ConsultantEndpoints
                 device = r.Device,
                 createdAt = r.CreatedAt,
                 expiresAt = r.ExpiresAt,
-                nameMatchesMember = taken.Contains(r.Name.Trim().ToLowerInvariant()),
+                nameMatchesMember = taken.Contains(JoinEndpoints.NameKey(r.Name)),
             }));
         });
 
         group.MapPost("/join-requests/{requestId:guid}/approve", async (
             Guid requestId, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
-            string? corrected = null;
+            string? typed = null;
             try
             {
                 if (http.Request.HasJsonContentType())
-                    corrected = (await http.Request.ReadFromJsonAsync<ApproveRequest>())?.DisplayName?.Trim();
+                    typed = (await http.Request.ReadFromJsonAsync<ApproveRequest>())?.DisplayName;
             }
             catch (System.Text.Json.JsonException) { return Results.BadRequest(new { error = "invalid_request" }); }
             catch (BadHttpRequestException) { return Results.BadRequest(new { error = "invalid_request" }); }
-            if (corrected is not null
-                && (corrected.Length is 0 or > JoinEndpoints.MaxNameLength || corrected.Any(char.IsControl)))
+            var corrected = JoinEndpoints.CleanName(typed);
+            if (typed is not null && corrected is null)
                 return Results.BadRequest(new { error = "invalid_request" });
 
             var request = await db.JoinRequests.AsNoTracking().SingleOrDefaultAsync(r => r.Id == requestId);
