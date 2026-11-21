@@ -1,6 +1,7 @@
 // Owner-facing text. English is the source; every key must also exist in tr.ts.
 const en = {
   app: {
+    loading: 'Loading…',
     name: 'Idea Discovery Rooms',
     tagline: 'Understanding an idea together',
   },
@@ -29,37 +30,43 @@ const en = {
     home: {
       title: 'Work out your idea together',
       intro:
-        'A shared place where you and your software consultant clarify a business idea, with an AI assistant to help with the questions.',
+        'A shared place where you and your software consultant work out a business idea together. An AI assistant helps by asking questions.',
       emailLabel: 'Your email address',
       emailMissing: 'Write your email address to continue.',
       submit: 'Email me a sign-in link',
       sentTitle: 'Check your email',
-      sent: 'If this email belongs to someone invited, a link is on its way.',
-      sentHint: 'The link works for a short time. If nothing arrives, check your spam folder or ask again.',
+      sent: 'If you were invited with {email}, a sign-in link will arrive there in a few minutes.',
+      sentHint:
+        'The link works for 30 minutes. If you ask more than once, use the newest email. Nothing after a few minutes? Check your spam folder.',
       askAgain: 'Ask again',
-      invitationNote: 'You can only sign in if your consultant has invited you.',
+      invitationNote:
+        'There is no password: each time, we email you a link. Only people your consultant has invited can sign in. First time here? Use the link in your invitation email.',
     },
     signIn: {
       title: 'Sign in',
-      explain: 'You opened a sign-in link. Press the button to sign in on this device.',
+      explain: 'Press the button to continue. Only do this if the link was sent to you.',
       button: 'Sign in',
       invalidTitle: 'This link does not work',
+      invalidHelp:
+        'If you have signed in before, ask for a new link below. If this was your invitation, or you think someone else opened it, tell your consultant.',
     },
+    signedInAs: 'Signed in as {name}',
   },
   errors: {
-    linkNotValid: 'This link no longer works. Ask for a new one.',
+    linkNotValid: 'This link no longer works. It may have been used already or be too old.',
     tooManyTries: 'Too many tries. Wait a little, then try again.',
-    network: 'Connection lost. Try again.',
+    network: 'Connection lost. Check your internet and try again.',
     generic: 'Something went wrong. Try again.',
   },
   notices: {
-    signedOut: 'You have been signed out. Sign in again to carry on.',
+    signedOut: 'You have been signed out. Ask for a new link below to carry on.',
+    signedOutByYou: 'You have signed out.',
     projectGone: 'We could not find that project. Here are the projects you are in.',
   },
   projects: {
     title: 'Your projects',
     sub: 'The ideas you are working on with your consultant.',
-    empty: "You're not in any project yet. Your consultant can invite you.",
+    empty: 'There are no projects to show. If you expected one, ask your consultant.',
     open: 'Open project',
   },
   idea: {

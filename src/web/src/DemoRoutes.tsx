@@ -9,11 +9,9 @@ import Idea from './screens/Idea'
 import Join from './screens/Join'
 import Notes from './screens/Notes'
 import Queue from './screens/Queue'
-import Rooms from './screens/Rooms'
 import Summary from './screens/Summary'
 import { useDemoStore } from './state/demoStore'
 import { useStore } from './state/store'
-import { consultant as c } from './strings/consultant'
 
 // Rooms are for signed-in people only.
 function SignedInOnly() {
@@ -44,16 +42,8 @@ function ConsultantOnly({ children }: { children: ReactNode }) {
 
 export const demoRoutes = (
   <Route element={<SignedInOnly />}>
-    <Route
-      path="/rooms"
-      element={
-        <ConsultantOnly>
-          <AppShell title={c.rooms.title}>
-            <Rooms />
-          </AppShell>
-        </ConsultantOnly>
-      }
-    />
+    {/* The old list of rooms: the project list at / replaced it. */}
+    <Route path="/rooms" element={<Navigate to="/" replace />} />
     <Route path="/rooms/:roomId" element={<RoomLayout />}>
       <Route index element={<Idea />} />
       <Route path="join" element={<Join />} />

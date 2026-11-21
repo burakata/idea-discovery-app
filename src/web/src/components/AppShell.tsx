@@ -2,10 +2,11 @@ import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { Project } from '../projects/types'
 import { useStore } from '../state/store'
-import { useT } from '../strings'
+import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import { useDemoT } from '../strings/demo'
 import { Button } from './Button'
+import { NoticeBox } from './Card'
 import { Icon, type IconName } from './Icon'
 import { LanguageSwitch } from './LanguageSwitch'
 import { CountBadge, Pill } from './Pill'
@@ -56,14 +57,12 @@ interface ShellProps {
   project?: Project
   // Burak's waiting count for the room; demo only.
   queueCount?: number
-  // The title when there is no room; the project list by default.
-  title?: string
   children: ReactNode
 }
 
 // Navy sidebar on desktop; compact header and bottom navigation on phones.
-export function AppShell({ project, queueCount = 0, title: pageTitle, children }: ShellProps) {
-  const { me, setLanguage, signOut } = useStore()
+export function AppShell({ project, queueCount = 0, children }: ShellProps) {
+  const { me, setLanguage, signOut, actionError } = useStore()
   const { t, lang, englishOnly, pick } = useT()
   const { pathname } = useLocation()
   const isConsultant = me?.isConsultant === true
@@ -92,11 +91,13 @@ export function AppShell({ project, queueCount = 0, title: pageTitle, children }
           { to: `${base}/notes`, icon: 'notes' as const, label: c.nav.notes, short: c.nav.notesShort },
         ]
       : []),
-    { to: '/rooms', icon: 'rooms', label: c.nav.rooms, short: c.nav.roomsShort, end: true },
+    // Back to the list; on the list itself the sections already hold it.
+    ...(project ? [{ to: '/', icon: 'rooms' as const, label: c.nav.rooms, short: c.nav.roomsShort, end: true }] : []),
   ]
 
-  const title = project ? pick(project.name).text : (pageTitle ?? t.projects.title)
+  const title = project ? pick(project.name).text : isConsultant ? c.projects.title : t.projects.title
   // The draft pill belongs to the room's three sections, not to Join or Burak's screens.
+  const signedInAs = me ? fill(t.auth.signedInAs, { name: me.displayName }) : null
   const onSection = sections.some((section) => section.to === pathname)
 
   return (
@@ -128,7 +129,9 @@ export function AppShell({ project, queueCount = 0, title: pageTitle, children }
           </div>
         )}
 
-        {isConsultant && __DEMO__ && (
+        {!project && <NavList items={sections} className={styles.nav} />}
+
+        {isConsultant && __DEMO__ && consultantItems.length > 0 && (
           <div>
             <div className={styles.label}>{c.nav.group}</div>
             <NavList items={consultantItems} className={styles.nav} />
@@ -149,6 +152,7 @@ export function AppShell({ project, queueCount = 0, title: pageTitle, children }
             </span>
           </div>
           <div className={styles.topRight}>
+            {signedInAs && <span className={styles.who}>{signedInAs}</span>}
             {onSection && project && project.statements.length > 0 && (
               <span className={styles.status}>
                 <Pill tone="amber">{t.status.draft}</Pill>
@@ -174,7 +178,14 @@ export function AppShell({ project, queueCount = 0, title: pageTitle, children }
           </div>
         </header>
 
+        {signedInAs && <p className={styles.whoPhone}>{signedInAs}</p>}
         {isConsultant && __DEMO__ && project && <NavList items={consultantItems} className={styles.strip} compact />}
+
+        {actionError && (
+          <div className={styles.alert}>
+            <NoticeBox tone="amber">{t.errors[actionError]}</NoticeBox>
+          </div>
+        )}
 
         <div className={styles.content}>{children}</div>
 

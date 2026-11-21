@@ -387,8 +387,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     language: state.signedIn ? viewer.language : state.guestLanguage,
     setLanguage: (lang) => dispatch(state.signedIn ? { type: 'language', lang } : { type: 'guestLanguage', lang }),
     projects: state.signedIn ? cardsFor(viewer) : null,
+    projectsError: null,
     notice: null,
-    clearNotice: () => {},
+    actionError: null,
     // No email is sent in the demo; the screen says so.
     requestLink: async () => {},
     redeem: async (_token, chosenLanguage) => dispatch({ type: 'signIn', language: chosenLanguage ?? undefined }),

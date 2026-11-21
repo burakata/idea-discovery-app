@@ -3,6 +3,7 @@ import type { Strings } from './en'
 // Typed as Strings so a missing or extra key fails the build.
 const tr: Strings = {
   app: {
+    loading: 'Yükleniyor…',
     name: 'Idea Discovery Rooms',
     tagline: 'Bir fikri birlikte anlamak',
   },
@@ -31,37 +32,43 @@ const tr: Strings = {
     home: {
       title: 'Fikrinizi birlikte netleştirin',
       intro:
-        'Yazılım danışmanınızla bir iş fikrini birlikte netleştirdiğiniz ortak bir alan. Yapay zekâ yardımcısı sorularda size destek olur.',
+        'Yazılım danışmanınızla bir iş fikrini birlikte netleştirdiğiniz ortak bir alan. Bir yapay zekâ yardımcısı da sorular sorarak yardımcı olur.',
       emailLabel: 'E-posta adresiniz',
       emailMissing: 'Devam etmek için e-posta adresinizi yazın.',
       submit: 'Bana giriş bağlantısı gönder',
       sentTitle: 'E-postanızı kontrol edin',
-      sent: 'Bu e-posta davet edilmiş birine aitse, bir bağlantı yolda.',
-      sentHint: 'Bağlantı kısa süre geçerlidir. Bir şey gelmezse istenmeyen postaları kontrol edin ya da yeniden isteyin.',
+      sent: '{email} adresiyle davet edildiyseniz, giriş bağlantınız birkaç dakika içinde bu adrese gelecek.',
+      sentHint:
+        'Bağlantı 30 dakika geçerlidir. Birden fazla kez isterseniz en son gelen e-postayı kullanın. Birkaç dakikada gelmezse spam klasörünüze bakın.',
       askAgain: 'Yeniden iste',
-      invitationNote: 'Giriş yapabilmek için danışmanınızın sizi davet etmiş olması gerekir.',
+      invitationNote:
+        'Şifre yok: her seferinde size e-postayla bir bağlantı göndeririz. Yalnızca danışmanınızın davet ettiği kişiler giriş yapabilir. İlk kez mi geliyorsunuz? Davet e-postanızdaki bağlantıyı kullanın.',
     },
     signIn: {
       title: 'Giriş yap',
-      explain: 'Bir giriş bağlantısı açtınız. Bu cihazda giriş yapmak için düğmeye basın.',
+      explain: 'Devam etmek için düğmeye basın. Bunu yalnızca bağlantı size gönderildiyse yapın.',
       button: 'Giriş yap',
       invalidTitle: 'Bu bağlantı çalışmıyor',
+      invalidHelp:
+        'Daha önce giriş yaptıysanız aşağıdan yeni bir bağlantı isteyin. Bu sizin davet bağlantınızsa ya da başka birinin açtığını düşünüyorsanız danışmanınıza haber verin.',
     },
+    signedInAs: '{name} olarak giriş yaptınız',
   },
   errors: {
-    linkNotValid: 'Bu bağlantı artık çalışmıyor. Yenisini isteyin.',
+    linkNotValid: 'Bu bağlantı artık çalışmıyor. Daha önce kullanılmış ya da süresi dolmuş olabilir.',
     tooManyTries: 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.',
-    network: 'Bağlantı kesildi. Tekrar deneyin.',
+    network: 'İnternet bağlantınız kesildi. Kontrol edip tekrar deneyin.',
     generic: 'Bir şeyler ters gitti. Tekrar deneyin.',
   },
   notices: {
-    signedOut: 'Oturumunuz kapandı. Devam etmek için yeniden giriş yapın.',
-    projectGone: 'Bu projeyi bulamadık. Dahil olduğunuz projeler burada.',
+    signedOut: 'Oturumunuz kapandı. Devam etmek için aşağıdan yeni bir bağlantı isteyin.',
+    signedOutByYou: 'Çıkış yaptınız.',
+    projectGone: 'Bu projeyi bulamadık. Yer aldığınız projeler aşağıda.',
   },
   projects: {
     title: 'Projeleriniz',
     sub: 'Danışmanınızla birlikte üzerinde çalıştığınız fikirler.',
-    empty: 'Henüz hiçbir projede değilsiniz. Danışmanınız sizi davet edebilir.',
+    empty: 'Gösterilecek proje yok. Bir proje bekliyorsanız danışmanınıza sorun.',
     open: 'Projeyi aç',
   },
   idea: {

@@ -20,7 +20,7 @@ function TryDemo() {
       <h2>{sample.tryTitle}</h2>
       <p className={styles.lead}>{sample.tryExplain}</p>
       <div>
-        <Button variant="secondary" iconRight="arrowRight" onClick={demoSignIn}>
+        <Button variant="primary" iconRight="arrowRight" onClick={demoSignIn}>
           {sample.tryButton}
         </Button>
       </div>
@@ -37,13 +37,14 @@ export default function Home() {
   return (
     <PublicPage>
       {notice && <NoticeBox tone="amber">{t.notices[notice]}</NoticeBox>}
+      {/* The demo's way in comes first: the email form does nothing there. */}
+      {__DEMO__ && <TryDemo />}
       <Card className={styles.card}>
         <h1>{t.auth.home.title}</h1>
         <p className={styles.lead}>{t.auth.home.intro}</p>
         <RequestLinkForm />
         <p className={styles.small}>{t.auth.home.invitationNote}</p>
       </Card>
-      {__DEMO__ && <TryDemo />}
     </PublicPage>
   )
 }

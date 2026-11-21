@@ -12,12 +12,18 @@ const stringsByLang: Record<Lang, Strings> = { en, tr }
 // whole screen stays in English there, whatever his language setting is.
 const consultantScreen = /^\/rooms\/?$|\/(queue|notes)\/?$/
 
-export function isEnglishOnly(pathname: string): boolean {
-  return consultantScreen.test(pathname)
+// Burak's project list is the home page ('/') when he is the one signed in.
+export function isEnglishOnly(pathname: string, consultant = false): boolean {
+  return consultantScreen.test(pathname) || (consultant && pathname === '/')
 }
 
-export function screenLang(pathname: string, viewerLang: Lang): Lang {
-  return isEnglishOnly(pathname) ? DEFAULT_LANG : viewerLang
+export function screenLang(pathname: string, viewerLang: Lang, consultant = false): Lang {
+  return isEnglishOnly(pathname, consultant) ? DEFAULT_LANG : viewerLang
+}
+
+// Puts values into a string's {placeholders}.
+export function fill(text: string, values: Record<string, string>): string {
+  return text.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match)
 }
 
 // Text in the reader's language. "missing" means only the other language exists.
@@ -39,10 +45,11 @@ export function translationLine(written: Written, lang: Lang, t: Strings) {
 }
 
 export function useT() {
-  const { language } = useStore()
+  const { language, me } = useStore()
   const { pathname } = useLocation()
-  const englishOnly = isEnglishOnly(pathname)
-  const lang = screenLang(pathname, language)
+  const consultant = me?.isConsultant === true
+  const englishOnly = isEnglishOnly(pathname, consultant)
+  const lang = screenLang(pathname, language, consultant)
   const t = stringsByLang[lang]
   const time = new Intl.DateTimeFormat(LANG_LABELS[lang].locale, {
     day: 'numeric',

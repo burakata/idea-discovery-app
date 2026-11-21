@@ -31,3 +31,15 @@ export function takeSignInToken(
 export function forgetSignInToken(): void {
   pending = null
 }
+
+// Called once when the page loads, before anything is drawn, so the token leaves the
+// address even if the session check is slow. Only the sign-in page's address is touched.
+// `base` is the app's base path ('' or '/idea-discovery-app').
+export function startupSignInToken(
+  base: string,
+  location: Where = window.location,
+  history: Replaceable = window.history,
+): void {
+  const path = location.pathname.startsWith(base) ? location.pathname.slice(base.length) : location.pathname
+  if (path === '/sign-in' || path === '/sign-in/') takeSignInToken(location, history)
+}

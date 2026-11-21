@@ -8,6 +8,6 @@ Use this link to join:
 
 {link}
 
-It works once and expires in {days} days.
+It works once and expires in {days} days. Do not forward this email: anyone who opens the link can sign in as you.
 
 If you were not expecting this, you can ignore this email.

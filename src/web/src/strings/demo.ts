@@ -30,7 +30,8 @@ const tr: DemoStrings = {
   preview: {
     label: 'Etkileşimli önizleme',
     short: 'Önizleme',
-    explain: 'Yardımcı ve paylaşım gerçek değil, örnektir. Her şey bu tarayıcıda kalır.',
+    explain:
+      'Yapay zekâ yardımcısı ve paylaşım gerçek değil, yalnızca nasıl çalışacağını gösterir. Her şey bu tarayıcıda kalır.',
     viewAs: 'Kimin gözünden',
     notJoined: 'henüz katılmadı',
     reset: 'Demoyu sıfırla',
@@ -38,7 +39,7 @@ const tr: DemoStrings = {
   sample: {
     tag: 'Demo',
     tryTitle: 'Sadece göz atıyor musunuz?',
-    tryExplain: 'Demoyu örnek danışman olarak açın. Her şey uydurmadır ve bu tarayıcıda kalır.',
+    tryExplain: 'Demoyu örnek danışman olarak açın. Tüm bilgiler örnektir ve bu tarayıcıda kalır.',
     tryButton: 'Demoyu dene',
     noEmail: 'Burası demo: buraya ne yazarsanız yazın e-posta gönderilmez.',
     linkTitle: 'Örnek giriş bağlantısı',
@@ -47,6 +48,11 @@ const tr: DemoStrings = {
 }
 
 const demoStrings: Record<Lang, DemoStrings> = { en, tr }
+
+// English only: Burak's demo screens.
+export const demoConsultant = {
+  scriptDone: 'The scripted replies have run out. Use Reset demo to start again.',
+}
 
 export function useDemoT(): DemoStrings {
   return demoStrings[useT().lang]

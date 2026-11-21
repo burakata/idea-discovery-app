@@ -8,4 +8,4 @@ Giriş yapmak için bu bağlantıyı kullanın:
 
 {link}
 
-Bağlantı yalnızca bir kez çalışır ve {minutes} dakika sonra geçerliliğini yitirir. Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz.
+Bağlantı yalnızca bir kez çalışır ve {minutes} dakika sonra geçerliliğini yitirir. Süresi dolarsa giriş sayfasından yeni bir bağlantı isteyebilirsiniz. Bu e-postayı kimseyle paylaşmayın: bağlantıyı açan herkes sizin adınıza giriş yapabilir.

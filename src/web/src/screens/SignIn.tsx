@@ -61,6 +61,7 @@ export default function SignIn() {
         <Card className={styles.card}>
           <h1>{t.auth.signIn.invalidTitle}</h1>
           <p className={styles.lead}>{t.errors.linkNotValid}</p>
+          <p className={styles.lead}>{t.auth.signIn.invalidHelp}</p>
           <RequestLinkForm />
         </Card>
       ) : (

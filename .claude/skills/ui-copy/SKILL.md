@@ -27,7 +27,7 @@ language.
   Good: "Your message was sent." / "Mesajınız gönderildi."
   Not: "Request processed successfully." / "İstek başarıyla işlendi."
 - Error messages say what to do next.
-  Good: "Connection lost. Try again." / "Bağlantı kesildi. Tekrar deneyin."
+  Good: "Connection lost. Check your internet and try again." / "İnternet bağlantınız kesildi. Kontrol edip tekrar deneyin."
 - No exclamation marks except in a greeting.
 - Do not call the owners' business a "platform", and do not describe it with
   words they have not used.

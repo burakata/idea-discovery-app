@@ -1,31 +1,34 @@
-import { useEffect } from 'react'
 import { Page, PageTitle } from '../components/AppShell'
 import { Button } from '../components/Button'
 import { Card, Empty, NoticeBox } from '../components/Card'
 import { Icon } from '../components/Icon'
 import { useStore } from '../state/store'
 import { useT } from '../strings'
+import { consultant as c } from '../strings/consultant'
 import styles from './Projects.module.css'
 
 // The signed-in home: the projects this person belongs to, even if there is one.
 // A project opens only where its card has a link (the demo; the real rooms come
 // in M1 PR 8), so the real cards are plain.
 export default function Projects() {
-  const { projects, notice, clearNotice } = useStore()
+  const { me, projects, projectsError, notice } = useStore()
   const { t, pick } = useT()
-
-  // A message that sent the person here is shown once.
-  useEffect(() => clearNotice, [clearNotice])
+  // Burak's list is in English, with his own wording.
+  const consultant = me?.isConsultant === true
 
   return (
     <Page>
-      <PageTitle title={t.projects.title} sub={t.projects.sub} />
+      <PageTitle
+        title={consultant ? c.projects.title : t.projects.title}
+        sub={consultant ? c.projects.sub : t.projects.sub}
+      />
       {notice && (
         <div className={styles.notice}>
           <NoticeBox tone="amber">{t.notices[notice]}</NoticeBox>
         </div>
       )}
-      {projects?.length === 0 && <Empty>{t.projects.empty}</Empty>}
+      {projectsError && <NoticeBox tone="amber">{t.errors[projectsError]}</NoticeBox>}
+      {projects?.length === 0 && <Empty>{consultant ? c.projects.empty : t.projects.empty}</Empty>}
       <ul className={styles.list}>
         {projects?.map((project) => (
           <li key={project.id}>

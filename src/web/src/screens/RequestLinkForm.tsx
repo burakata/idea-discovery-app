@@ -3,7 +3,7 @@ import { Button } from '../components/Button'
 import { NoticeBox } from '../components/Card'
 import { TextInput } from '../components/Field'
 import { useStore } from '../state/store'
-import { useT } from '../strings'
+import { fill, useT } from '../strings'
 import { DemoNoEmail } from './DemoNoEmail'
 import styles from './Public.module.css'
 
@@ -13,6 +13,8 @@ export function RequestLinkForm() {
   const { requestLink } = useStore()
   const { t } = useT()
   const [email, setEmail] = useState('')
+  // The address the confirmation names, as it was sent.
+  const [sentTo, setSentTo] = useState('')
   const [phase, setPhase] = useState<'form' | 'sending' | 'sent'>('form')
   const [missing, setMissing] = useState(false)
 
@@ -23,15 +25,22 @@ export function RequestLinkForm() {
     if (trimmed === '') return
     setPhase('sending')
     await requestLink(trimmed)
+    setSentTo(trimmed)
     setPhase('sent')
   }
 
   if (phase === 'sent') {
     return (
       <div className={styles.form}>
-        {__DEMO__ && <DemoNoEmail />}
-        <NoticeBox title={t.auth.home.sentTitle}>{t.auth.home.sent}</NoticeBox>
-        <p className={styles.small}>{t.auth.home.sentHint}</p>
+        {/* The demo sends nothing, so it must not say that a link is on its way. */}
+        {__DEMO__ ? (
+          <DemoNoEmail />
+        ) : (
+          <>
+            <NoticeBox title={t.auth.home.sentTitle}>{fill(t.auth.home.sent, { email: sentTo })}</NoticeBox>
+            <p className={styles.small}>{t.auth.home.sentHint}</p>
+          </>
+        )}
         <div>
           <Button variant="quiet" onClick={() => setPhase('form')}>
             {t.auth.home.askAgain}

@@ -16,6 +16,16 @@ export const LANG_LABELS: Record<Lang, { short: string; full: string; locale: st
 // The source language, and the fallback for anything unsupported.
 export const DEFAULT_LANG: Lang = 'en'
 
+// The language the browser prefers, if it is one we support; otherwise the default.
+// Takes navigator.languages, for example ['tr-TR', 'en'].
+export function browserLang(preferred: readonly string[]): Lang {
+  for (const tag of preferred) {
+    const primary = tag.split('-')[0].toLowerCase()
+    if (isLang(primary)) return primary
+  }
+  return DEFAULT_LANG
+}
+
 export function isLang(value: unknown): value is Lang {
   return typeof value === 'string' && (LANGS as readonly string[]).includes(value)
 }

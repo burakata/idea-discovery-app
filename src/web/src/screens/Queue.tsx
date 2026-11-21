@@ -14,6 +14,7 @@ import { useDemoStore } from '../state/demoStore'
 import type { QueueItem, Source } from '../state/types'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
+import { demoConsultant } from '../strings/demo'
 import styles from './Queue.module.css'
 
 export default function Queue() {
@@ -253,10 +254,10 @@ export default function Queue() {
         <ul className={styles.items}>{room.queue.map(renderItem)}</ul>
       ) : (
         <Empty>
-          {c.queue.empty} {scriptDone ? c.queue.scriptDone : c.queue.emptyHint}
+          {c.queue.empty} {scriptDone ? demoConsultant.scriptDone : c.queue.emptyHint}
         </Empty>
       )}
-      {room.queue.length > 0 && scriptDone && <p className={styles.done}>{c.queue.scriptDone}</p>}
+      {room.queue.length > 0 && scriptDone && <p className={styles.done}>{demoConsultant.scriptDone}</p>}
     </Page>
   )
 }

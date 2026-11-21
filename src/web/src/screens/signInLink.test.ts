@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { forgetSignInToken, takeSignInToken } from './signInLink'
+import { forgetSignInToken, startupSignInToken, takeSignInToken } from './signInLink'
 
 function fakeBrowser(hash: string) {
   const location = { hash, pathname: '/idea/sign-in', search: '?x=1' }
@@ -47,5 +47,24 @@ describe('reading the sign-in link', () => {
     const { location, history } = fakeBrowser('#other=1')
     expect(takeSignInToken(location, history)).toBeNull()
     expect(history.replaced).toHaveLength(1)
+  })
+})
+
+describe('reading the link at startup', () => {
+  it('takes the token and clears the fragment on the sign-in page, under a base path', () => {
+    const { location, history } = fakeBrowser('#t=abc')
+    location.pathname = '/idea-discovery-app/sign-in'
+    startupSignInToken('/idea-discovery-app', location, history)
+    expect(history.replaced).toEqual(['/idea-discovery-app/sign-in?x=1'])
+    // The page then finds it without the fragment.
+    expect(takeSignInToken({ hash: '', pathname: '/', search: '' }, history)).toBe('abc')
+  })
+
+  it('leaves every other address alone', () => {
+    const { location, history } = fakeBrowser('#t=abc')
+    location.pathname = '/'
+    startupSignInToken('', location, history)
+    expect(history.replaced).toEqual([])
+    expect(location.hash).toBe('#t=abc')
   })
 })
