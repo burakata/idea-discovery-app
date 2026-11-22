@@ -53,7 +53,13 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
      another message. The reply arrives by itself after a moment.
   5. As Tom, open the Shared summary and tap "Not right" on a statement.
   6. As Burak, confirm, edit, remove or add statements, then Export.
-  7. As Burak, open "All rooms" to see the empty example project.
+  7. As Burak, the project list also shows the empty example project.
+  8. As Burak, press **Create project**, fill in the title and introduction
+     in English and Turkish, then open **People** on a project: invite a new
+     address (the invitation appears; nothing is sent) and an existing one
+     such as `tom@example.test` (the demo people's addresses are
+     `<name>@example.test`, so Tom is added at once), copy a link (a labelled
+     sample), look at someone's sign-ins and end one, and remove a member.
 
 | Person | Role | Starts as |
 |---|---|---|
