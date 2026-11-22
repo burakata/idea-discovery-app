@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { ErrorKey } from '../api/client'
 import type { Lang } from '../languages'
-import type { Text } from '../projects/types'
+import type { Bilingual, Text } from '../projects/types'
 
 // Who is signed in. The same in both builds.
 export interface Me {
@@ -23,6 +23,63 @@ export interface ProjectCard {
   lead?: Text
   to?: string
 }
+
+// Burak's project form: every language in languages.ts, so no language is named here.
+export interface ProjectDraft {
+  title: Bilingual
+  intro: Bilingual
+}
+
+export interface Member {
+  userId: string
+  displayName: string
+  role: 'consultant' | 'owner'
+  // Only Burak's screens get emails.
+  email: string | null
+}
+
+export interface ProjectDetails extends ProjectDraft {
+  id: string
+  members: Member[]
+}
+
+export type InvitationState = 'open' | 'accepted' | 'revoked' | 'expired'
+
+export interface Invitation {
+  id: string
+  email: string
+  displayName: string
+  language: Lang
+  state: InvitationState
+  createdAt: string
+  expiresAt: string
+}
+
+export interface SignInSession {
+  id: string
+  createdAt: string
+  lastSeenAt: string | null
+  expiresAt: string
+  endedAt: string | null
+  device: string | null
+}
+
+export interface InviteInput {
+  email: string
+  displayName: string
+  language: Lang
+}
+
+// The three things that can come back from an invitation. The other refusals
+// (already a member, already invited, your own address) are errors.
+export type InviteOutcome =
+  | { kind: 'invited' }
+  | { kind: 'added'; displayName: string }
+  | { kind: 'tryLater' }
+
+// A copied link goes to the clipboard and nowhere else. Only when the clipboard
+// is unavailable does the link come back, once, to be shown in the open dialog.
+export type CopyResult = { copied: true } | { copied: false; link: string }
 
 // What every screen sees. Two implementations sit behind it: the demo (seed data,
 // local storage, simulated sign-in) and the API. Screens never know which.
@@ -46,6 +103,21 @@ export interface Store {
   // `chosenLanguage` is set only if the person changed the switch on the sign-in page.
   redeem: (token: string | null, chosenLanguage: Lang | null) => Promise<void>
   signOut: () => Promise<void>
+  // Burak's project and people actions (M1 PR 7b). They throw an ApiError when the
+  // call is refused; the screens show text for its `consultantKey`. Both
+  // implementations reload the project list after a change to it.
+  createProject: (draft: ProjectDraft) => Promise<string>
+  saveProject: (id: string, draft: ProjectDraft) => Promise<void>
+  getProject: (id: string) => Promise<ProjectDetails>
+  invite: (projectId: string, input: InviteInput) => Promise<InviteOutcome>
+  listInvitations: (projectId: string) => Promise<Invitation[]>
+  revokeInvitation: (invitationId: string) => Promise<void>
+  copyInvitationLink: (invitationId: string) => Promise<CopyResult>
+  copySignInLink: (userId: string) => Promise<CopyResult>
+  listSessions: (userId: string) => Promise<SignInSession[]>
+  endSession: (sessionId: string) => Promise<void>
+  removeMember: (projectId: string, userId: string) => Promise<void>
+
   // Demo only: signs in as the sample consultant.
   demoSignIn?: () => void
 }

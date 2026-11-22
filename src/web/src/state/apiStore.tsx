@@ -34,6 +34,17 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     requestLink: session.requestLink,
     redeem: session.redeem,
     signOut: session.signOut,
+    createProject: session.createProject,
+    saveProject: session.saveProject,
+    getProject: session.getProject,
+    invite: session.invite,
+    listInvitations: session.listInvitations,
+    revokeInvitation: session.revokeInvitation,
+    copyInvitationLink: session.copyInvitationLink,
+    copySignInLink: session.copySignInLink,
+    listSessions: session.listSessions,
+    endSession: session.endSession,
+    removeMember: session.removeMember,
   }
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

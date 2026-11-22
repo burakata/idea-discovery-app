@@ -1,4 +1,5 @@
-import type { JobFlowStep, Lang, Participant, StatementGroup, Text } from '../projects/types'
+import type { Bilingual, JobFlowStep, Lang, Participant, StatementGroup, Text } from '../projects/types'
+import type { Invitation, SignInSession } from './context'
 
 export interface Person extends Participant {
   // The room an owner belongs to. Burak and the assistant are in every room.
@@ -81,6 +82,19 @@ export interface Room {
   scriptIndex: number
 }
 
+// A person's place in a project (their name and role are on the person), with the
+// sample email Burak's People screen shows.
+export interface DemoMember {
+  userId: string
+  email: string
+}
+
+// The title and introduction of a project Burak created, or his edit of a sample one.
+export interface DemoTexts {
+  title: Bilingual
+  intro: Bilingual
+}
+
 export interface AppState {
   version: number
   seq: number
@@ -91,4 +105,11 @@ export interface AppState {
   viewAs: string
   people: Record<string, Person>
   rooms: Record<string, Room>
+  // Burak's project and people screens. Projects he creates in the demo have no room.
+  created: string[]
+  texts: Record<string, DemoTexts>
+  members: Record<string, DemoMember[]>
+  invitations: Record<string, Invitation[]>
+  // Invented sample sign-ins, by person.
+  sessions: Record<string, SignInSession[]>
 }

@@ -7,9 +7,12 @@
 // - Tokens are kept in memory only and never logged or stored.
 // - Nothing the API says is shown as it is: a code or status maps to a key in the
 //   strings files.
+import type { consultant } from '../strings/consultant'
 import type { Strings } from '../strings/en'
 
 export type ErrorKey = keyof Strings['errors']
+// Burak's screens are English only, so their refusals have their own texts.
+export type ConsultantErrorKey = keyof typeof consultant.errors
 
 // What the store does about a status, whichever call returned it.
 export type StatusEffect = 'signedOut' | 'toList' | null
@@ -31,6 +34,24 @@ export function errorKey(status: number, code: string | null): ErrorKey {
   return 'generic'
 }
 
+const consultantCodeKeys: Record<string, ConsultantErrorKey> = {
+  invalid_request: 'invalidRequest',
+  already_member: 'alreadyMember',
+  already_invited: 'alreadyInvited',
+  cannot_invite_consultant: 'ownEmail',
+  invitation_not_open: 'invitationNotOpen',
+  cannot_remove_consultant: 'cannotRemoveConsultant',
+  try_later: 'tryLater',
+}
+
+export function consultantErrorKey(status: number, code: string | null): ConsultantErrorKey {
+  if (code && code in consultantCodeKeys) return consultantCodeKeys[code]
+  if (status === 404) return 'notFound'
+  if (status === 429) return 'tooManyTries'
+  if (status === 0) return 'network'
+  return 'generic'
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly code: string | null
@@ -45,6 +66,10 @@ export class ApiError extends Error {
   get key(): ErrorKey {
     return errorKey(this.status, this.code)
   }
+
+  get consultantKey(): ConsultantErrorKey {
+    return consultantErrorKey(this.status, this.code)
+  }
 }
 
 export interface ApiClientOptions {
@@ -56,6 +81,9 @@ export interface ApiClientOptions {
 interface RequestOptions {
   // For calls where a 401 is an ordinary answer, such as asking who is signed in.
   expectSignedOut?: boolean
+  // For calls about one thing inside a project (an invitation, a session): a 404 says
+  // that thing is gone, not the project, so the person stays where they are.
+  expectMissing?: boolean
 }
 
 export function createApiClient(options: ApiClientOptions = {}) {
@@ -107,14 +135,20 @@ export function createApiClient(options: ApiClientOptions = {}) {
       return (response.status === 204 || response.status === 202 ? undefined : await response.json()) as T
     }
     const effect = statusEffect(response.status)
-    if (effect && !(effect === 'signedOut' && opts.expectSignedOut)) options.onStatus?.(effect)
+    if (
+      effect &&
+      !(effect === 'signedOut' && opts.expectSignedOut) &&
+      !(effect === 'toList' && opts.expectMissing)
+    ) {
+      options.onStatus?.(effect)
+    }
     throw new ApiError(response.status, await codeOf(response))
   }
 
   return {
     get: <T>(path: string, opts?: RequestOptions) => request<T>('GET', path, undefined, opts),
-    post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
-    put: <T>(path: string, body: unknown) => request<T>('PUT', path, body),
+    post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, body ?? {}, opts),
+    put: <T>(path: string, body: unknown, opts?: RequestOptions) => request<T>('PUT', path, body, opts),
     // The token is bound to who is signed in, so ask for a new one after signing in or out.
     forgetCsrfToken: () => {
       csrf = null

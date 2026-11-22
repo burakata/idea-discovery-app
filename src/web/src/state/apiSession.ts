@@ -2,9 +2,11 @@
 // who is signed in, the person's projects and language, and what happens after a
 // 401, a failed sign-out or a failed list. apiStore.tsx only connects it to React.
 import { ApiError, createApiClient, type ErrorKey } from '../api/client'
+import { bilingualFrom, createConsultantApi } from '../api/consultant'
 import { browserLang, DEFAULT_LANG, isLang, type Lang } from '../languages'
+import { browserClipboard, copyLink, type Clipboard } from './copyLink'
 import { languageToSave } from './sessionRules'
-import type { Me, NoticeKey, ProjectCard, SessionStatus } from './context'
+import type { InviteInput, Me, NoticeKey, ProjectCard, ProjectDraft, SessionStatus } from './context'
 
 const LANGUAGE_KEY = 'idea-discovery-rooms-language'
 
@@ -25,11 +27,7 @@ interface MeResponse {
   isConsultant: boolean
 }
 
-interface ProjectResponse {
-  id: string
-  titleEn: string
-  titleTr: string
-}
+type ProjectResponse = Record<string, unknown> & { id: string }
 
 // Data from the API is checked where it comes in (docs/engineering.md section 7).
 function toMe(body: MeResponse): Me {
@@ -42,7 +40,7 @@ function toMe(body: MeResponse): Me {
 }
 
 function toCard(project: ProjectResponse): ProjectCard {
-  return { id: project.id, title: { en: project.titleEn, tr: project.titleTr } }
+  return { id: project.id, title: bilingualFrom(project, 'title') }
 }
 
 export interface SessionOptions {
@@ -50,6 +48,8 @@ export interface SessionOptions {
   storage?: Pick<Storage, 'getItem' | 'setItem'>
   // navigator.languages: used when the visitor has not chosen a language yet.
   browserLanguages?: readonly string[]
+  // Where copied links go; the browser's own when not given.
+  clipboard?: Clipboard
 }
 
 export function createApiSession(options: SessionOptions = {}) {
@@ -106,6 +106,9 @@ export function createApiSession(options: SessionOptions = {}) {
       // Not remembering the visitor's language is harmless.
     }
   }
+
+  const consultantApi = createConsultantApi(api)
+  const clipboard = () => options.clipboard ?? browserClipboard()
 
   async function loadProjects() {
     set({ notice: null, projects: null, projectsError: null })
@@ -172,6 +175,28 @@ export function createApiSession(options: SessionOptions = {}) {
       set({ me, status: 'signedIn', actionError: null })
       void loadProjects()
     },
+
+    // Burak's actions. Each goes through the api client; a change to the project list
+    // reloads it. Refusals are thrown as ApiError for the screen to show.
+    async createProject(draft: ProjectDraft) {
+      const project = await consultantApi.createProject(draft)
+      await loadProjects()
+      return project.id
+    },
+    async saveProject(id: string, draft: ProjectDraft) {
+      await consultantApi.saveProject(id, draft)
+      await loadProjects()
+    },
+    getProject: consultantApi.getProject,
+    invite: (projectId: string, input: InviteInput) => consultantApi.invite(projectId, input),
+    listInvitations: consultantApi.listInvitations,
+    revokeInvitation: consultantApi.revokeInvitation,
+    copyInvitationLink: (invitationId: string) =>
+      copyLink(() => consultantApi.invitationLink(invitationId), clipboard()),
+    copySignInLink: (userId: string) => copyLink(() => consultantApi.signInLink(userId), clipboard()),
+    listSessions: consultantApi.listSessions,
+    endSession: consultantApi.endSession,
+    removeMember: consultantApi.removeMember,
 
     // Local state is cleared only when the server confirms (204) or says nobody is
     // signed in (401). Otherwise the person stays signed in and is told.

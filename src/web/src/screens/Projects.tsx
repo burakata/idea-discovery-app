@@ -9,7 +9,7 @@ import styles from './Projects.module.css'
 
 // The signed-in home: the projects this person belongs to, even if there is one.
 // A project opens only where its card has a link (the demo; the real rooms come
-// in M1 PR 8), so the real cards are plain.
+// in M1 PR 8). Burak's cards also lead to the project's People and its edit form.
 export default function Projects() {
   const { me, projects, projectsError, notice } = useStore()
   const { t, pick } = useT()
@@ -21,6 +21,13 @@ export default function Projects() {
       <PageTitle
         title={consultant ? c.projects.title : t.projects.title}
         sub={consultant ? c.projects.sub : t.projects.sub}
+        aside={
+          consultant && (
+            <Button variant="primary" icon="add" to="/projects/new">
+              {c.projects.create}
+            </Button>
+          )
+        }
       />
       {notice && (
         <div className={styles.notice}>
@@ -46,6 +53,20 @@ export default function Projects() {
                 <Button variant="primary" iconRight="arrowRight" to={project.to}>
                   {t.projects.open}
                 </Button>
+              )}
+              {consultant && (
+                <div className={styles.actions}>
+                  <Button
+                    variant={project.to ? 'secondary' : 'primary'}
+                    icon="people"
+                    to={`/projects/${encodeURIComponent(project.id)}/people`}
+                  >
+                    {c.projects.people}
+                  </Button>
+                  <Button variant="quiet" icon="edit" to={`/projects/${encodeURIComponent(project.id)}/edit`}>
+                    {c.projects.edit}
+                  </Button>
+                </div>
               )}
             </Card>
           </li>

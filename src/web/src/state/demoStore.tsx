@@ -5,12 +5,15 @@ import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
 import { DEFAULT_LANG, isLang, otherLang, type Lang } from '../languages'
-import { StoreContext, type Me, type ProjectCard, type Store } from './context'
+import { ApiError } from '../api/client'
+import { StoreContext, type InviteInput, type Me, type ProjectCard, type ProjectDraft, type Store } from './context'
+import { browserClipboard, copyLink } from './copyLink'
+import * as peopleRules from './demoPeople'
 import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 6
+const VERSION = 7
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =
@@ -31,10 +34,17 @@ type Action =
   | { type: 'editStatement'; roomId: string; statementId: string; text: string }
   | { type: 'removeStatement'; roomId: string; statementId: string }
   | { type: 'addStatement'; roomId: string; group: 'early' | 'open'; text: string }
+  | { type: 'createProject'; id: string; draft: ProjectDraft }
+  | { type: 'saveProject'; id: string; draft: ProjectDraft }
+  | { type: 'invite'; projectId: string; input: InviteInput; now: string }
+  | { type: 'revokeInvitation'; invitationId: string }
+  | { type: 'endSession'; sessionId: string; now: string }
+  | { type: 'removeMember'; projectId: string; userId: string; now: string }
   | { type: 'reset' }
 
 export function createInitialState(): AppState {
   const people: Record<string, Person> = {}
+
   const rooms: Record<string, Room> = {}
   for (const project of projects) {
     for (const participant of project.participants) {
@@ -59,7 +69,16 @@ export function createInitialState(): AppState {
     }
   }
   // The demo opens on the signed-out home, like the real app.
-  return { version: VERSION, seq: 1, signedIn: false, guestLanguage: DEFAULT_LANG, viewAs: startingViewer, people, rooms }
+  return {
+    version: VERSION,
+    seq: 1,
+    signedIn: false,
+    guestLanguage: DEFAULT_LANG,
+    viewAs: startingViewer,
+    people,
+    rooms,
+    ...peopleRules.initialPeopleState(people),
+  }
 }
 
 function loadState(): AppState {
@@ -112,6 +131,15 @@ function assistantMessage(id: string, lang: Lang, text: string, translation?: st
     text,
     translation,
     scripted: true,
+  }
+}
+
+function attempt(state: AppState, change: () => AppState): AppState {
+  try {
+    return change()
+  } catch (failure) {
+    if (failure instanceof ApiError) return state
+    throw failure
   }
 }
 
@@ -340,6 +368,28 @@ export function reducer(state: AppState, action: Action): AppState {
         1,
       )
 
+    // The store has already run each of these once and let a refusal through to the
+    // screen, so a refusal here cannot happen; the state stays as it was if it does.
+    case 'createProject':
+      return peopleRules.createProject(state, action.id, action.draft)
+
+    case 'saveProject':
+      return peopleRules.saveProject(state, action.id, action.draft)
+
+    case 'invite':
+      return attempt(state, () => peopleRules.invite(state, action.projectId, action.input, new Date(action.now)).state)
+
+    case 'revokeInvitation':
+      return attempt(state, () => peopleRules.revokeInvitation(state, action.invitationId))
+
+    case 'endSession':
+      return attempt(state, () => peopleRules.endSession(state, action.sessionId, new Date(action.now)))
+
+    case 'removeMember':
+      return attempt(state, () =>
+        peopleRules.removeMember(state, action.projectId, action.userId, new Date(action.now)),
+      )
+
     case 'reset':
       return createInitialState()
   }
@@ -355,11 +405,22 @@ interface DemoStore {
 
 const DemoContext = createContext<DemoStore | null>(null)
 
-function cardsFor(viewer: Person): ProjectCard[] {
-  // Owners see their own project, even if it is the only one; Burak sees all.
-  return projects
-    .filter((project) => viewer.role === 'consultant' || viewer.roomId === project.id)
-    .map((project) => ({ id: project.id, title: project.name, lead: project.intro.lead, to: `/rooms/${project.id}` }))
+function cardsFor(state: AppState, viewer: Person): ProjectCard[] {
+  // Owners see the projects they are in, even if there is one; Burak sees all. The
+  // sample projects have a room; the ones Burak creates in the demo have none.
+  return peopleRules
+    .projectIds(state)
+    .filter(
+      (id) =>
+        viewer.role === 'consultant' || (state.members[id] ?? []).some((member) => member.userId === viewer.id),
+    )
+    .map((id) => {
+      const texts = peopleRules.textsOf(state, id)!
+      const hasRoom = projects.some((project) => project.id === id)
+      // An owner removed from a sample project has lost its room as well.
+      const open = hasRoom && (viewer.role === 'consultant' || viewer.roomId === id)
+      return { id, title: texts.title, lead: texts.intro, to: open ? `/rooms/${id}` : undefined }
+    })
 }
 
 export function DemoProvider({ children }: { children: ReactNode }) {
@@ -386,7 +447,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     me,
     language: state.signedIn ? viewer.language : state.guestLanguage,
     setLanguage: (lang) => dispatch(state.signedIn ? { type: 'language', lang } : { type: 'guestLanguage', lang }),
-    projects: state.signedIn ? cardsFor(viewer) : null,
+    projects: state.signedIn ? cardsFor(state, viewer) : null,
     projectsError: null,
     notice: null,
     actionError: null,
@@ -395,6 +456,48 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     redeem: async (_token, chosenLanguage) => dispatch({ type: 'signIn', language: chosenLanguage ?? undefined }),
     signOut: async () => dispatch({ type: 'signOut' }),
     demoSignIn: () => dispatch({ type: 'signIn', language: state.guestLanguage }),
+
+    // Burak's screens on the demo data. Nothing is sent; links are samples.
+    createProject: async (draft) => {
+      const id = peopleRules.newProjectId(state)
+      dispatch({ type: 'createProject', id, draft })
+      return id
+    },
+    saveProject: async (id, draft) => {
+      if (!peopleRules.textsOf(state, id)) throw new ApiError(404, null)
+      dispatch({ type: 'saveProject', id, draft })
+    },
+    getProject: async (id) => peopleRules.detailsOf(state, id),
+    invite: async (projectId, input) => {
+      const now = new Date()
+      const { outcome } = peopleRules.invite(state, projectId, input, now)
+      dispatch({ type: 'invite', projectId, input, now: now.toISOString() })
+      return outcome
+    },
+    listInvitations: async (projectId) => peopleRules.invitationsOf(state, projectId),
+    revokeInvitation: async (invitationId) => {
+      peopleRules.revokeInvitation(state, invitationId)
+      dispatch({ type: 'revokeInvitation', invitationId })
+    },
+    copyInvitationLink: async (invitationId) => {
+      peopleRules.checkInvitationOpen(state, invitationId)
+      return copyLink(async () => peopleRules.SAMPLE_LINK, browserClipboard())
+    },
+    copySignInLink: async (userId) => {
+      peopleRules.sessionsOf(state, userId)
+      return copyLink(async () => peopleRules.SAMPLE_LINK, browserClipboard())
+    },
+    listSessions: async (userId) => peopleRules.sessionsOf(state, userId),
+    endSession: async (sessionId) => {
+      const now = new Date()
+      peopleRules.endSession(state, sessionId, now)
+      dispatch({ type: 'endSession', sessionId, now: now.toISOString() })
+    },
+    removeMember: async (projectId, userId) => {
+      const now = new Date()
+      peopleRules.removeMember(state, projectId, userId, now)
+      dispatch({ type: 'removeMember', projectId, userId, now: now.toISOString() })
+    },
   }
 
   return (
