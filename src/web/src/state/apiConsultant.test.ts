@@ -17,6 +17,9 @@ function setup(clipboard: Clipboard | undefined) {
     if (url === '/api/auth/csrf') return json({ token: 'T' })
     if (url === '/api/auth/me') return json({ id: 'b', displayName: 'Burak', uiLanguage: 'en', isConsultant: true })
     if (url === '/api/projects') return json(projectList)
+    if (url === '/api/projects/p1') {
+      return json({ id: 'p1', titleEn: 'One', titleTr: 'Bir', introEn: 'About one', introTr: 'Bir hakkında', members: [] })
+    }
     if (url === '/api/consultant/projects' && method === 'POST') {
       projectList = [...projectList, { id: 'p2', titleEn: 'Two', titleTr: 'İki' }]
       return json({ id: 'p2', titleEn: 'Two', titleTr: 'İki', introEn: 'a', introTr: 'b', members: [] }, 201)
@@ -44,6 +47,19 @@ describe('the api store: creating a project', () => {
     expect(calls.filter((call) => call === 'GET /api/projects')).toHaveLength(2)
     expect(session.getState().projects?.map((card) => card.id)).toEqual(['p1', 'p2'])
     expect(session.getState().projects?.[1].title).toEqual({ en: 'Two', tr: 'İki' })
+  })
+
+  it('gives the consultant cards their introductions, and leaves a card plain if its details fail', async () => {
+    const { session } = setup(undefined)
+    await session.start()
+    const cards = session.getState().projects!
+    expect(cards[0].lead).toEqual({ en: 'About one', tr: 'Bir hakkında' })
+    await session.createProject(draft)
+    // p2 has no details answer in the fake server: its card stays, with no introduction, and no notice.
+    const [, second] = session.getState().projects!
+    expect(second.id).toBe('p2')
+    expect(second.lead).toBeUndefined()
+    expect(session.getState().notice).toBeNull()
   })
 
   it('throws the refusal for the screen to show', async () => {

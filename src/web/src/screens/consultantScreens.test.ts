@@ -3,7 +3,7 @@ import { LANG_LABELS, LANGS, type Lang } from '../languages'
 import type { Member, SignInSession } from '../state/context'
 import { isEnglishOnly, screenLang } from '../strings'
 import { consultant as c } from '../strings/consultant'
-import { canCopySignInLink, canRemove, copiedMessage, inviteMessage, isLive } from './peopleRules'
+import { canCopySignInLink, canRemove, copiedMessage, deviceLabel, inviteMessage, isLive } from './peopleRules'
 import { cleanDraft, emptyDraft, formGroups, PROJECT_LIMITS, validateDraft } from './projectFormRules'
 
 // A language the app does not have yet: the form must grow a field pair for it.
@@ -125,5 +125,32 @@ describe('the language of Burak\'s project screens', () => {
   it('is not English-only for anyone else, or on other pages', () => {
     expect(isEnglishOnly('/projects/new', false)).toBe(false)
     expect(isEnglishOnly('/projects/abc/other', true)).toBe(false)
+  })
+})
+
+describe('readable devices', () => {
+  const chromeWindows =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+  const safariIphone =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1'
+
+  it('gives a short browser-and-system label', () => {
+    expect(deviceLabel(chromeWindows)).toBe('Chrome on Windows')
+    expect(deviceLabel(safariIphone)).toBe('Safari on iPhone')
+    expect(deviceLabel('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Gecko/20100101 Firefox/132.0')).toBe('Firefox on Mac')
+    expect(deviceLabel('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')).toBe(
+      'Chrome on Android',
+    )
+  })
+
+  it('names Edge and Opera, which also say Chrome', () => {
+    expect(deviceLabel(chromeWindows + ' Edg/130.0.0.0')).toBe('Edge on Windows')
+    expect(deviceLabel(chromeWindows + ' OPR/115.0.0.0')).toBe('Opera on Windows')
+  })
+
+  it('falls back to "Unknown device" for nothing it knows', () => {
+    expect(deviceLabel(null)).toBe('Unknown device')
+    expect(deviceLabel('curl/8.0')).toBe('Unknown device')
+    expect(deviceLabel('')).toBe('Unknown device')
   })
 })

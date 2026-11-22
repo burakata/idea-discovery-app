@@ -61,7 +61,7 @@ export const demoConsultant = {
 // Burak's people screen in the demo: what it simulates, in plain words.
 export const demoPeople = {
   note: 'This is the demo: no email is sent, the links are samples that open nothing, and the sign-ins are invented.',
-  sampleLink: 'Sample link, not a real one: ',
+  sampleLink: 'This is a sample link: it opens nothing and signs nobody in.',
 }
 
 export function useDemoT(): DemoStrings {

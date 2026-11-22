@@ -70,7 +70,8 @@ export default function People() {
 
   const afterCopy = (result: CopyResult, name: string, show: (note: Note) => void) => {
     const text = copiedMessage(result, name)
-    if (text) show({ tone: 'info', text })
+    // In the demo the copied link is a sample, and the note says so.
+    if (text) show({ tone: 'info', text: __DEMO__ ? `${text} ${demoPeople.sampleLink}` : text })
     else if (!result.copied) setFallback({ name, link: result.link })
   }
 

@@ -38,7 +38,8 @@ export function sampleSessions(personId: string, now: Date): SignInSession[] {
       lastSeenAt: ago(10 * 60 * 1000),
       expiresAt: new Date(started + SESSION_LIFETIME_MS).toISOString(),
       endedAt: null,
-      device: 'Chrome on Windows (sample)',
+      device:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     },
     {
       id: `${personId}-s2`,
@@ -46,7 +47,8 @@ export function sampleSessions(personId: string, now: Date): SignInSession[] {
       lastSeenAt: ago(8 * DAY_MS),
       expiresAt: new Date(now.getTime() - 9 * DAY_MS + SESSION_LIFETIME_MS).toISOString(),
       endedAt: ago(8 * DAY_MS),
-      device: 'Safari on iPhone (sample)',
+      device:
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
     },
   ]
 }

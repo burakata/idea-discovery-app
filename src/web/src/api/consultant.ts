@@ -107,8 +107,9 @@ export function createConsultantApi(api: ApiClient) {
     },
 
     // A 404 here means the project is gone: the session sends Burak to his list.
-    async getProject(projectId: string): Promise<ProjectDetails> {
-      return toProject(await api.get<Row>(`/projects/${id(projectId)}`))
+    // `quiet` is for a background read (the list's introductions): a 404 is not news.
+    async getProject(projectId: string, quiet = false): Promise<ProjectDetails> {
+      return toProject(await api.get<Row>(`/projects/${id(projectId)}`, quiet ? { expectMissing: true } : undefined))
     },
 
     async invite(projectId: string, input: InviteInput): Promise<InviteOutcome> {

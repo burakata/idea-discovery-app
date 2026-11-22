@@ -33,3 +33,30 @@ export function canCopySignInLink(member: Member, myId: string | undefined): boo
 export function copiedMessage(result: CopyResult, name: string): string | null {
   return result.copied ? fill(c.people.linkCopied, { name }) : null
 }
+
+// A short label for a browser's User-Agent text: "Chrome on Windows". The first
+// match in each list wins, so Edge and Opera (which also say Chrome) come first.
+const browsers: Array<[RegExp, string]> = [
+  [/Edg(e|A|iOS)?\//, 'Edge'],
+  [/OPR\/|Opera/, 'Opera'],
+  [/Firefox\/|FxiOS\//, 'Firefox'],
+  [/Chrome\/|CriOS\//, 'Chrome'],
+  [/Safari\//, 'Safari'],
+]
+const systems: Array<[RegExp, string]> = [
+  [/iPhone/, 'iPhone'],
+  [/iPad/, 'iPad'],
+  [/Android/, 'Android'],
+  [/Windows/, 'Windows'],
+  [/Macintosh|Mac OS X/, 'Mac'],
+  [/CrOS/, 'ChromeOS'],
+  [/Linux/, 'Linux'],
+]
+
+export function deviceLabel(userAgent: string | null): string {
+  const text = userAgent ?? ''
+  const browser = browsers.find(([pattern]) => pattern.test(text))?.[1]
+  const system = systems.find(([pattern]) => pattern.test(text))?.[1]
+  if (browser && system) return `${browser} on ${system}`
+  return browser ?? system ?? c.people.unknownDevice
+}

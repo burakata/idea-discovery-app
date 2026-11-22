@@ -9,18 +9,21 @@ import type { Member, SignInSession } from '../state/context'
 import { useStore } from '../state/store'
 import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
-import { isLive } from './peopleRules'
+import { demoPeople } from '../strings/demo'
+import { deviceLabel, isLive } from './peopleRules'
 import styles from './People.module.css'
 
 const p = c.people
 
-// Shown only when the browser would not copy the link. The link lives in this
-// component alone, so it is gone when the dialog closes.
+// Shown only when the browser would not copy the link. The link is held by the
+// People screen, in state set only for this dialog, and is cleared when it closes;
+// it is never in the store or in storage.
 export function LinkDialog({ name, link, onClose }: { name: string; link: string; onClose: () => void }) {
   return (
     <Dialog title={p.linkFallbackTitle} onClose={onClose} closeLabel={p.close}>
       <div className={styles.dialogBody}>
         <p>{fill(p.linkFallbackBody, { name })}</p>
+        {__DEMO__ && <p>{demoPeople.sampleLink}</p>}
         <TextInput
           readOnly
           value={link}
@@ -75,6 +78,7 @@ export function RemoveDialog({
 }
 
 export function SessionsDialog({ member, onClose }: { member: Member; onClose: () => void }) {
+  const [confirmed, setConfirmed] = useState(false)
   const { listSessions, endSession } = useStore()
   const { time } = useT()
   const [sessions, setSessions] = useState<SignInSession[] | null>(null)
@@ -94,8 +98,10 @@ export function SessionsDialog({ member, onClose }: { member: Member; onClose: (
   const end = async (id: string) => {
     setBusy(id)
     setError(null)
+    setConfirmed(false)
     try {
       await endSession(id)
+      setConfirmed(true)
       await load()
     } catch (failure) {
       setError(failure instanceof ApiError ? failure.consultantKey : 'generic')
@@ -113,6 +119,7 @@ export function SessionsDialog({ member, onClose }: { member: Member; onClose: (
             <NoticeBox tone="amber">{c.errors[error]}</NoticeBox>
           </div>
         )}
+        <div role="status">{confirmed && !error && <NoticeBox>{p.sessionEnded}</NoticeBox>}</div>
         {!sessions && !error && <p role="status">{p.loading}</p>}
         {sessions?.length === 0 && <p>{p.noSessions}</p>}
         <ul className={styles.sessions}>
@@ -121,7 +128,7 @@ export function SessionsDialog({ member, onClose }: { member: Member; onClose: (
             return (
               <li key={session.id} className={styles.session}>
                 <div className={styles.sessionText}>
-                  <strong>{session.device ?? p.unknownDevice}</strong>
+                  <strong title={session.device ?? undefined}>{deviceLabel(session.device)}</strong>
                   <span>{fill(p.started, { time: time(session.createdAt) })}</span>
                   {session.lastSeenAt && <span>{fill(p.lastSeen, { time: time(session.lastSeenAt) })}</span>}
                   {session.endedAt && <span>{fill(p.ended, { time: time(session.endedAt) })}</span>}
@@ -132,7 +139,7 @@ export function SessionsDialog({ member, onClose }: { member: Member; onClose: (
                     <Button
                       size="sm"
                       disabled={busy === session.id}
-                      aria-label={fill(p.endLabel, { device: session.device ?? p.unknownDevice })}
+                      aria-label={fill(p.endLabel, { device: deviceLabel(session.device) })}
                       onClick={() => void end(session.id)}
                     >
                       {p.end}

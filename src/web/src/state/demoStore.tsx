@@ -1,6 +1,6 @@
 // The demo data source: seed data and a simulated sign-in, saved in local storage.
 // Only the demo build includes this file (see App.tsx and store.tsx).
-import { createContext, useContext, useEffect, useReducer, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
 import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
@@ -423,9 +423,84 @@ function cardsFor(state: AppState, viewer: Person): ProjectCard[] {
     })
 }
 
+// Burak's screens on the demo data. Nothing is sent; links are samples. Each action
+// works out the next state with its pure function (which throws the refusal), keeps
+// it in `latest` and then dispatches, and the reads use `latest`: a render's own
+// state would still be the old one right after a change.
+export function createConsultantActions(
+  latest: { current: AppState },
+  dispatch: (action: Action) => void,
+  clipboard = browserClipboard,
+) {
+  const apply = (action: Action) => {
+    latest.current = reducer(latest.current, action)
+    dispatch(action)
+  }
+  const actions: Pick<
+    Store,
+    | 'createProject'
+    | 'saveProject'
+    | 'getProject'
+    | 'invite'
+    | 'listInvitations'
+    | 'revokeInvitation'
+    | 'copyInvitationLink'
+    | 'copySignInLink'
+    | 'listSessions'
+    | 'endSession'
+    | 'removeMember'
+  > = {
+    createProject: async (draft) => {
+      const id = peopleRules.newProjectId(latest.current)
+      apply({ type: 'createProject', id, draft })
+      return id
+    },
+    saveProject: async (id, draft) => {
+      if (!peopleRules.textsOf(latest.current, id)) throw new ApiError(404, null)
+      apply({ type: 'saveProject', id, draft })
+    },
+    getProject: async (id) => peopleRules.detailsOf(latest.current, id),
+    invite: async (projectId, input) => {
+      const now = new Date()
+      const { outcome } = peopleRules.invite(latest.current, projectId, input, now)
+      apply({ type: 'invite', projectId, input, now: now.toISOString() })
+      return outcome
+    },
+    listInvitations: async (projectId) => peopleRules.invitationsOf(latest.current, projectId),
+    revokeInvitation: async (invitationId) => {
+      peopleRules.revokeInvitation(latest.current, invitationId)
+      apply({ type: 'revokeInvitation', invitationId })
+    },
+    copyInvitationLink: async (invitationId) => {
+      peopleRules.checkInvitationOpen(latest.current, invitationId)
+      return copyLink(async () => peopleRules.SAMPLE_LINK, clipboard())
+    },
+    copySignInLink: async (userId) => {
+      peopleRules.sessionsOf(latest.current, userId)
+      return copyLink(async () => peopleRules.SAMPLE_LINK, clipboard())
+    },
+    listSessions: async (userId) => peopleRules.sessionsOf(latest.current, userId),
+    endSession: async (sessionId) => {
+      const now = new Date()
+      peopleRules.endSession(latest.current, sessionId, now)
+      apply({ type: 'endSession', sessionId, now: now.toISOString() })
+    },
+    removeMember: async (projectId, userId) => {
+      const now = new Date()
+      peopleRules.removeMember(latest.current, projectId, userId, now)
+      apply({ type: 'removeMember', projectId, userId, now: now.toISOString() })
+    },
+  }
+  return actions
+}
+
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
   const viewer = state.people[state.viewAs]
+  // The newest state, kept in step with every change the people actions make, so
+  // a read right after a change sees it without waiting for a new render.
+  const latest = useRef(state)
+  latest.current = state
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
@@ -457,47 +532,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     signOut: async () => dispatch({ type: 'signOut' }),
     demoSignIn: () => dispatch({ type: 'signIn', language: state.guestLanguage }),
 
-    // Burak's screens on the demo data. Nothing is sent; links are samples.
-    createProject: async (draft) => {
-      const id = peopleRules.newProjectId(state)
-      dispatch({ type: 'createProject', id, draft })
-      return id
-    },
-    saveProject: async (id, draft) => {
-      if (!peopleRules.textsOf(state, id)) throw new ApiError(404, null)
-      dispatch({ type: 'saveProject', id, draft })
-    },
-    getProject: async (id) => peopleRules.detailsOf(state, id),
-    invite: async (projectId, input) => {
-      const now = new Date()
-      const { outcome } = peopleRules.invite(state, projectId, input, now)
-      dispatch({ type: 'invite', projectId, input, now: now.toISOString() })
-      return outcome
-    },
-    listInvitations: async (projectId) => peopleRules.invitationsOf(state, projectId),
-    revokeInvitation: async (invitationId) => {
-      peopleRules.revokeInvitation(state, invitationId)
-      dispatch({ type: 'revokeInvitation', invitationId })
-    },
-    copyInvitationLink: async (invitationId) => {
-      peopleRules.checkInvitationOpen(state, invitationId)
-      return copyLink(async () => peopleRules.SAMPLE_LINK, browserClipboard())
-    },
-    copySignInLink: async (userId) => {
-      peopleRules.sessionsOf(state, userId)
-      return copyLink(async () => peopleRules.SAMPLE_LINK, browserClipboard())
-    },
-    listSessions: async (userId) => peopleRules.sessionsOf(state, userId),
-    endSession: async (sessionId) => {
-      const now = new Date()
-      peopleRules.endSession(state, sessionId, now)
-      dispatch({ type: 'endSession', sessionId, now: now.toISOString() })
-    },
-    removeMember: async (projectId, userId) => {
-      const now = new Date()
-      peopleRules.removeMember(state, projectId, userId, now)
-      dispatch({ type: 'removeMember', projectId, userId, now: now.toISOString() })
-    },
+    ...createConsultantActions(latest, dispatch),
   }
 
   return (

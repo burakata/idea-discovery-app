@@ -40,9 +40,10 @@
   border-bottom: 0;
 }
 
+/* Details on their own line at full width; the actions wrap below them. */
 .who {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   min-width: 0;
 }
@@ -50,6 +51,7 @@
 .name {
   display: grid;
   min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--color-muted-strong);
   font-size: var(--text-sm);
 }
@@ -153,10 +155,5 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--space-7);
     align-items: start;
-  }
-
-  .row {
-    grid-template-columns: 1fr auto;
-    align-items: center;
   }
 }

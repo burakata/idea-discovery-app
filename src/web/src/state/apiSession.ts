@@ -113,7 +113,22 @@ export function createApiSession(options: SessionOptions = {}) {
   async function loadProjects() {
     set({ notice: null, projects: null, projectsError: null })
     try {
-      set({ projects: (await api.get<ProjectResponse[]>('/projects')).map(toCard) })
+      const cards = (await api.get<ProjectResponse[]>('/projects')).map(toCard)
+      set({ projects: cards })
+      // The list does not carry introductions. Burak's cards show them, so his list
+      // reads each project's details (he has few projects); owners' cards stay title only.
+      if (state.me?.isConsultant) {
+        const filled = await Promise.all(
+          cards.map(async (card) => {
+            try {
+              return { ...card, lead: (await consultantApi.getProject(card.id, true)).intro }
+            } catch {
+              return card
+            }
+          }),
+        )
+        if (state.status === 'signedIn') set({ projects: filled })
+      }
     } catch (failure) {
       // After a 401 the person is already on the home; any other failure is said out loud.
       if (state.status === 'signedIn') {

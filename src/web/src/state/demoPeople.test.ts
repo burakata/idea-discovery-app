@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '../api/client'
 import { projects } from '../projects'
-import { createInitialState, reducer } from './demoStore'
+import { createConsultantActions, createInitialState, reducer } from './demoStore'
 import * as demo from './demoPeople'
 import { copyLink } from './copyLink'
 import type { AppState } from './types'
@@ -202,5 +202,52 @@ describe('the demo: copied links', () => {
   it('is a sample that says so', () => {
     expect(demo.SAMPLE_LINK).toContain('sample')
     expect(demo.SAMPLE_LINK).toContain('.invalid')
+  })
+})
+
+describe('the demo store: a read right after a change sees it', () => {
+  // The harness never re-renders, like a screen that reloads straight after an action.
+  function store() {
+    const latest = { current: createInitialState() }
+    return createConsultantActions(latest, () => {}, () => undefined)
+  }
+
+  it('lists an invitation as revoked straight after revoking it', async () => {
+    const actions = store()
+    await actions.invite(home, { email: 'x@example.test', displayName: 'X', language: 'en' })
+    const [open] = await actions.listInvitations(home)
+    expect(open.state).toBe('open')
+    await actions.revokeInvitation(open.id)
+    expect((await actions.listInvitations(home))[0].state).toBe('revoked')
+  })
+
+  it('drops a member from the project straight after removing them', async () => {
+    const actions = store()
+    expect((await actions.getProject(home)).members.map((member) => member.userId)).toContain('elif')
+    await actions.removeMember(home, 'elif')
+    expect((await actions.getProject(home)).members.map((member) => member.userId)).not.toContain('elif')
+  })
+
+  it('shows a sign-in as ended straight after ending it', async () => {
+    const actions = store()
+    await actions.endSession('tom-s1')
+    expect((await actions.listSessions('tom')).find((session) => session.id === 'tom-s1')?.endedAt).not.toBeNull()
+  })
+
+  it('shows a new project, an edit and an added person straight away', async () => {
+    const actions = store()
+    const id = await actions.createProject(draft)
+    expect((await actions.getProject(id)).title).toEqual(draft.title)
+    await actions.saveProject(id, { ...draft, title: { en: 'Renamed', tr: 'Yeni ad' } })
+    expect((await actions.getProject(id)).title.en).toBe('Renamed')
+    const outcome = await actions.invite(id, { email: demo.sampleEmail('tom'), displayName: 'x', language: 'en' })
+    expect(outcome.kind).toBe('added')
+    expect((await actions.getProject(id)).members.map((member) => member.userId)).toContain('tom')
+  })
+
+  it('still refuses, and changes nothing, when a rule says no', async () => {
+    const actions = store()
+    await expect(actions.removeMember(home, 'burak')).rejects.toMatchObject({ code: 'cannot_remove_consultant' })
+    expect((await actions.getProject(home)).members.map((member) => member.userId)).toContain('burak')
   })
 })
