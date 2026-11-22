@@ -110,10 +110,17 @@ export function createApiSession(options: SessionOptions = {}) {
   const consultantApi = createConsultantApi(api)
   const clipboard = () => options.clipboard ?? browserClipboard()
 
+  // Loads can overlap (right after start, or during createProject). Only the newest
+  // one may write: an older one that finishes last must not overwrite the list.
+  let loadCount = 0
+
   async function loadProjects() {
+    const mine = ++loadCount
+    const newest = () => mine === loadCount
     set({ notice: null, projects: null, projectsError: null })
     try {
       const cards = (await api.get<ProjectResponse[]>('/projects')).map(toCard)
+      if (!newest()) return
       set({ projects: cards })
       // The list does not carry introductions. Burak's cards show them, so his list
       // reads each project's details (he has few projects); owners' cards stay title only.
@@ -127,11 +134,11 @@ export function createApiSession(options: SessionOptions = {}) {
             }
           }),
         )
-        if (state.status === 'signedIn') set({ projects: filled })
+        if (newest() && state.status === 'signedIn') set({ projects: filled })
       }
     } catch (failure) {
       // After a 401 the person is already on the home; any other failure is said out loud.
-      if (state.status === 'signedIn') {
+      if (newest() && state.status === 'signedIn') {
         set({ projectsError: failure instanceof ApiError ? failure.key : 'generic' })
       }
     }

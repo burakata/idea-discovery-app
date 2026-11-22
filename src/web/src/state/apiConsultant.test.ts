@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createApiSession } from './apiSession'
 import type { Clipboard } from './copyLink'
 
@@ -104,5 +104,34 @@ describe('the api store: copying a link', () => {
     await session.start()
     // In the test there is no navigator.clipboard either.
     expect(await session.copyInvitationLink('i1')).toEqual({ copied: false, link: LINK })
+  })
+})
+
+describe('overlapping list loads', () => {
+  it('keeps the newest list when an older load finishes last', async () => {
+    const release: Array<() => void> = []
+    let listCalls = 0
+    const send = (async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url === '/api/auth/csrf') return json({ token: 'T' })
+      if (url === '/api/auth/me') return json({ id: 'b', displayName: 'Burak', uiLanguage: 'en', isConsultant: true })
+      if (url === '/api/projects') {
+        const which = ++listCalls
+        // The first list (the start-up load) is held back; the second answers at once.
+        if (which === 1) await new Promise<void>((resolve) => release.push(resolve))
+        return json(which === 1 ? [{ id: 'old', titleEn: 'Old', titleTr: 'Eski' }] : [{ id: 'new', titleEn: 'New', titleTr: 'Yeni' }])
+      }
+      return json({}, 404)
+    }) as typeof fetch
+    const session = createApiSession({ fetch: send, storage: { getItem: () => null, setItem: () => {} } })
+
+    const started = session.start()
+    await vi.waitFor(() => expect(release).toHaveLength(1))
+    await session.loadProjects()
+    expect(session.getState().projects?.map((card) => card.id)).toEqual(['new'])
+
+    release[0]()
+    await started
+    expect(session.getState().projects?.map((card) => card.id)).toEqual(['new'])
   })
 })
