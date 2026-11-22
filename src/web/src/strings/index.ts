@@ -12,9 +12,14 @@ const stringsByLang: Record<Lang, Strings> = { en, tr }
 // whole screen stays in English there, whatever his language setting is.
 const consultantScreen = /^\/rooms\/?$|\/(queue|notes)\/?$/
 
+// Burak's project form and People screen: /projects/new, /projects/<id>/edit, /projects/<id>/people.
+const projectScreens = /^\/projects\/(new|[^/]+\/(edit|people))\/?$/
+
 // Burak's project list is the home page ('/') when he is the one signed in.
 export function isEnglishOnly(pathname: string, consultant = false): boolean {
-  return consultantScreen.test(pathname) || (consultant && pathname === '/')
+  return (
+    consultantScreen.test(pathname) || (consultant && (pathname === '/' || projectScreens.test(pathname)))
+  )
 }
 
 export function screenLang(pathname: string, viewerLang: Lang, consultant = false): Lang {

@@ -1,0 +1,159 @@
+.titleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.block {
+  margin-bottom: var(--space-4);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.column {
+  min-width: 0;
+}
+
+.column > :first-child {
+  margin-top: 0;
+}
+
+.rows,
+.invitations {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Details on their own line at full width; the actions wrap below them. */
+.who {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.name {
+  display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-muted-strong);
+  font-size: var(--text-sm);
+}
+
+.name strong {
+  font-size: var(--text-body);
+  color: var(--color-ink);
+}
+
+.email {
+  overflow-wrap: anywhere;
+}
+
+.you {
+  font-weight: normal;
+  color: var(--color-muted-strong);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.danger {
+  color: var(--color-red);
+  border-color: var(--color-red-line);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--color-red-tint);
+}
+
+.invitation {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form label {
+  font-weight: var(--weight-medium);
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+
+.dialogBody {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.sessions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.sessionText {
+  display: grid;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+}
+
+.sessionText strong {
+  font-size: var(--text-body);
+  color: var(--color-ink);
+}
+
+.sessionAction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-7);
+    align-items: start;
+  }
+}

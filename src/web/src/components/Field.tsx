@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import styles from './Field.module.css'
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
@@ -28,4 +28,8 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
       <span className={styles.thumb} />
     </button>
   )
+}
+
+export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={styles.field} />
 }

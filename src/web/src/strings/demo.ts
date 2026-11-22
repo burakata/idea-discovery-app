@@ -58,6 +58,12 @@ export const demoConsultant = {
     'This note is a hand-written sample. In the real app the assistant writes a new one when you ask.',
 }
 
+// Burak's people screen in the demo: what it simulates, in plain words.
+export const demoPeople = {
+  note: 'This is the demo: no email is sent, the links are samples that open nothing, and the sign-ins are invented.',
+  sampleLink: 'This is a sample link: it opens nothing and signs nobody in.',
+}
+
 export function useDemoT(): DemoStrings {
   return demoStrings[useT().lang]
 }
