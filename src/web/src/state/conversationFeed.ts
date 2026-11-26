@@ -9,7 +9,9 @@
 // - A finished conversation cannot change, so its messages are not polled again (the list
 //   still is, so a newly started conversation shows up).
 // - A failed round sets `retrying`; the next round tries again and a success clears it.
-// - A 401 or 404 already sent the person away (the api client), so the feed only stops.
+// - A 401 already signs the person out (the api client), so the feed only stops. A 404 means
+//   the project or conversation is gone: the feed stops and sets `gone`, and the screen sends
+//   the person to their list, as the room's layout does.
 import { ApiError } from '../api/client'
 import type { ConversationSummary, MessagePage, RoomMessage } from './context'
 
@@ -38,6 +40,8 @@ export interface FeedState {
   loaded: boolean
   // The last round failed; the next one tries again.
   retrying: boolean
+  // A read got a 404: the project is gone or this person is no longer in it.
+  gone: boolean
 }
 
 export interface FeedOptions {
@@ -92,6 +96,7 @@ export function createConversationFeed(options: FeedOptions) {
   let conversations = options.conversations
   let loaded = false
   let retrying = false
+  let gone = false
 
   let state: FeedState = snapshot()
   const listeners = new Set<() => void>()
@@ -104,7 +109,7 @@ export function createConversationFeed(options: FeedOptions) {
   let stopListening: (() => void) | undefined
 
   function snapshot(): FeedState {
-    return { messages: mergeById(confirmed, pending), conversations, loaded, retrying }
+    return { messages: mergeById(confirmed, pending), conversations, loaded, retrying, gone }
   }
 
   function publish() {
@@ -163,6 +168,8 @@ export function createConversationFeed(options: FeedOptions) {
         } catch (failure) {
           if (stopped || mine !== epoch) return
           if (failure instanceof ApiError && (failure.status === 401 || failure.status === 404)) {
+            gone = failure.status === 404
+            publish()
             feed.stop()
             return
           }

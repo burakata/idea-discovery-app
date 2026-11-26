@@ -299,15 +299,32 @@ describe('the feed and a failed round', () => {
     feed.stop()
   })
 
-  it.each([401, 404])('only stops after a %i, which the api client has already acted on', async (status) => {
+  it('only stops after a 401, which the api client has already acted on', async () => {
     const { feed, server, waiting } = setup()
     feed.start()
     await settle()
-    server.fail = new ApiError(status, null)
-    await feed.refresh()
+    server.fail = new ApiError(401, null)
+    feed.refresh()
     await settle()
     expect(waiting.size).toBe(0)
-    expect(feed.getState().retrying).toBe(false)
+    expect(feed.getState()).toMatchObject({ retrying: false, gone: false })
+  })
+
+  // Changed in the PR 8b fix round: a 404 is no longer only a stop; the screen needs to know.
+  it('stops and says the project is gone after a 404', async () => {
+    const { feed, server, waiting, reads } = setup()
+    feed.start()
+    await settle()
+    expect(feed.getState().gone).toBe(false)
+    server.fail = new ApiError(404, null)
+    feed.refresh()
+    await settle()
+    expect(feed.getState()).toMatchObject({ gone: true, retrying: false })
+    expect(waiting.size).toBe(0)
+    const before = reads.length
+    feed.refresh()
+    await settle()
+    expect(reads.length).toBe(before)
   })
 })
 
@@ -349,6 +366,64 @@ describe('showing another conversation', () => {
     await settle()
     expect(reads.at(-1)).toEqual({ number: 2, cursor: undefined })
     expect(ids(feed.getState().messages)).toEqual(['new'])
+    feed.stop()
+  })
+})
+
+// An answer that arrives after stop() or show() must change nothing. The read is resolved by hand.
+describe('a late answer', () => {
+  function manual() {
+    const pending: { number: number; resolve: (page: MessagePage) => void }[] = []
+    const waiting = new Map<number, () => void>()
+    let next = 1
+    const feed = createConversationFeed({
+      projectId: 'p1',
+      number: 1,
+      conversations: [finished(1), active(2)],
+      source: {
+        listConversations: async () => [finished(1), active(2)],
+        readMessages: (_p, number) => new Promise<MessagePage>((resolve) => pending.push({ number, resolve })),
+      },
+      timers: {
+        set: (run) => {
+          waiting.set(next, run)
+          return next++
+        },
+        clear: (handle) => void waiting.delete(handle as number),
+      },
+      visibility: { isHidden: () => false, subscribe: () => () => {} },
+    })
+    return { feed, pending, waiting }
+  }
+
+  it('after stop() changes no messages, loaded flag or timers', async () => {
+    const { feed, pending, waiting } = manual()
+    feed.start()
+    await settle()
+    expect(pending).toHaveLength(1)
+    feed.stop()
+    pending[0].resolve({ messages: [message('late')], cursor: '1' })
+    await settle()
+    expect(feed.getState()).toMatchObject({ messages: [], loaded: false })
+    expect(waiting.size).toBe(0)
+  })
+
+  it('after show() changes nothing of the new conversation, and starts no second timer', async () => {
+    const { feed, pending, waiting } = manual()
+    feed.start()
+    await settle()
+    feed.show(2)
+    await settle()
+    expect(pending.map((read) => read.number)).toEqual([1, 2])
+    pending[0].resolve({ messages: [message('old')], cursor: '1-1' })
+    await settle()
+    expect(feed.getState()).toMatchObject({ messages: [], loaded: false })
+    expect(waiting.size).toBe(0)
+    pending[1].resolve({ messages: [message('new')], cursor: '2-1' })
+    await settle()
+    expect(ids(feed.getState().messages)).toEqual(['new'])
+    expect(feed.getState().loaded).toBe(true)
+    expect(waiting.size).toBe(1)
     feed.stop()
   })
 })
