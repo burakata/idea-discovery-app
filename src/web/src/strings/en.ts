@@ -174,6 +174,8 @@ const en = {
     start: 'Start conversation {number}',
     empty: 'No messages yet. The first question will appear here, or you can write first.',
     loading: 'Loading messages…',
+    emptyFinished: 'No messages were written in this conversation.',
+    finishedNoneConsultant: 'This conversation is finished. You can read it, or start a new one above.',
     draftKept:
       'Your consultant finished this conversation before your message was sent. Your text is still here, so you can copy it.',
     draftKeptConsultant:

@@ -26,7 +26,10 @@ export function RoomLayout({ queueCount }: { queueCount?: number }) {
   const syncConversations = useCallback(
     (list: Room['conversations']) => {
       if (!held.current || sameConversations(held.current.conversations, list)) return
-      loadRoom(projectId).then(setRoom, () => {})
+      // An answer for another project (the person moved on meanwhile) is ignored.
+      loadRoom(projectId).then((loaded) => {
+        if (loaded.id === projectId) setRoom(loaded)
+      }, () => {})
     },
     // The demo's loadRoom changes identity with its state; the project is what matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps

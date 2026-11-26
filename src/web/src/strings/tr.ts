@@ -174,6 +174,8 @@ const tr: Strings = {
     start: 'Yeni görüşme başlat (Görüşme {number})',
     empty: 'Henüz mesaj yok. İlk soru burada görünecek; isterseniz ilk siz yazabilirsiniz.',
     loading: 'Mesajlar yükleniyor…',
+    emptyFinished: 'Bu görüşmede mesaj yazılmadı.',
+    finishedNoneConsultant: 'Bu görüşme tamamlandı. Okuyabilir ya da yukarıdan yenisini başlatabilirsiniz.',
     draftKept:
       'Mesajınız gönderilmeden önce danışmanınız bu görüşmeyi tamamladı. Yazdıklarınız burada duruyor, kopyalayabilirsiniz.',
     draftKeptConsultant:

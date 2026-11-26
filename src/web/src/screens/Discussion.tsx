@@ -129,7 +129,7 @@ function Thread({ room }: { room: Room }) {
   const submit = async (event?: FormEvent) => {
     event?.preventDefault()
     const text = draft.trim()
-    if (!text || sending || !feed) return
+    if (!text || sending || !feed || draft.length > MAX_LENGTH) return
     setSending(true)
     setSendError(null)
     try {
@@ -192,7 +192,9 @@ function Thread({ room }: { room: Room }) {
   // Unsent text that cannot go where it was written: shown read-only, or carried to another
   // conversation, always with the notice.
   const hasDraft = draft.trim() !== ''
-  const stranded = hasDraft && (!controls.canWrite || refused === number)
+  // Only where the text was typed: in another conversation it waits for the writer's return.
+  const stranded = hasDraft && draftFrom === number && (!controls.canWrite || refused === number)
+  const tooLong = draft.length > MAX_LENGTH
   const carried = hasDraft && !stranded && draftFrom !== null && draftFrom !== number
   const newer = shownConversation(conversations)
   const newerNumber = newer && newer.state === 'active' && newer.number !== number ? newer.number : null
@@ -287,7 +289,7 @@ function Thread({ room }: { room: Room }) {
         {newerNumber !== null && (
           <p className={styles.newer}>
             {t.discussion.newerTitle}{' '}
-            <Link to={roomPath(room.id, 'discussion')} onClick={() => setParams(new URLSearchParams(), { replace: true })}>
+            <Link to={roomPath(room.id, 'discussion')} replace>
               {fill(t.discussion.newerGo, { number: String(newerNumber) })}
             </Link>
           </p>
@@ -324,7 +326,7 @@ function Thread({ room }: { room: Room }) {
           )}
           {state?.loaded && messages.length === 0 && (
             <li>
-              <Empty>{t.discussion.empty}</Empty>
+              <Empty>{shown?.state === 'finished' ? t.discussion.emptyFinished : t.discussion.empty}</Empty>
             </li>
           )}
           {messages.map((message) => {
@@ -370,7 +372,6 @@ function Thread({ room }: { room: Room }) {
             <TextArea
               rows={1}
               value={draft}
-              maxLength={MAX_LENGTH}
               onChange={(event) => {
                 setDraft(event.target.value)
                 setDraftFrom(number)
@@ -379,9 +380,14 @@ function Thread({ room }: { room: Room }) {
               placeholder={t.discussion.placeholder}
               aria-label={t.discussion.messageLabel}
             />
-            <Button variant="primary" type="submit" icon="send" disabled={!draft.trim() || sending}>
+            <Button variant="primary" type="submit" icon="send" disabled={!draft.trim() || sending || tooLong}>
               {t.discussion.send}
             </Button>
+            {tooLong && (
+              <div className={styles.sendError} role="alert">
+                <NoticeBox tone="amber">{t.errors.messageTooLong}</NoticeBox>
+              </div>
+            )}
             {draft.length >= COUNT_FROM && (
               <p className={styles.count}>{fill(t.discussion.charCount, { count: String(draft.length), max: String(MAX_LENGTH) })}</p>
             )}
@@ -395,7 +401,11 @@ function Thread({ room }: { room: Room }) {
               </>
             ) : (
               <NoticeBox>
-                {!isConsultant && noneActive ? t.discussion.finishedWaiting : t.discussion.finishedNote}
+                {noneActive
+                  ? isConsultant
+                    ? t.discussion.finishedNoneConsultant
+                    : t.discussion.finishedWaiting
+                  : t.discussion.finishedNote}
               </NoticeBox>
             )}
           </div>

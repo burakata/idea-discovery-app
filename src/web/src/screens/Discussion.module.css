@@ -32,8 +32,10 @@
 }
 
 /* The conversation picker and Burak's finish or start button. */
+
 .bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-4);
@@ -43,7 +45,7 @@
 /* The label sits beside the choice, so the bar stays one row on a phone. */
 .picker {
   display: flex;
-  flex: 1;
+  flex: 1 1 20rem;
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
@@ -56,6 +58,7 @@
 }
 
 .picker select {
+  flex: 1;
   min-width: 0;
 }
 
