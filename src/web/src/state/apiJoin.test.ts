@@ -16,7 +16,14 @@ function setup(options: { clipboard?: Clipboard; requestState?: () => string; cl
     calls.push(`${method} ${url}`)
     if (url === '/api/auth/csrf') return json({ token: 'T' })
     if (url === '/api/auth/me') return json({}, 401)
-    if (url === '/api/join/request') return json({ state: options.requestState?.() ?? 'pending' })
+    if (url === '/api/join/request' || url === '/api/join/request?code=abc') return json({ state: options.requestState?.() ?? 'pending' })
+    if (url.startsWith('/api/join/request?code=')) {
+      const mine = url.endsWith('=abc')
+      return json({ state: mine ? (options.requestState?.() ?? 'pending') : 'expired', forThisLink: mine })
+    }
+    if (url === '/api/projects/p1') {
+      return json({ id: 'p1', titleEn: 'One', titleTr: 'Bir', introEn: 'a', introTr: 'b', members: [], askToJoin: { enabled: true, link: LINK } })
+    }
     if (url === '/api/join/abc' && method === 'GET') return json({ canAsk: true })
     if (url === '/api/join/abc' && method === 'POST') return json({ state: 'pending' }, 202)
     if (url.startsWith('/api/join/') && method === 'GET' && url !== '/api/join/abc') return json({ canAsk: false })
@@ -91,9 +98,18 @@ describe('the api store: the person asking, signed out', () => {
 })
 
 describe('the api store: Burak\'s asking to join', () => {
-  it('cannot tell whether asking is on, and says so', async () => {
+  it('reads whether asking is on from the project, and keeps the link out of state', async () => {
     const { session } = setup()
-    expect(await session.joinAsking()).toBeNull()
+    await session.start()
+    expect(await session.joinAsking('p1')).toBe(true)
+    expect(JSON.stringify(session.getState())).not.toContain('SECRET-CODE')
+  })
+
+  it('shows a request only on the link it was made on', async () => {
+    const { session, calls } = setup()
+    expect(await session.joinStatus('abc')).toBe('pending')
+    expect(await session.joinStatus('other')).toBe('expired')
+    expect(calls).toContain('GET /api/join/request?code=other')
   })
 
   it('copies the link to the clipboard and keeps it out of state', async () => {

@@ -175,6 +175,15 @@ describe('the demo: asking, waiting, and being approved', () => {
     expect(join.statusOf(other, new Date())).toBe('expired')
   })
 
+  it('shows a request only on the link it was made on', async () => {
+    const { latest, actions } = await asked()
+    const other = projects[1].id
+    await actions.turnOnJoinLink(other)
+    expect(await actions.joinStatus(join.defaultCode(home))).toBe('pending')
+    expect(await actions.joinStatus(join.defaultCode(other))).toBe('expired')
+    expect(join.statusOf(latest.current, new Date(), 'nope')).toBe('expired')
+  })
+
   it('lets a request run out after 48 hours, for both sides', async () => {
     const { latest } = await asked()
     const later = new Date(Date.now() + 49 * 60 * 60 * 1000)

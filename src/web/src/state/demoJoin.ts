@@ -219,9 +219,11 @@ export function ask(
 }
 
 // The same answers as the API: no request is "expired", whatever the reason.
-export function statusOf(state: AppState, now: Date): JoinState {
+// With the project link's code, a request made on another project's link reads as no request.
+export function statusOf(state: AppState, now: Date, code?: string): JoinState {
   const request = mine(state)
   if (!request) return 'expired'
+  if (code !== undefined && codeOf(state, request.projectId) !== code) return 'expired'
   if (request.state === 'rejected') return 'rejected'
   if (request.state === 'pending') return waitingNow(request, now) ? 'pending' : 'expired'
   return !request.claimed && approvedStill(request, now) ? 'approved' : 'expired'

@@ -239,7 +239,7 @@ public static class ConsultantEndpoints
         });
     }
 
-    private static string JoinLink(AuthSettings settings, string? code) => $"{settings.LinkBase}/join/{code}";
+    public static string JoinLink(AuthSettings settings, string? code) => $"{settings.LinkBase}/join/{code}";
 
     private static string? Ip(HttpContext http) => http.Connection.RemoteIpAddress?.ToString();
 }

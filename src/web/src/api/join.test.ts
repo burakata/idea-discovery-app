@@ -64,6 +64,24 @@ describe('the join api: the person asking', () => {
     expect(toJoinState({})).toBe('expired')
   })
 
+  it('asks about one link: a request for another link reads as none', async () => {
+    const { join, calls } = setup((_method, url) =>
+      json(url.endsWith('=mine') ? { state: 'approved', forThisLink: true } : { state: 'approved', forThisLink: false }),
+    )
+    expect(await join.status('mine')).toBe('approved')
+    expect(await join.status('other')).toBe('expired')
+    expect(calls[1].url).toBe('/api/join/request?code=other')
+  })
+
+  it('reads whether asking is on from the project details', async () => {
+    const { join } = setup(() => json({ id: 'p1', askToJoin: { enabled: true, link: 'https://x.test/join/C' } }))
+    expect(await join.asking('p1')).toBe(true)
+    const off = setup(() => json({ id: 'p1', askToJoin: { enabled: false, link: null } }))
+    expect(await off.join.asking('p1')).toBe(false)
+    const owner = setup(() => json({ id: 'p1' }))
+    expect(await owner.join.asking('p1')).toBe(false)
+  })
+
   it('claims once approved', async () => {
     const { join, calls } = setup(() => json({ id: 'u', displayName: 'Işıl', uiLanguage: 'en', isConsultant: false }))
     const me = await join.claim<{ id: string }>()

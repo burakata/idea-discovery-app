@@ -32,7 +32,8 @@ public static class JoinEndpoints
 
         // Anonymous on purpose: the person opening the project link has no session.
         // The literal routes win over {code}, and no code can be that short.
-        join.MapGet("/request", StatusAsync).AllowAnonymous();
+        join.MapGet("/request", (HttpContext http, AppDbContext db, TokenHasher hasher, TimeProvider clock, string? code) =>
+            StatusAsync(http, db, hasher, clock, code)).AllowAnonymous();
         join.MapPost("/claim", ClaimAsync).AllowAnonymous().RequireRateLimiting(AuthEndpoints.RedeemRateLimit);
         join.MapGet("/{code}", CanAskAsync).AllowAnonymous();
         join.MapPost("/{code}", AskAsync).AllowAnonymous().RequireRateLimiting(AskRateLimit);
@@ -53,6 +54,15 @@ public static class JoinEndpoints
         if (string.IsNullOrEmpty(code) || code.Length > MaxCodeLength) return null;
         return await db.Projects.AsNoTracking()
             .Where(p => p.AskToJoinEnabled && p.JoinCode == code)
+            .Select(p => (Guid?)p.Id)
+            .SingleOrDefaultAsync();
+    }
+
+    private static async Task<Guid?> FindProjectIdByCodeAsync(AppDbContext db, string code)
+    {
+        if (string.IsNullOrEmpty(code) || code.Length > MaxCodeLength) return null;
+        return await db.Projects.AsNoTracking()
+            .Where(p => p.JoinCode == code)
             .Select(p => (Guid?)p.Id)
             .SingleOrDefaultAsync();
     }
@@ -136,10 +146,15 @@ public static class JoinEndpoints
     // Reads the cookie only and changes nothing. "expired" covers every case in
     // which this browser has nothing to wait for, so the answer reveals no more.
     private static async Task<IResult> StatusAsync(
-        HttpContext http, AppDbContext db, TokenHasher hasher, TimeProvider clock)
+        HttpContext http, AppDbContext db, TokenHasher hasher, TimeProvider clock, string? code)
     {
         var now = clock.GetUtcNow().UtcDateTime;
         var request = await FindOwnRequestAsync(http, db, hasher);
+        // With the project link's code the page asks "is this request for this link?". If
+        // not, the answer is exactly what a browser with no request gets: nothing about
+        // the other project. A switched-off link still counts, so an approval can be claimed.
+        var forThisLink = code is null ? (bool?)null : request is not null && request.ProjectId == await FindProjectIdByCodeAsync(db, code);
+        if (forThisLink == false) request = null;
         var state = request switch
         {
             null => "expired",
@@ -147,7 +162,9 @@ public static class JoinEndpoints
             { State: JoinRequestState.Pending } => request.ExpiresAt > now ? "pending" : "expired",
             _ => request.ClaimedAt is null && request.ApprovedUntil >= now ? "approved" : "expired",
         };
-        return Results.Json(new { state });
+        return forThisLink is null
+            ? Results.Json(new { state })
+            : Results.Json(new { state, forThisLink = forThisLink.Value });
     }
 
     // ---- Claiming ----

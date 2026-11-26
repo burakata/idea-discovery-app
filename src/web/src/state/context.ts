@@ -144,12 +144,13 @@ export interface Store {
   // project is ever returned: only whether asking is open, and this browser's own request.
   joinCanAsk: (code: string) => Promise<boolean>
   joinAsk: (code: string, input: JoinInput) => Promise<JoinState>
-  joinStatus: () => Promise<JoinState>
+  // With the link's code, a request made on another project's link reads as "expired":
+  // this page shows only what belongs to this link.
+  joinStatus: (code?: string) => Promise<JoinState>
   // Completes sign-in once the request is approved, then the project list loads.
   joinContinue: () => Promise<void>
-  // Ask to join, Burak's side. `joinAsking` is null where the API cannot say whether
-  // asking is on. The link actions copy it and return it only if the clipboard refuses.
-  joinAsking: (projectId: string) => Promise<boolean | null>
+  // Ask to join, Burak's side. The link actions copy it and return it only if the clipboard refuses.
+  joinAsking: (projectId: string) => Promise<boolean>
   turnOnJoinLink: (projectId: string) => Promise<CopyResult>
   turnOffJoinLink: (projectId: string) => Promise<void>
   renewJoinLink: (projectId: string) => Promise<CopyResult>

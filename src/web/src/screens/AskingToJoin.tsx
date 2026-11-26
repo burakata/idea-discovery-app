@@ -26,7 +26,7 @@ const errorNote = (failure: unknown): Note => ({ tone: 'amber', text: c.errors[k
 export function AskingToJoin({ projectId, onApproved }: { projectId: string; onApproved: () => Promise<void> }) {
   const store = useStore()
   const { time } = useT()
-  // null: not known on this page (the API cannot say); true or false once known.
+  // null until the first load; then what the server says.
   const [asking, setAsking] = useState<boolean | null>(null)
   const [requests, setRequests] = useState<JoinRequest[] | null>(null)
   const [note, setNote] = useState<Note | null>(null)
@@ -40,8 +40,7 @@ export function AskingToJoin({ projectId, onApproved }: { projectId: string; onA
   const load = async () => {
     try {
       const [on, list] = await Promise.all([store.joinAsking(projectId), store.listJoinRequests(projectId)])
-      // Where the API cannot say, what Burak did on this page is the better answer.
-      setAsking((known) => on ?? known)
+      setAsking(on)
       setRequests(list)
     } catch (failure) {
       setNote(errorNote(failure))
@@ -126,7 +125,7 @@ export function AskingToJoin({ projectId, onApproved }: { projectId: string; onA
         <div className={styles.askingHead}>
           {asking !== null && <Pill tone={asking ? 'green' : 'neutral'}>{asking ? a.on : a.off}</Pill>}
           <div className={styles.actions}>
-            {asking !== true && (
+            {asking === false && (
               <Button size="sm" icon="send" disabled={busy} onClick={() => void turnOn()}>
                 {a.turnOn}
               </Button>
@@ -141,14 +140,13 @@ export function AskingToJoin({ projectId, onApproved }: { projectId: string; onA
                 </Button>
               </>
             )}
-            {asking !== false && (
+            {asking === true && (
               <Button size="sm" icon="close" disabled={busy} onClick={() => void turnOff()}>
                 {a.turnOff}
               </Button>
             )}
           </div>
         </div>
-        {asking === null && <p className={styles.hint}>{a.unknown}</p>}
         <p className={styles.hint}>{a.linkNote}</p>
         <div role="status">{note && <NoticeBox tone={note.tone}>{note.text}</NoticeBox>}</div>
       </Card>

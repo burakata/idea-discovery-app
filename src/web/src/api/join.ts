@@ -56,11 +56,23 @@ export function createJoinApi(api: ApiClient) {
       await api.post(`/join/${id(code)}`, { name: input.name, email: email === '' ? null : email }, quiet)
     },
 
-    async status(): Promise<JoinState> {
-      return toJoinState(await api.get<Row>('/join/request', quiet))
+    // With the project link's code, the API says whether the request is for this link;
+    // a request for another link is read as no request at all.
+    async status(code?: string): Promise<JoinState> {
+      const query = code === undefined ? '' : `?code=${id(code)}`
+      const body = await api.get<Row>(`/join/request${query}`, quiet)
+      return body.forThisLink === false ? 'expired' : toJoinState(body)
     },
 
     claim: <T>() => api.post<T>('/join/claim', undefined, quiet),
+
+    // Whether asking is on: part of Burak's project details. The link in that answer is
+    // not read here; copying goes through turnOn.
+    async asking(projectId: string): Promise<boolean> {
+      const body = await api.get<Row>(`/projects/${id(projectId)}`, quiet)
+      const asking = body.askToJoin as Row | undefined
+      return asking?.enabled === true
+    },
 
     // The link goes to the clipboard through copyLink and nowhere else.
     async turnOn(projectId: string): Promise<string> {

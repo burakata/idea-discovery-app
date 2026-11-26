@@ -164,7 +164,6 @@ export const consultant = {
       sub: 'People with the project link can ask to join. Nobody gets in until you approve them.',
       on: 'On',
       off: 'Off',
-      unknown: 'This page cannot tell whether asking is on. Turn it on to copy the link, or off to stop new requests.',
       turnOn: 'Turn on and copy link',
       copyLink: 'Copy link',
       renew: 'Replace link',

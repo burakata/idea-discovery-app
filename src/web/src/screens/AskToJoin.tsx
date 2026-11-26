@@ -42,7 +42,7 @@ export default function AskToJoin() {
     let current = true
     setView('loading')
     setLoadError(null)
-    Promise.all([joinCanAsk(code), joinStatus()]).then(
+    Promise.all([joinCanAsk(code), joinStatus(code)]).then(
       ([canAsk, status]) => current && setView(entryView(status, canAsk)),
       (failure: unknown) => {
         if (current) setLoadError(t.errors[joinErrorKey(failure)])
@@ -64,7 +64,7 @@ export default function AskToJoin() {
   useEffect(() => {
     if (!shouldPoll(view, visible)) return
     const timer = window.setInterval(() => {
-      joinStatus().then(
+      joinStatus(code).then(
         (status) => setView(status),
         () => {}, // A missed answer is tried again at the next tick.
       )

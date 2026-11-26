@@ -557,7 +557,7 @@ export function createConsultantActions(
       apply({ type: 'joinAsk', code, input, device, now: now.toISOString() })
       return status
     },
-    joinStatus: async () => joinRules.statusOf(latest.current, new Date()),
+    joinStatus: async (code) => joinRules.statusOf(latest.current, new Date(), code),
     joinContinue: async () => {
       const now = new Date()
       joinRules.claim(latest.current, now)

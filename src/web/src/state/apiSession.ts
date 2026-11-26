@@ -229,7 +229,7 @@ export function createApiSession(options: SessionOptions = {}) {
       await joinApi.ask(code, input)
       // The 202 carries the state, but the status call is the one place that reads it.
       // If it fails the request still exists, and waiting is the honest answer.
-      return joinApi.status().catch((): JoinState => 'pending')
+      return joinApi.status(code).catch((): JoinState => 'pending')
     },
     joinStatus: joinApi.status,
     async joinContinue() {
@@ -246,8 +246,7 @@ export function createApiSession(options: SessionOptions = {}) {
       void loadProjects()
     },
 
-    // The API has no read for whether asking is on, so this page cannot know.
-    joinAsking: async () => null,
+    joinAsking: joinApi.asking,
     turnOnJoinLink: (projectId: string) => copyLink(() => joinApi.turnOn(projectId), clipboard()),
     turnOffJoinLink: joinApi.turnOff,
     renewJoinLink: (projectId: string) => copyLink(() => joinApi.renew(projectId), clipboard()),
