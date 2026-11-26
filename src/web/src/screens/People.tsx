@@ -14,6 +14,7 @@ import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import { demoPeople } from '../strings/demo'
 import { canCopySignInLink, canRemove, copiedMessage, inviteMessage } from './peopleRules'
+import { AskingToJoin } from './AskingToJoin'
 import { LinkDialog, RemoveDialog, SessionsDialog } from './PeopleDialogs'
 import styles from './People.module.css'
 
@@ -188,6 +189,8 @@ export default function People() {
                 ))}
               </ul>
             </Card>
+
+            <AskingToJoin projectId={projectId} onApproved={reload} />
           </div>
 
           <div className={styles.column}>

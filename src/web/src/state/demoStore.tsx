@@ -6,14 +6,23 @@ import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
 import { DEFAULT_LANG, isLang, otherLang, type Lang } from '../languages'
 import { ApiError } from '../api/client'
-import { StoreContext, type InviteInput, type Me, type ProjectCard, type ProjectDraft, type Store } from './context'
+import {
+  StoreContext,
+  type InviteInput,
+  type JoinInput,
+  type Me,
+  type ProjectCard,
+  type ProjectDraft,
+  type Store,
+} from './context'
 import { browserClipboard, copyLink } from './copyLink'
+import * as joinRules from './demoJoin'
 import * as peopleRules from './demoPeople'
 import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 7
+const VERSION = 8
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =
@@ -40,6 +49,13 @@ type Action =
   | { type: 'revokeInvitation'; invitationId: string }
   | { type: 'endSession'; sessionId: string; now: string }
   | { type: 'removeMember'; projectId: string; userId: string; now: string }
+  | { type: 'joinOn'; projectId: string }
+  | { type: 'joinOff'; projectId: string }
+  | { type: 'joinRenew'; projectId: string }
+  | { type: 'joinAsk'; code: string; input: JoinInput; device: string; now: string }
+  | { type: 'joinApprove'; requestId: string; displayName?: string; now: string }
+  | { type: 'joinReject'; requestId: string; now: string }
+  | { type: 'joinClaim'; now: string }
   | { type: 'reset' }
 
 export function createInitialState(): AppState {
@@ -390,6 +406,33 @@ export function reducer(state: AppState, action: Action): AppState {
         peopleRules.removeMember(state, action.projectId, action.userId, new Date(action.now)),
       )
 
+    case 'joinOn':
+      return attempt(state, () => joinRules.turnOn(state, action.projectId))
+
+    case 'joinOff':
+      return attempt(state, () => joinRules.turnOff(state, action.projectId))
+
+    case 'joinRenew':
+      return attempt(state, () => joinRules.renew(state, action.projectId))
+
+    case 'joinAsk':
+      return attempt(
+        state,
+        () => joinRules.ask(state, action.code, action.input, action.device, new Date(action.now)).state,
+      )
+
+    case 'joinApprove':
+      return attempt(
+        state,
+        () => joinRules.approve(state, action.requestId, action.displayName, new Date(action.now)).state,
+      )
+
+    case 'joinReject':
+      return attempt(state, () => joinRules.reject(state, action.requestId, new Date(action.now)))
+
+    case 'joinClaim':
+      return attempt(state, () => joinRules.claim(state, new Date(action.now)))
+
     case 'reset':
       return createInitialState()
   }
@@ -431,6 +474,9 @@ export function createConsultantActions(
   latest: { current: AppState },
   dispatch: (action: Action) => void,
   clipboard = browserClipboard,
+  // Where the demo's own pages live, so a copied sample link opens the demo's ask-to-join page.
+  linkBase = '',
+  device = '',
 ) {
   const apply = (action: Action) => {
     latest.current = reducer(latest.current, action)
@@ -449,6 +495,17 @@ export function createConsultantActions(
     | 'listSessions'
     | 'endSession'
     | 'removeMember'
+    | 'joinCanAsk'
+    | 'joinAsk'
+    | 'joinStatus'
+    | 'joinContinue'
+    | 'joinAsking'
+    | 'turnOnJoinLink'
+    | 'turnOffJoinLink'
+    | 'renewJoinLink'
+    | 'listJoinRequests'
+    | 'approveJoinRequest'
+    | 'rejectJoinRequest'
   > = {
     createProject: async (draft) => {
       const id = peopleRules.newProjectId(latest.current)
@@ -489,6 +546,52 @@ export function createConsultantActions(
       const now = new Date()
       peopleRules.removeMember(latest.current, projectId, userId, now)
       apply({ type: 'removeMember', projectId, userId, now: now.toISOString() })
+    },
+
+    // Ask to join, both sides, on the demo data. The link is built when copied and
+    // goes to the clipboard only; the state keeps the code, never the link.
+    joinCanAsk: async (code) => joinRules.canAsk(latest.current, code),
+    joinAsk: async (code, input) => {
+      const now = new Date()
+      const { status } = joinRules.ask(latest.current, code, input, device, now)
+      apply({ type: 'joinAsk', code, input, device, now: now.toISOString() })
+      return status
+    },
+    joinStatus: async () => joinRules.statusOf(latest.current, new Date()),
+    joinContinue: async () => {
+      const now = new Date()
+      joinRules.claim(latest.current, now)
+      apply({ type: 'joinClaim', now: now.toISOString() })
+    },
+    joinAsking: async (projectId) => {
+      peopleRules.detailsOf(latest.current, projectId)
+      return joinRules.isAsking(latest.current, projectId)
+    },
+    turnOnJoinLink: async (projectId) => {
+      joinRules.turnOn(latest.current, projectId)
+      apply({ type: 'joinOn', projectId })
+      return copyLink(async () => joinRules.joinLink(latest.current, projectId, linkBase), clipboard())
+    },
+    turnOffJoinLink: async (projectId) => {
+      joinRules.turnOff(latest.current, projectId)
+      apply({ type: 'joinOff', projectId })
+    },
+    renewJoinLink: async (projectId) => {
+      joinRules.renew(latest.current, projectId)
+      apply({ type: 'joinRenew', projectId })
+      return copyLink(async () => joinRules.joinLink(latest.current, projectId, linkBase), clipboard())
+    },
+    listJoinRequests: async (projectId) => joinRules.listRequests(latest.current, projectId, new Date()),
+    approveJoinRequest: async (requestId, displayName) => {
+      const now = new Date()
+      const { displayName: name } = joinRules.approve(latest.current, requestId, displayName, now)
+      apply({ type: 'joinApprove', requestId, displayName, now: now.toISOString() })
+      return name
+    },
+    rejectJoinRequest: async (requestId) => {
+      const now = new Date()
+      joinRules.reject(latest.current, requestId, now)
+      apply({ type: 'joinReject', requestId, now: now.toISOString() })
     },
   }
   return actions
@@ -532,7 +635,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     signOut: async () => dispatch({ type: 'signOut' }),
     demoSignIn: () => dispatch({ type: 'signIn', language: state.guestLanguage }),
 
-    ...createConsultantActions(latest, dispatch),
+    ...createConsultantActions(
+      latest,
+      dispatch,
+      browserClipboard,
+      window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+      window.navigator.userAgent,
+    ),
   }
 
   return (

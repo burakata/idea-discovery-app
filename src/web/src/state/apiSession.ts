@@ -3,10 +3,11 @@
 // 401, a failed sign-out or a failed list. apiStore.tsx only connects it to React.
 import { ApiError, createApiClient, type ErrorKey } from '../api/client'
 import { bilingualFrom, createConsultantApi } from '../api/consultant'
+import { createJoinApi } from '../api/join'
 import { browserLang, DEFAULT_LANG, isLang, type Lang } from '../languages'
 import { browserClipboard, copyLink, type Clipboard } from './copyLink'
 import { languageToSave } from './sessionRules'
-import type { InviteInput, Me, NoticeKey, ProjectCard, ProjectDraft, SessionStatus } from './context'
+import type { InviteInput, JoinInput, JoinState, Me, NoticeKey, ProjectCard, ProjectDraft, SessionStatus } from './context'
 
 const LANGUAGE_KEY = 'idea-discovery-rooms-language'
 
@@ -108,6 +109,7 @@ export function createApiSession(options: SessionOptions = {}) {
   }
 
   const consultantApi = createConsultantApi(api)
+  const joinApi = createJoinApi(api)
   const clipboard = () => options.clipboard ?? browserClipboard()
 
   // Loads can overlap (right after start, or during createProject). Only the newest
@@ -219,6 +221,39 @@ export function createApiSession(options: SessionOptions = {}) {
     listSessions: consultantApi.listSessions,
     endSession: consultantApi.endSession,
     removeMember: consultantApi.removeMember,
+
+    // Ask to join. The person's calls work signed out. The request's cookie is
+    // HttpOnly and the browser's own business: nothing about the request is kept here.
+    joinCanAsk: joinApi.canAsk,
+    async joinAsk(code: string, input: JoinInput): Promise<JoinState> {
+      await joinApi.ask(code, input)
+      // The 202 carries the state, but the status call is the one place that reads it.
+      // If it fails the request still exists, and waiting is the honest answer.
+      return joinApi.status().catch((): JoinState => 'pending')
+    },
+    joinStatus: joinApi.status,
+    async joinContinue() {
+      const me = toMe(await joinApi.claim<MeResponse>())
+      api.forgetCsrfToken()
+      // The person's language on this page becomes the account's.
+      const toSave = languageToSave(state.guestLanguage, me.uiLanguage)
+      if (toSave) {
+        me.uiLanguage = toSave
+        await api.put('/me/language', { language: toSave }).catch(() => {})
+      }
+      rememberLanguage(me.uiLanguage)
+      set({ me, status: 'signedIn', actionError: null, notice: null })
+      void loadProjects()
+    },
+
+    // The API has no read for whether asking is on, so this page cannot know.
+    joinAsking: async () => null,
+    turnOnJoinLink: (projectId: string) => copyLink(() => joinApi.turnOn(projectId), clipboard()),
+    turnOffJoinLink: joinApi.turnOff,
+    renewJoinLink: (projectId: string) => copyLink(() => joinApi.renew(projectId), clipboard()),
+    listJoinRequests: joinApi.listRequests,
+    approveJoinRequest: joinApi.approve,
+    rejectJoinRequest: joinApi.reject,
 
     // Local state is cleared only when the server confirms (204) or says nobody is
     // signed in (401). Otherwise the person stays signed in and is told.

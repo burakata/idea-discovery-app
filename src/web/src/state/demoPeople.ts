@@ -67,7 +67,9 @@ export function initialPeopleState(people: Record<string, Person>, now = new Dat
   }
   const texts: Record<string, DemoTexts> = {}
   const invitations: Record<string, Invitation[]> = {}
-  return { created: [] as string[], texts, members, invitations, sessions }
+  const joinLinks: AppState['joinLinks'] = {}
+  const joinRequests: AppState['joinRequests'] = []
+  return { created: [] as string[], texts, members, invitations, sessions, joinLinks, joinRequests, myJoinRequest: null }
 }
 
 // A project's title and introduction: Burak's own text if he has set it, else the sample's.

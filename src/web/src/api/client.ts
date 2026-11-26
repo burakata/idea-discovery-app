@@ -25,6 +25,10 @@ export function statusEffect(status: number): StatusEffect {
 
 const codeKeys: Record<string, ErrorKey> = {
   link_not_valid: 'linkNotValid',
+  // Ask to join, the person's side.
+  try_later: 'joinTryLater',
+  cannot_ask: 'joinClosed',
+  cannot_claim: 'cannotClaim',
 }
 
 export function errorKey(status: number, code: string | null): ErrorKey {
@@ -42,6 +46,7 @@ const consultantCodeKeys: Record<string, ConsultantErrorKey> = {
   invitation_not_open: 'invitationNotOpen',
   cannot_remove_consultant: 'cannotRemoveConsultant',
   try_later: 'tryLater',
+  request_not_waiting: 'requestNotWaiting',
 }
 
 export function consultantErrorKey(status: number, code: string | null): ConsultantErrorKey {

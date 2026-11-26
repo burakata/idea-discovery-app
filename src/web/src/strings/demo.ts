@@ -21,6 +21,8 @@ const en = {
     noEmail: 'This is the demo: no email is sent, whatever you write here.',
     linkTitle: 'Sample sign-in link',
     linkExplain: 'In the real app this page opens from the emailed link. Here it is only a sample.',
+    joinNote:
+      'This is the demo: your request stays in this browser. To answer it, switch to the sample consultant under View as, or sign in as the consultant on the home page.',
   },
 }
 
@@ -44,6 +46,8 @@ const tr: DemoStrings = {
     noEmail: 'Burası demo: buraya ne yazarsanız yazın e-posta gönderilmez.',
     linkTitle: 'Örnek giriş bağlantısı',
     linkExplain: 'Gerçek uygulamada bu sayfa e-postadaki bağlantıdan açılır. Burada yalnızca bir örnektir.',
+    joinNote:
+      'Burası demo: isteğiniz bu tarayıcıda kalır. Yanıtlamak için Kimin gözünden bölümünden örnek danışmana geçin ya da ana sayfadan danışman olarak girin.',
   },
 }
 
@@ -62,6 +66,7 @@ export const demoConsultant = {
 export const demoPeople = {
   note: 'This is the demo: no email is sent, the links are samples that open nothing, and the sign-ins are invented.',
   sampleLink: 'This is a sample link: it opens nothing and signs nobody in.',
+  joinLink: 'This is a sample link: it opens the demo’s ask-to-join page in this browser only.',
 }
 
 export function useDemoT(): DemoStrings {

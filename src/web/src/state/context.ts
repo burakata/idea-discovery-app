@@ -77,6 +77,27 @@ export type InviteOutcome =
   | { kind: 'added'; displayName: string }
   | { kind: 'tryLater' }
 
+// Ask to join (M1 PR 7c). The state of one request, as the person who asked sees it.
+// "expired" also covers a browser that holds no request: the API says no more.
+export type JoinState = 'pending' | 'approved' | 'rejected' | 'expired'
+
+export interface JoinInput {
+  name: string
+  // Optional, unchecked, and only for Burak to recognise the person. Never used to send anything.
+  email: string
+}
+
+// One waiting request, as Burak sees it.
+export interface JoinRequest {
+  id: string
+  name: string
+  uncheckedEmail: string | null
+  device: string | null
+  createdAt: string
+  expiresAt: string
+  nameMatchesMember: boolean
+}
+
 // A copied link goes to the clipboard and nowhere else. Only when the clipboard
 // is unavailable does the link come back, once, to be shown in the open dialog.
 export type CopyResult = { copied: true } | { copied: false; link: string }
@@ -117,6 +138,25 @@ export interface Store {
   listSessions: (userId: string) => Promise<SignInSession[]>
   endSession: (sessionId: string) => Promise<void>
   removeMember: (projectId: string, userId: string) => Promise<void>
+
+  // Ask to join, the person's side (M1 PR 7c). All work signed out and throw an
+  // ApiError when refused; the screens show text for its `key`. Nothing of the
+  // project is ever returned: only whether asking is open, and this browser's own request.
+  joinCanAsk: (code: string) => Promise<boolean>
+  joinAsk: (code: string, input: JoinInput) => Promise<JoinState>
+  joinStatus: () => Promise<JoinState>
+  // Completes sign-in once the request is approved, then the project list loads.
+  joinContinue: () => Promise<void>
+  // Ask to join, Burak's side. `joinAsking` is null where the API cannot say whether
+  // asking is on. The link actions copy it and return it only if the clipboard refuses.
+  joinAsking: (projectId: string) => Promise<boolean | null>
+  turnOnJoinLink: (projectId: string) => Promise<CopyResult>
+  turnOffJoinLink: (projectId: string) => Promise<void>
+  renewJoinLink: (projectId: string) => Promise<CopyResult>
+  listJoinRequests: (projectId: string) => Promise<JoinRequest[]>
+  // Returns the name the person was given.
+  approveJoinRequest: (requestId: string, displayName?: string) => Promise<string>
+  rejectJoinRequest: (requestId: string) => Promise<void>
 
   // Demo only: signs in as the sample consultant.
   demoSignIn?: () => void
