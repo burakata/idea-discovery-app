@@ -4,6 +4,7 @@ import { AppShell } from './components/AppShell'
 import { PublicPage } from './components/PublicPage'
 import { PrototypeBar } from './components/PrototypeBar'
 import { demoRoutes } from './DemoRoutes'
+import AskToJoin from './screens/AskToJoin'
 import Home from './screens/Home'
 import People from './screens/People'
 import ProjectForm from './screens/ProjectForm'
@@ -39,6 +40,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/sign-in" element={<SignIn />} />
+      {/* Outside the signed-in shell: the person asking has no account yet. */}
+      <Route path="/join/:code" element={<AskToJoin />} />
       <Route
         path="/"
         element={

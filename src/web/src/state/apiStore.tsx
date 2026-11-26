@@ -45,6 +45,17 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     listSessions: session.listSessions,
     endSession: session.endSession,
     removeMember: session.removeMember,
+    joinCanAsk: session.joinCanAsk,
+    joinAsk: session.joinAsk,
+    joinStatus: session.joinStatus,
+    joinContinue: session.joinContinue,
+    joinAsking: session.joinAsking,
+    turnOnJoinLink: session.turnOnJoinLink,
+    turnOffJoinLink: session.turnOffJoinLink,
+    renewJoinLink: session.renewJoinLink,
+    listJoinRequests: session.listJoinRequests,
+    approveJoinRequest: session.approveJoinRequest,
+    rejectJoinRequest: session.rejectJoinRequest,
   }
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

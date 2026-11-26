@@ -9,31 +9,94 @@ import type { Member, SignInSession } from '../state/context'
 import { useStore } from '../state/store'
 import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
-import { demoPeople } from '../strings/demo'
 import { deviceLabel, isLive } from './peopleRules'
 import styles from './People.module.css'
 
 const p = c.people
 
-// Shown only when the browser would not copy the link. The link is held by the
-// People screen, in state set only for this dialog, and is cleared when it closes;
-// it is never in the store or in storage.
-export function LinkDialog({ name, link, onClose }: { name: string; link: string; onClose: () => void }) {
+// Shown only when the browser would not copy a link. The link is held by the screen,
+// in state set only for this dialog, and is cleared when it closes; it is never in the
+// store or in storage. The texts come from the caller: a person's sign-in link and the
+// project's join link say different things.
+export function LinkDialog({
+  title,
+  body,
+  fieldLabel,
+  demoNote,
+  link,
+  onClose,
+}: {
+  title: string
+  body: string
+  fieldLabel: string
+  // Demo only: says the link is a sample.
+  demoNote?: string
+  link: string
+  onClose: () => void
+}) {
   return (
-    <Dialog title={p.linkFallbackTitle} onClose={onClose} closeLabel={p.close}>
+    <Dialog title={title} onClose={onClose} closeLabel={p.close}>
       <div className={styles.dialogBody}>
-        <p>{fill(p.linkFallbackBody, { name })}</p>
-        {__DEMO__ && <p>{demoPeople.sampleLink}</p>}
+        <p>{body}</p>
+        {demoNote && <p>{demoNote}</p>}
         <TextInput
           readOnly
           value={link}
-          aria-label={fill(p.linkField, { name })}
+          aria-label={fieldLabel}
           data-autofocus
           onFocus={(event) => event.currentTarget.select()}
         />
         <div className={styles.dialogActions}>
           <Button variant="primary" onClick={onClose}>
             {p.close}
+          </Button>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+// A confirmation with one decision: replace the join link, reject a request, remove a
+// person. Cancel is the focused, safe choice.
+export function ConfirmDialog({
+  title,
+  body,
+  confirmLabel,
+  danger,
+  busy,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  title: string
+  body: string
+  confirmLabel: string
+  danger?: boolean
+  busy: boolean
+  error: ConsultantErrorKey | null
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  return (
+    <Dialog title={title} onClose={onClose} closeLabel={p.close}>
+      <div className={styles.dialogBody}>
+        <p>{body}</p>
+        {error && (
+          <div role="alert">
+            <NoticeBox tone="amber">{c.errors[error]}</NoticeBox>
+          </div>
+        )}
+        <div className={styles.dialogActions}>
+          <Button variant="secondary" onClick={onClose} data-autofocus>
+            {p.cancel}
+          </Button>
+          <Button
+            variant={danger ? 'secondary' : 'primary'}
+            className={danger ? styles.danger : undefined}
+            onClick={onConfirm}
+            disabled={busy}
+          >
+            {confirmLabel}
           </Button>
         </div>
       </div>
@@ -56,24 +119,16 @@ export function RemoveDialog({
 }) {
   const name = { name: member.displayName }
   return (
-    <Dialog title={fill(p.removeTitle, name)} onClose={onClose} closeLabel={p.close}>
-      <div className={styles.dialogBody}>
-        <p>{fill(p.removeBody, name)}</p>
-        {error && (
-          <div role="alert">
-            <NoticeBox tone="amber">{c.errors[error]}</NoticeBox>
-          </div>
-        )}
-        <div className={styles.dialogActions}>
-          <Button variant="secondary" onClick={onClose} data-autofocus>
-            {p.cancel}
-          </Button>
-          <Button variant="secondary" className={styles.danger} onClick={onConfirm} disabled={busy}>
-            {fill(p.removeConfirm, name)}
-          </Button>
-        </div>
-      </div>
-    </Dialog>
+    <ConfirmDialog
+      title={fill(p.removeTitle, name)}
+      body={fill(p.removeBody, name)}
+      confirmLabel={fill(p.removeConfirm, name)}
+      danger
+      busy={busy}
+      error={error}
+      onConfirm={onConfirm}
+      onClose={onClose}
+    />
   )
 }
 

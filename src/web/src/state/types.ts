@@ -95,6 +95,22 @@ export interface DemoTexts {
   intro: Bilingual
 }
 
+// A request to join, in the demo: the person's side (name, device) and Burak's decision.
+export interface DemoJoinRequest {
+  id: string
+  projectId: string
+  name: string
+  uncheckedEmail: string | null
+  device: string
+  createdAt: string
+  expiresAt: string
+  state: 'pending' | 'approved' | 'rejected'
+  // Set on approval: the new person, and how long the browser may still continue.
+  userId?: string
+  approvedUntil?: string
+  claimed: boolean
+}
+
 export interface AppState {
   version: number
   seq: number
@@ -112,4 +128,9 @@ export interface AppState {
   invitations: Record<string, Invitation[]>
   // Invented sample sign-ins, by person.
   sessions: Record<string, SignInSession[]>
+  // Ask to join, both sides simulated. A project without an entry is switched off, with
+  // its default code. `myJoinRequest` stands in for the browser's cookie.
+  joinLinks: Record<string, { code: string; on: boolean }>
+  joinRequests: DemoJoinRequest[]
+  myJoinRequest: string | null
 }

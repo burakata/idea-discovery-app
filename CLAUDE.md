@@ -114,8 +114,9 @@ Read before planning: the Phase 1 PRD,
 
 ## Commands
 The client runs as the demo (see PROTOTYPE.md) or against the API. Signing
-in, signing out and the project list work against the API; the room screens
-are demo-only until M1 PR 8. The API in `src/api` answers under `/api` (and
+in and out, the project list, Burak's project and people screens and
+asking to join work against the API; the room screens are demo-only until
+M1 PR 8. The API in `src/api` answers under `/api` (and
 at its root) and has deny-by-default access, a health endpoint, the M1 database, sign-in
 with one-time links and server-side sessions (`/auth/*`, `/consultant/*`),
 asking to join (`/join/*`), projects and members (`/projects`,

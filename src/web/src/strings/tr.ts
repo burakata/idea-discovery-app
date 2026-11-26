@@ -54,11 +54,48 @@ const tr: Strings = {
     },
     signedInAs: '{name} olarak giriş yaptınız',
   },
+  askToJoin: {
+    title: 'Katılma isteği gönderin',
+    intro:
+      'Bu bağlantı, bir iş fikrinin konuşulmasına katılabilmeniz için paylaşıldı. Adınızı yazın; kimin katılacağına bu işi yürüten danışman karar verecek.',
+    closedTitle: 'Bu bağlantıyla katılamazsınız',
+    checking: 'Bağlantı kontrol ediliyor…',
+    nameLabel: 'Adınız',
+    nameHint:
+      'Bu adı danışmanınız, katıldıktan sonra da diğer kişiler görür. Yalnızca harf kullanın; boşluk, kesme işareti, tire ve nokta olabilir.',
+    nameMissing: 'Devam etmek için adınızı yazın.',
+    emailLabel: 'E-posta adresiniz (isteğe bağlı)',
+    emailHint: 'Bunu yalnızca danışmanınız sizi tanıyabilsin diye soruyoruz. Bu adrese hiçbir şey göndermeyiz.',
+    submit: 'İstek gönder',
+    sending: 'Gönderiliyor…',
+    pendingTitle: 'Danışmanınızın yanıtı bekleniyor',
+    pending:
+      'İsteğiniz danışmanınıza iletildi. Durumuna bakmak için iki gün içinde bu bağlantıyı aynı telefon ya da bilgisayarda, aynı yoldan yeniden açın.',
+    rejectedTitle: 'İsteğiniz kabul edilmedi',
+    rejected:
+      'Danışman bu isteği kabul etmedi. Bir yanlışlık olduğunu düşünüyorsanız bağlantıyı size gönderen kişiye söyleyin.',
+    expiredTitle: 'Bu isteğin süresi doldu',
+    expired: 'İki gün içinde yanıtlanmadı ya da kullanılmadı. Yeniden istek gönderebilirsiniz.',
+    askAgain: 'Yeniden istek gönder',
+    approvedTitle: 'Katılabilirsiniz',
+    approved: 'Danışmanınız isteğinizi kabul etti. Girmek için Devam’a basın.',
+    continue: 'Devam',
+    continuing: 'Açılıyor…',
+    tryAgain: 'Tekrar dene',
+  },
   errors: {
     linkNotValid: 'Bu bağlantı artık çalışmıyor. Daha önce kullanılmış ya da süresi dolmuş olabilir.',
     tooManyTries: 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.',
     network: 'İnternet bağlantınız kesildi. Kontrol edip tekrar deneyin.',
     generic: 'Bir şeyler ters gitti. Tekrar deneyin.',
+    nameNotValid:
+      'Bu adı kullanamadık. Yalnızca harf, boşluk, kesme işareti (\'), tire (-) ve nokta (.) kullanın; rakam ya da başka işaret olmasın.',
+    joinTryLater:
+      'Biraz sonra yeniden deneyin.',
+    joinClosed:
+      'Bağlantı kapatılmış ya da yanlış kopyalanmış olabilir. Size gönderen kişiden yeni bir bağlantı isteyin.',
+    cannotClaim:
+      'Bu onay artık kullanılamıyor. Daha önce kullanılmış ya da iki günden eski olabilir. Danışmanınızdan sizi yeniden kabul etmesini isteyin.',
   },
   notices: {
     signedOut: 'Oturumunuz kapandı. Devam etmek için aşağıdan yeni bir bağlantı isteyin.',

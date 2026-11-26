@@ -1504,4 +1504,128 @@ public class AskToJoinTests
         await GetAll();
         Assert.Equal(before, Snapshot(r.F));
     }
+
+    // ---- Whether asking is on, and whose request this is (PR 7c) ----
+
+    [Fact]
+    public async Task Burak_reads_whether_asking_is_on_with_its_link_and_an_owner_never_does()
+    {
+        using var r = new Rig();
+        var burak = await r.Burak();
+        var url = $"/projects/{r.ProjectA}";
+
+        var before = await Read(await burak.Http.GetAsync(url));
+        Assert.False(before.GetProperty("askToJoin").GetProperty("enabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, before.GetProperty("askToJoin").GetProperty("link").ValueKind);
+
+        var code = await r.Enable();
+        var on = (await Read(await burak.Http.GetAsync(url))).GetProperty("askToJoin");
+        Assert.True(on.GetProperty("enabled").GetBoolean());
+        Assert.Equal($"{RoomsFactory.BaseUrl}/join/{code}", on.GetProperty("link").GetString());
+
+        Assert.Equal(HttpStatusCode.NoContent, (await burak.Post($"/consultant/projects/{r.ProjectA}/join-link/off")).StatusCode);
+        var off = (await Read(await burak.Http.GetAsync(url))).GetProperty("askToJoin");
+        Assert.False(off.GetProperty("enabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, off.GetProperty("link").ValueKind);
+
+        // An owner of the project gets the project, and no word about asking or the code.
+        await r.Enable();
+        var ownerId = r.F.SeedOwner();
+        AddMember(r.F, r.ProjectA, ownerId);
+        var owner = await r.F.SignedIn(ownerId);
+        var ownerResponse = await owner.Http.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, ownerResponse.StatusCode);
+        var text = await ownerResponse.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("askToJoin", text);
+        Assert.DoesNotContain("/join/", text);
+        Assert.DoesNotContain(code, text);
+    }
+
+    [Fact]
+    public async Task A_request_is_reported_as_for_this_link_only_to_the_link_it_was_made_on()
+    {
+        using var r = new Rig();
+        var projectB = r.F.SeedProject("Project B");
+        var codeA = await r.Enable();
+        var codeB = await r.Enable(projectB);
+        var person = r.NewBrowser();
+        await r.Asked(person, codeA, "Ayse Yilmaz");
+
+        var own = await Read(await person.Get($"/join/request?code={codeA}"));
+        Assert.Equal("pending", own.GetProperty("state").GetString());
+        Assert.True(own.GetProperty("forThisLink").GetBoolean());
+
+        // Read with another project's code, the answer is what a browser with no request gets.
+        var other = await person.Get($"/join/request?code={codeB}");
+        var otherText = await other.Content.ReadAsStringAsync();
+        Assert.Equal("{\"state\":\"expired\",\"forThisLink\":false}", otherText);
+        var stranger = await r.NewBrowser().Get($"/join/request?code={codeB}");
+        Assert.Equal(otherText, await stranger.Content.ReadAsStringAsync());
+        Assert.DoesNotContain("Project A", otherText);
+        Assert.DoesNotContain(codeA, otherText);
+
+        // An unknown code says false too, and without a code the answer is unchanged.
+        Assert.Equal(otherText, await (await person.Get("/join/request?code=nope")).Content.ReadAsStringAsync());
+        Assert.Equal("{\"state\":\"pending\"}", await (await person.Get("/join/request")).Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task An_approved_request_is_still_for_its_link_after_asking_is_switched_off()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var (person, _) = await r.ApprovedBrowser(code);
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await (await r.Burak()).Post($"/consultant/projects/{r.ProjectA}/join-link/off")).StatusCode);
+
+        var answer = await Read(await person.Get($"/join/request?code={code}"));
+        Assert.Equal("approved", answer.GetProperty("state").GetString());
+        Assert.True(answer.GetProperty("forThisLink").GetBoolean());
+    }
+
+    [Fact]
+    public async Task A_request_that_ran_out_is_stale_for_its_own_link_and_nothing_else()
+    {
+        using var r = new Rig();
+        var projectB = r.F.SeedProject("Project B");
+        var codeA = await r.Enable();
+        var codeB = await r.Enable(projectB);
+
+        var waiting = r.NewBrowser();
+        await r.Asked(waiting, codeA);
+        var (lapsed, _) = await r.ApprovedBrowser(codeA, "Can Demir");
+        var nobody = r.NewBrowser();
+
+        r.F.Clock.Advance(TimeSpan.FromHours(49));
+
+        Assert.Equal("{\"state\":\"stale\",\"forThisLink\":true}",
+            await (await waiting.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+        Assert.Equal("{\"state\":\"stale\",\"forThisLink\":true}",
+            await (await lapsed.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+
+        // Read with another project's link, or by a browser with no request, it is the no-request answer.
+        var none = "{\"state\":\"expired\",\"forThisLink\":false}";
+        Assert.Equal(none, await (await waiting.Get($"/join/request?code={codeB}")).Content.ReadAsStringAsync());
+        Assert.Equal(none, await (await nobody.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+        // Without a code nothing changes.
+        Assert.Equal("{\"state\":\"expired\"}", await (await waiting.Get("/join/request")).Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task A_rejected_or_claimed_request_is_never_stale()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var rejected = r.NewBrowser();
+        await r.Reject(await r.Asked(rejected, code));
+        var (claimed, _) = await r.ApprovedBrowser(code, "Can Demir");
+        Assert.Equal(HttpStatusCode.OK, (await r.Claim(claimed)).StatusCode);
+        r.F.Clock.Advance(TimeSpan.FromHours(100));
+
+        Assert.Equal("{\"state\":\"rejected\",\"forThisLink\":true}",
+            await (await rejected.Get($"/join/request?code={code}")).Content.ReadAsStringAsync());
+        // The claim cleared the cookie; a copy of the old one reads as used, not as stale.
+        Assert.Equal("{\"state\":\"expired\",\"forThisLink\":false}",
+            await (await claimed.Get($"/join/request?code={code}")).Content.ReadAsStringAsync());
+    }
 }

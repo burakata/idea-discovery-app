@@ -52,11 +52,49 @@ const en = {
     },
     signedInAs: 'Signed in as {name}',
   },
+  // Asking to join a project: the page behind a project link. It says nothing of the project.
+  askToJoin: {
+    title: 'Ask to join',
+    intro:
+      'Someone shared this link so you can take part in talking through a business idea. Write your name and the consultant running it will decide whether to let you in.',
+    closedTitle: 'This link cannot be used to join',
+    checking: 'Checking the link…',
+    nameLabel: 'Your name',
+    nameHint:
+      'Your consultant sees this name, and so do the others once you join. Use letters only; spaces, apostrophes, hyphens and full stops are fine.',
+    nameMissing: 'Write your name to continue.',
+    emailLabel: 'Your email address (optional)',
+    emailHint: 'We ask only so your consultant can recognise you. We will not send anything to it.',
+    submit: 'Ask to join',
+    sending: 'Sending…',
+    pendingTitle: 'Waiting for your consultant’s answer',
+    pending:
+      'Your request has been sent to your consultant. To check on it, open this same link again the same way on this phone or computer, within two days.',
+    rejectedTitle: 'Your request was not accepted',
+    rejected:
+      'The consultant did not accept this request. If you think this is a mistake, tell the person who sent you the link.',
+    expiredTitle: 'This request has expired',
+    expired: 'It was not answered, or not used, within two days. You can ask again.',
+    askAgain: 'Ask again',
+    approvedTitle: 'You can join',
+    approved: 'Your consultant accepted your request. Press Continue to go in.',
+    continue: 'Continue',
+    continuing: 'Opening…',
+    tryAgain: 'Try again',
+  },
   errors: {
     linkNotValid: 'This link no longer works. It may have been used already or be too old.',
     tooManyTries: 'Too many tries. Wait a little, then try again.',
     network: 'Connection lost. Check your internet and try again.',
     generic: 'Something went wrong. Try again.',
+    nameNotValid:
+      'We could not use that name. Use only letters, spaces, apostrophes (\'), hyphens (-) and full stops (.), with no numbers or other signs.',
+    joinTryLater:
+      'Try again in a little while.',
+    joinClosed:
+      'It may have been switched off, or copied incorrectly. Ask the person who sent it to you for a new way in.',
+    cannotClaim:
+      'This acceptance can no longer be used. It may already have been used, or be more than two days old. Ask your consultant to accept you again.',
   },
   notices: {
     signedOut: 'You have been signed out. Ask for a new link below to carry on.',

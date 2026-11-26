@@ -13,6 +13,12 @@ public static class ProjectEndpoints
 
     private sealed record ProjectRequest(string? TitleEn, string? TitleTr, string? IntroEn, string? IntroTr);
     private sealed record LanguageRequest(string? Language);
+    private sealed record AskToJoinView(bool Enabled, string? Link);
+    private sealed record ProjectView(
+        Guid Id, string TitleEn, string TitleTr, string IntroEn, string IntroTr, string Status, DateTime CreatedAt,
+        object Members,
+        [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        AskToJoinView? AskToJoin);
 
     public static void MapProjects(this IEndpointRouteBuilder app)
     {
@@ -27,12 +33,13 @@ public static class ProjectEndpoints
             }));
         });
 
-        app.MapGet("/projects/{projectId:guid}", async (Guid projectId, HttpContext http, AppDbContext db) =>
+        app.MapGet("/projects/{projectId:guid}", async (Guid projectId, HttpContext http, AppDbContext db, AuthSettings settings) =>
         {
             var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
             var withEmail = ProjectAccess.IsConsultant(http.User);
-            return Results.Ok(await Describe(db, project, withEmail));
+            // Whether asking to join is on is Burak's to see; owners get no such field.
+            return Results.Ok(await Describe(db, project, withEmail, withEmail ? settings : null));
         });
 
         app.MapPut("/me/language", async (HttpContext http, AppDbContext db) =>
@@ -145,7 +152,7 @@ public static class ProjectEndpoints
         });
     }
 
-    private static async Task<object> Describe(AppDbContext db, Project project, bool withEmail)
+    private static async Task<object> Describe(AppDbContext db, Project project, bool withEmail, AuthSettings? askToJoinFor = null)
     {
         var rows = await (from m in db.ProjectMembers
                           join u in db.Users on m.UserId equals u.Id
@@ -157,15 +164,18 @@ public static class ProjectEndpoints
                 ? (object)new { userId = r.Id, displayName = r.DisplayName, role = Role(r.Role), email = r.Email }
                 : new { userId = r.Id, displayName = r.DisplayName, role = Role(r.Role) })
             .ToList();
-        return new
-        {
-            id = project.Id,
-            titleEn = project.TitleEn, titleTr = project.TitleTr,
-            introEn = project.IntroEn, introTr = project.IntroTr,
-            status = project.Status,
-            createdAt = project.CreatedAt,
-            members,
-        };
+        // One shape for everyone; Burak's reads add `askToJoin`, and nobody else's carries the field.
+        var askToJoin = askToJoinFor is null
+            ? null
+            : new AskToJoinView(
+                project.AskToJoinEnabled,
+                // A switched-off link takes no requests, so none is offered.
+                project.AskToJoinEnabled && project.JoinCode is not null
+                    ? ConsultantEndpoints.JoinLink(askToJoinFor, project.JoinCode)
+                    : null);
+        return new ProjectView(
+            project.Id, project.TitleEn, project.TitleTr, project.IntroEn, project.IntroTr,
+            project.Status, project.CreatedAt, members, askToJoin);
     }
 
     private static string Role(MemberRole role) => role.ToString().ToLowerInvariant();
