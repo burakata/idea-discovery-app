@@ -19,12 +19,12 @@ import {
 import { browserClipboard, copyLink } from './copyLink'
 import * as joinRules from './demoJoin'
 import * as peopleRules from './demoPeople'
-import { roomOf } from './demoRoom'
+import * as roomRules from './demoRoom'
 import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 8
+const VERSION = 9
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =
@@ -33,7 +33,6 @@ type Action =
   | { type: 'guestLanguage'; lang: Lang }
   | { type: 'viewAs'; id: string }
   | { type: 'language'; lang: Lang }
-  | { type: 'join'; name: string }
   | { type: 'send'; roomId: string; text: string }
   | { type: 'autoReply'; roomId: string; replyTo: string }
   | { type: 'react'; roomId: string; statementId: string; kind: 'right' | 'notRight' | null; correction?: string }
@@ -45,7 +44,9 @@ type Action =
   | { type: 'editStatement'; roomId: string; statementId: string; text: string }
   | { type: 'removeStatement'; roomId: string; statementId: string }
   | { type: 'addStatement'; roomId: string; group: 'early' | 'open'; text: string }
-  | { type: 'createProject'; id: string; draft: ProjectDraft }
+  | { type: 'finishConversation'; roomId: string; now: string }
+  | { type: 'startConversation'; roomId: string; now: string }
+  | { type: 'createProject'; id: string; draft: ProjectDraft; now?: string }
   | { type: 'saveProject'; id: string; draft: ProjectDraft }
   | { type: 'invite'; projectId: string; input: InviteInput; now: string }
   | { type: 'revokeInvitation'; invitationId: string }
@@ -73,7 +74,15 @@ export function createInitialState(): AppState {
     }
     const seed = seeds[project.id]
     rooms[project.id] = {
-      messages: seed?.messages ?? [],
+      conversations: [
+        {
+          number: 1,
+          state: 'active',
+          startedAt: roomRules.SAMPLE_STARTED_AT,
+          finishedAt: null,
+          messages: seed?.messages ?? [],
+        },
+      ],
       statements: project.statements.map((statement) => ({
         id: statement.id,
         group: seed?.confirmed.includes(statement.id) ? 'confirmed' : statement.group,
@@ -191,9 +200,6 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'language':
       return updateViewer(state, { language: action.lang })
 
-    case 'join':
-      return updateViewer(state, { name: action.name, joined: true })
-
     case 'send': {
       const message: Message = {
         id: `m${state.seq}`,
@@ -206,7 +212,9 @@ export function reducer(state: AppState, action: Action): AppState {
         state,
         action.roomId,
         (room) => {
-          const next = { ...room, messages: [...room.messages, message] }
+          // With no active conversation there is nowhere to write: nothing changes.
+          if (!roomRules.activeOf(room)) return room
+          const next = roomRules.addToActive(room, message)
           const line = scriptLine(room.scriptIndex)
           // With approval on, an owner's message produces a draft for Burak, not a reply.
           if (viewer.role !== 'owner' || room.autoReply || !line) return next
@@ -231,13 +239,12 @@ export function reducer(state: AppState, action: Action): AppState {
         (room) => {
           const line = scriptLine(room.scriptIndex)
           const lang = state.people[action.replyTo].language
-          if (!room.autoReply || !line) return room
+          if (!room.autoReply || !line || !roomRules.activeOf(room)) return room
           return {
-            ...room,
-            messages: [
-              ...room.messages,
+            ...roomRules.addToActive(
+              room,
               assistantMessage(`m${state.seq}`, lang, line[lang], line[otherLang(lang)]),
-            ],
+            ),
             scriptIndex: room.scriptIndex + 1,
           }
         },
@@ -268,13 +275,11 @@ export function reducer(state: AppState, action: Action): AppState {
           if (!item) return room
           const queue = room.queue.filter((entry) => entry.id !== item.id)
           if (item.kind === 'message') {
+            // The draft waits while no conversation is active: Burak can still reject it.
+            if (!roomRules.activeOf(room)) return room
             return {
-              ...room,
+              ...roomRules.addToActive(room, assistantMessage(`m${state.seq}`, item.lang, item.text, item.translation)),
               queue,
-              messages: [
-                ...room.messages,
-                assistantMessage(`m${state.seq}`, item.lang, item.text, item.translation),
-              ],
             }
           }
           if (item.kind === 'statement') {
@@ -388,8 +393,18 @@ export function reducer(state: AppState, action: Action): AppState {
 
     // The store has already run each of these once and let a refusal through to the
     // screen, so a refusal here cannot happen; the state stays as it was if it does.
-    case 'createProject':
-      return peopleRules.createProject(state, action.id, action.draft)
+    case 'createProject': {
+      // Like the API: creating a project opens Conversation 1, with nothing in it yet.
+      const created = peopleRules.createProject(state, action.id, action.draft)
+      const startedAt = action.now ?? new Date().toISOString()
+      return { ...created, rooms: { ...created.rooms, [action.id]: roomRules.newDemoRoom(startedAt) } }
+    }
+
+    case 'finishConversation':
+      return attempt(state, () => roomRules.finishActive(state, action.roomId, new Date(action.now)))
+
+    case 'startConversation':
+      return attempt(state, () => roomRules.startNext(state, action.roomId, new Date(action.now)).state)
 
     case 'saveProject':
       return peopleRules.saveProject(state, action.id, action.draft)
@@ -440,12 +455,11 @@ export function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-// What the demo-only room screens use (discussion, queue, notes and the summary's actions).
+// What the demo-only room screens use (queue, notes and the summary's actions).
 interface DemoStore {
   state: AppState
   viewer: Person
   dispatch: (action: Action) => void
-  send: (roomId: string, text: string) => void
 }
 
 const DemoContext = createContext<DemoStore | null>(null)
@@ -507,7 +521,7 @@ export function createConsultantActions(
   > = {
     createProject: async (draft) => {
       const id = peopleRules.newProjectId(latest.current)
-      apply({ type: 'createProject', id, draft })
+      apply({ type: 'createProject', id, draft, now: new Date().toISOString() })
       return id
     },
     saveProject: async (id, draft) => {
@@ -595,6 +609,49 @@ export function createConsultantActions(
   return actions
 }
 
+// The discussion on the demo data, the same calls as the API's. A refusal is the same
+// ApiError the API would give. Sending also runs the scripted assistant: a draft for Burak, or
+// with automatic replies on, a reply after a short wait (`later` is injected for tests).
+export function createRoomActions(
+  latest: { current: AppState },
+  dispatch: (action: Action) => void,
+  later: (run: () => void, ms: number) => void = (run, ms) => void setTimeout(run, ms),
+) {
+  const apply = (action: Action) => {
+    latest.current = reducer(latest.current, action)
+    dispatch(action)
+  }
+  const actions: Pick<
+    Store,
+    'listConversations' | 'readMessages' | 'postMessage' | 'finishConversation' | 'startConversation'
+  > = {
+    listConversations: async (projectId) => roomRules.conversationsOf(latest.current, projectId),
+    readMessages: async (projectId, number, cursor) =>
+      roomRules.readMessages(latest.current, projectId, number, cursor),
+    postMessage: async (projectId, text) => {
+      const clean = roomRules.checkToPost(latest.current, projectId, text)
+      const writer = latest.current.people[latest.current.viewAs]
+      apply({ type: 'send', roomId: projectId, text: clean })
+      if (writer.role === 'owner' && latest.current.rooms[projectId].autoReply) {
+        later(() => apply({ type: 'autoReply', roomId: projectId, replyTo: writer.id }), AUTO_REPLY_DELAY_MS)
+      }
+      return roomRules.lastActiveMessage(latest.current, projectId)
+    },
+    finishConversation: async (projectId) => {
+      const now = new Date()
+      roomRules.finishActive(latest.current, projectId, now)
+      apply({ type: 'finishConversation', roomId: projectId, now: now.toISOString() })
+    },
+    startConversation: async (projectId) => {
+      const now = new Date()
+      const { conversation } = roomRules.startNext(latest.current, projectId, now)
+      apply({ type: 'startConversation', roomId: projectId, now: now.toISOString() })
+      return conversation
+    },
+  }
+  return actions
+}
+
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
   // The one message the demo can leave on the list: a room that could not be opened.
@@ -608,13 +665,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
-
-  const send = (roomId: string, text: string) => {
-    dispatch({ type: 'send', roomId, text })
-    if (viewer.role === 'owner' && state.rooms[roomId].autoReply) {
-      setTimeout(() => dispatch({ type: 'autoReply', roomId, replyTo: viewer.id }), AUTO_REPLY_DELAY_MS)
-    }
-  }
 
   const me: Me | null = state.signedIn
     ? { id: viewer.id, displayName: viewer.name, uiLanguage: viewer.language, isConsultant: viewer.role === 'consultant' }
@@ -646,7 +696,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     // A refusal leaves the same "project gone" notice on the list as the api build does.
     loadRoom: async (projectId) => {
       try {
-        const room = roomOf(latest.current, projectId)
+        const room = roomRules.roomOf(latest.current, projectId)
         setNotice(null)
         return room
       } catch (failure) {
@@ -655,6 +705,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       }
     },
 
+    ...createRoomActions(latest, dispatch),
     ...createConsultantActions(
       latest,
       dispatch,
@@ -666,7 +717,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   return (
     <StoreContext.Provider value={store}>
-      <DemoContext.Provider value={{ state, viewer, dispatch, send }}>{children}</DemoContext.Provider>
+      <DemoContext.Provider value={{ state, viewer, dispatch }}>{children}</DemoContext.Provider>
     </StoreContext.Provider>
   )
 }

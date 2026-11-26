@@ -29,10 +29,16 @@ const codeKeys: Record<string, ErrorKey> = {
   try_later: 'joinTryLater',
   cannot_ask: 'joinClosed',
   cannot_claim: 'cannotClaim',
+  // The discussion. api/room.ts turns a message's "invalid_request" into "message_not_valid":
+  // on other calls that code stays generic.
+  message_not_valid: 'messageNotValid',
+  no_active_conversation: 'conversationFinished',
+  conversation_active: 'conversationActive',
 }
 
 export function errorKey(status: number, code: string | null): ErrorKey {
   if (code && code in codeKeys) return codeKeys[code]
+  if (status === 413) return 'messageTooLong'
   if (status === 429) return 'tooManyTries'
   if (status === 0) return 'network'
   return 'generic'

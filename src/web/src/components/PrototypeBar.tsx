@@ -55,7 +55,6 @@ export function PrototypeBar() {
               {personName(person)}
               {/* On phones the name alone fits; the role would be cut off. */}
               {isDesktop && ` · ${t.roles[person.role]}`}
-              {isDesktop && !person.joined && ` (${d.notJoined})`}
             </option>
           ))}
         </select>

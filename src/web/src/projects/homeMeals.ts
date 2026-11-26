@@ -134,9 +134,9 @@ export const homeMeals: Project = {
     },
   ],
   participants: [
-    { id: 'elif', role: 'owner', name: 'Elif Yıldız', language: 'tr', joined: true },
-    { id: 'hasan', role: 'owner', name: 'Hasan Aksoy', language: 'tr', joined: false },
-    { id: 'tom', role: 'owner', name: 'Tom Bennett', language: 'en', joined: true },
+    { id: 'elif', role: 'owner', name: 'Elif Yıldız', language: 'tr' },
+    { id: 'hasan', role: 'owner', name: 'Hasan Aksoy', language: 'tr' },
+    { id: 'tom', role: 'owner', name: 'Tom Bennett', language: 'en' },
     burak,
     assistant,
   ],

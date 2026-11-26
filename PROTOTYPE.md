@@ -42,7 +42,7 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
 - Things to try:
   1. Press **Try the demo**, then open "Home-cooked meals" from the project
      list.
-  2. Switch View as to Hasan, switch to TR, tap "Sohbete katıl", enter a name
+  2. Switch View as to Hasan, switch to TR, open the Discussion ("Sohbet")
      and send a message. You see "Yanıt gelecek." and no reply.
   3. Switch back to Burak and open "Waiting for you". The draft reply is
      there. Approve it and it appears in the Discussion. The queue also starts
@@ -51,6 +51,9 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
      a question.
   4. Turn on "Send chat replies automatically", switch to an owner and send
      another message. The reply arrives by itself after a moment.
+     In the Discussion, Burak can also press **Finish conversation** (it
+     becomes read-only for everyone) and then **Start conversation 2**; the
+     picker above the thread opens earlier conversations.
   5. As Tom, open the Shared summary and tap "Not right" on a statement.
   6. As Burak, confirm, edit, remove or add statements, then Export.
   7. As Burak, the project list also shows the empty example project.
@@ -69,9 +72,9 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
 
 | Person | Role | Starts as |
 |---|---|---|
-| Elif Yıldız | Business owner | joined, Turkish |
-| Hasan Aksoy | Business owner | not joined, Turkish |
-| Tom Bennett | Business owner | joined, English only |
+| Elif Yıldız | Business owner | Turkish |
+| Hasan Aksoy | Business owner | Turkish; has not written anything yet |
+| Tom Bennett | Business owner | English only |
 | Burak | Software consultant | English; the demo starts as him |
 
 ## What is real
@@ -97,7 +100,7 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
 | The assistant answers every owner message and never stays quiet | `NO_REPLY` when a message is between people |
 | Proposed summary statements and the job-flow change are hand-written and seeded | Written by the AI from `prompts/summary.md` after new owner messages |
 | The private note is one hand-written sample | Written by the AI from `prompts/consultant-notes.md` when Burak asks |
-| Translations of the seeded messages are hand-written. Anything typed in the demo shows "A translation appears here in the real app." | Translations from `prompts/translate.md` for every message, correction and statement |
+| Translations of the seeded messages are hand-written. Anything typed in the demo shows no translation line (decided 2026-11-26: nothing until a real translation exists) | Translations from `prompts/translate.md` for every message, correction and statement |
 | The language of a typed message is taken to be the writer's language setting | Detect the language actually written |
 | The seeded discussion, reactions and proposals are **invented**. No owner said any of it. Nothing starts as confirmed | Real messages and reactions from the real owners |
 | Asking to join keeps the request in this browser's storage; nothing is sent, and the link is a labelled sample | A random project link Burak switches on; the request is tied to the asking browser by a private cookie, and Burak approves it in the app |

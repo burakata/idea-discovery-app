@@ -137,8 +137,8 @@ export function approve(
     role: 'owner',
     name,
     language: DEFAULT_LANG,
-    joined: true,
-    // The sample projects have a room to open; ones Burak made in the demo have none.
+    // The owner's sample room, if the project is a sample one. Membership of a project Burak
+    // created is in state.members; this field is only the sample-room shortcut.
     roomId: projects.some((project) => project.id === request.projectId) ? request.projectId : null,
   }
   const next = replaceRequest(state, {

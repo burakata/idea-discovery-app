@@ -73,10 +73,6 @@
   vertical-align: text-bottom;
 }
 
-.placeholder {
-  font-style: italic;
-}
-
 .meta {
   display: flex;
   flex-wrap: wrap;

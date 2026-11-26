@@ -38,15 +38,11 @@ export function pickText(text: Text, lang: Lang): { text: string; missing: boole
   return { text: text[otherLang(lang)] ?? '', missing: true }
 }
 
-// The translation line for something written in another language, if one is needed.
+// The translation line for something written in another language. Burak decided
+// (2026-11-26) that nothing is shown until a real translation exists: no placeholder.
 export function translationLine(written: Written, lang: Lang, t: Strings) {
-  return written.lang === lang
-    ? undefined
-    : {
-        label: t.discussion.translated,
-        text: written.translation,
-        placeholder: t.discussion.translationPlaceholder,
-      }
+  if (written.lang === lang || !written.translation) return undefined
+  return { label: t.discussion.translated, text: written.translation }
 }
 
 export function useT() {

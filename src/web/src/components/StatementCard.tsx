@@ -12,19 +12,16 @@ export interface ReactionView {
 
 interface Props {
   text: string
-  // Shown beneath the text, for example the translation placeholder.
-  note?: ReactNode
   // Shown when nobody has reacted yet.
   status?: string
   reactions?: ReactionView[]
   children?: ReactNode
 }
 
-export function StatementCard({ text, note, status, reactions = [], children }: Props) {
+export function StatementCard({ text, status, reactions = [], children }: Props) {
   return (
     <li className={styles.card}>
       <p className={styles.text}>{text}</p>
-      {note}
       {reactions.length === 0 && status && <p className={styles.status}>{status}</p>}
       {reactions.length > 0 && (
         <ul className={styles.reactions}>

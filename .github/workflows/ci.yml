@@ -34,7 +34,7 @@ jobs:
       - name: The api build holds no demo code
         run: |
           failed=0
-          for marker in "Reset demo" "Interactive preview" "Try the demo" "hand-written sample" "scripted replies have run out" "Home-cooked meals" "Ev yemekleri" "interviewer.md" "idea-discovery-rooms-demo"; do
+          for marker in "Reset demo" "Interactive preview" "Try the demo" "hand-written sample" "scripted replies have run out" "Home-cooked meals" "Ev yemekleri" "interviewer.md" "idea-discovery-rooms-demo" "Replies here are examples"; do
             if grep -rqF -- "$marker" src/web/dist/assets; then
               echo "::error::The api build contains demo text: $marker"
               failed=1

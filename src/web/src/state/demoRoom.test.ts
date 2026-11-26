@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '../api/client'
 import { projects } from '../projects'
-import { roomOf } from './demoRoom'
+import { readMessages, roomOf } from './demoRoom'
 import { createInitialState, reducer } from './demoStore'
 import type { AppState } from './types'
 
@@ -91,9 +91,13 @@ describe('the demo room: what it holds', () => {
     }
   })
 
-  it('has no conversation in a project Burak created, so it has no Discussion', () => {
+  // Changed in PR 8b (was: "has no conversation in a project Burak created"). Like the API,
+  // creating a project opens Conversation 1 (decision 2026-11-20), so it has a Discussion.
+  it('opens Conversation 1, active and empty, in a project Burak created', () => {
     const created = reducer(viewingAs('burak'), { type: 'createProject', id: 'new-1', draft })
-    expect(roomOf(created, 'new-1').conversations).toEqual([])
+    const room = roomOf(created, 'new-1')
+    expect(room.conversations).toMatchObject([{ number: 1, state: 'active', finishedAt: null }])
+    expect(readMessages(created, 'new-1', 1).messages).toEqual([])
   })
 
   it('has no content at all in the second sample project', () => {

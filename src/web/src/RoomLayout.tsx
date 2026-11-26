@@ -1,12 +1,13 @@
 // The room's frame, the same in both builds: it loads the room through the store and
 // hands it to the screens (the idea page, the shared summary, and the demo's own).
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import { ApiError } from './api/client'
 import { AppShell, Page } from './components/AppShell'
 import { NoticeBox } from './components/Card'
 import { PublicPage } from './components/PublicPage'
 import type { Room } from './state/context'
+import { RoomSyncContext, sameConversations } from './state/roomSync'
 import { useStore } from './state/store'
 import { useT } from './strings'
 
@@ -17,6 +18,23 @@ export function RoomLayout({ queueCount }: { queueCount?: number }) {
   const { t } = useT()
   const [room, setRoom] = useState<Room | null>(null)
   const [problem, setProblem] = useState<unknown>(null)
+  const held = useRef<Room | null>(null)
+  held.current = room
+
+  // The discussion reports a changed conversation list; the room is loaded again from the store.
+  // A failure here is left alone: the next load of the room says what is wrong.
+  const syncConversations = useCallback(
+    (list: Room['conversations']) => {
+      if (!held.current || sameConversations(held.current.conversations, list)) return
+      // An answer for another project (the person moved on meanwhile) is ignored.
+      loadRoom(projectId).then((loaded) => {
+        if (loaded.id === projectId) setRoom(loaded)
+      }, () => {})
+    },
+    // The demo's loadRoom changes identity with its state; the project is what matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projectId],
+  )
 
   // Loaded again when the person moves inside the room, or the viewer changes (the demo's
   // View as), so a change made on another screen (a new title, a job-flow step the demo's
@@ -64,7 +82,9 @@ export function RoomLayout({ queueCount }: { queueCount?: number }) {
 
   return (
     <AppShell room={room} queueCount={queueCount}>
-      <Outlet context={room} />
+      <RoomSyncContext.Provider value={syncConversations}>
+        <Outlet context={room} />
+      </RoomSyncContext.Provider>
     </AppShell>
   )
 }

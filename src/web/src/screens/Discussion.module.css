@@ -18,13 +18,83 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-line);
 }
 
 .head h1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-lg);
   letter-spacing: -0.3px;
+}
+
+/* The conversation picker and Burak's finish or start button. */
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* The label sits beside the choice, so the bar stays one row on a phone. */
+.picker {
+  display: flex;
+  flex: 1 1 20rem;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.picker label {
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--color-muted-strong);
+}
+
+.picker select {
+  flex: 1;
+  min-width: 0;
+}
+
+.newer {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-muted-strong);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.count {
+  flex: 1 0 100%;
+  font-size: var(--text-xs);
+  color: var(--color-muted-strong);
+  text-align: right;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.retrying {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-amber-ink);
+  background: var(--color-amber-bg-soft);
+  border-bottom: 1px solid var(--color-amber-line);
+}
+
+.alert {
+  padding: var(--space-2) var(--space-4);
 }
 
 /* Left out on phones so the thread has room. */
@@ -85,10 +155,40 @@
 
 .composer {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-line);
+}
+
+/* A refused send sits above the text box, which keeps what was typed. */
+.sendError {
+  flex: 1 0 100%;
+}
+
+.composer textarea {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Where the composer would be, when nobody can write. */
+.finished {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-line);
+}
+
+.dialogBody {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .side {
@@ -151,6 +251,23 @@
   }
 
   .head {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .bar {
+    padding: var(--space-3) var(--space-6);
+  }
+
+  .newer {
+    padding-inline: var(--space-6);
+  }
+
+  .alert,
+  .retrying {
+    padding-inline: var(--space-6);
+  }
+
+  .finished {
     padding: var(--space-4) var(--space-6);
   }
 

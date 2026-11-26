@@ -16,7 +16,6 @@ export interface Participant {
   role: Role
   name: string
   language: Lang
-  joined: boolean
 }
 
 export interface JobFlowStep {
@@ -59,7 +58,6 @@ export const burak: Participant = {
   role: 'consultant',
   name: 'Burak',
   language: 'en',
-  joined: true,
 }
 
 // The assistant's display name comes from the strings files.
@@ -68,5 +66,4 @@ export const assistant: Participant = {
   role: 'assistant',
   name: '',
   language: 'en',
-  joined: true,
 }

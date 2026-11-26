@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import type { Room as RoomView } from '../state/context'
 import { Page, PageTitle } from '../components/AppShell'
 import { Button } from '../components/Button'
 import { Card, Empty } from '../components/Card'
@@ -9,7 +10,7 @@ import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
 import { scriptLine } from '../demo/script'
 import { otherLang } from '../languages'
-import type { Project, Text } from '../projects/types'
+import type { Text } from '../projects/types'
 import { useDemoStore } from '../state/demoStore'
 import type { QueueItem, Source } from '../state/types'
 import { useT } from '../strings'
@@ -18,19 +19,16 @@ import { demoConsultant } from '../strings/demo'
 import styles from './Queue.module.css'
 
 export default function Queue() {
-  const project = useOutletContext<Project>()
+  const shown = useOutletContext<RoomView>()
   const { state, dispatch } = useDemoStore()
   const { t, lang, pick, personName, translationOf } = useT()
   const [editing, setEditing] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [what, setWhat] = useState('')
 
-  const roomId = project.id
+  const roomId = shown.id
   const room = state.rooms[roomId]
   const scriptDone = !scriptLine(room.scriptIndex)
-  const placeholderLine = (
-    <TranslationLine label={t.discussion.translated} placeholder={t.discussion.translationPlaceholder} />
-  )
 
   const startEdit = (item: QueueItem) => {
     setEditing(item.id)
@@ -51,9 +49,9 @@ export default function Queue() {
   // The other language of a proposal, so Burak can check both before approving.
   const otherLanguage = (value: Text) => {
     const other = value[otherLang(lang)]
-    if (pick(value).missing || !other) return placeholderLine
+    if (pick(value).missing || !other) return undefined
     // The assistant wrote both versions, so this one is named, not called a translation.
-    return <TranslationLine label={c.languages[otherLang(lang)]} text={other} placeholder="" />
+    return <TranslationLine label={c.languages[otherLang(lang)]} text={other} />
   }
 
   const renderItem = (item: QueueItem) => {

@@ -72,7 +72,6 @@ export function AppShell({ room, queueCount = 0, children }: ShellProps) {
   const sections: NavItem[] = room
     ? [
         { to: base, icon: 'idea', label: t.nav.idea, end: true },
-        // The Discussion screen joins the api build in PR 8b.
         ...(hasDiscussion(room)
           ? [{ to: `${base}/discussion`, icon: 'discussion' as const, label: t.nav.discussion }]
           : []),
@@ -80,11 +79,11 @@ export function AppShell({ room, queueCount = 0, children }: ShellProps) {
       ]
     : [{ to: '/', icon: 'rooms', label: t.nav.projects, end: true }]
 
-  // Burak's own items. The queue and private notes are the demo's until the API has them, and
-  // only a demo room with a conversation (a sample one) has either.
+  // Burak's own items. People and the project list follow his language setting; the queue and
+  // private notes (English only) are the demo's until the API has them.
   const consultantItems: NavItem[] = room
     ? [
-        { to: `${base}/people`, icon: 'people', label: c.projects.people, short: c.projects.people },
+        { to: `${base}/people`, icon: 'people', label: t.nav.people, short: t.nav.people },
         ...(__DEMO__ && hasDiscussion(room)
           ? [
               {
@@ -99,7 +98,7 @@ export function AppShell({ room, queueCount = 0, children }: ShellProps) {
             ]
           : []),
         // Back to the list; on the list itself the sections already hold it.
-        { to: '/', icon: 'rooms', label: c.nav.rooms, short: c.nav.roomsShort, end: true },
+        { to: '/', icon: 'rooms', label: t.nav.projects, short: t.nav.projects, end: true },
       ]
     : []
 
@@ -148,7 +147,7 @@ export function AppShell({ room, queueCount = 0, children }: ShellProps) {
 
         {isConsultant && consultantItems.length > 0 && (
           <div>
-            <div className={styles.label}>{c.nav.group}</div>
+            <div className={styles.label}>{t.nav.forYou}</div>
             <NavList items={consultantItems} className={styles.nav} />
           </div>
         )}

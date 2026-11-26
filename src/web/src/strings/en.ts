@@ -16,6 +16,9 @@ const en = {
     discussion: 'Discussion',
     summary: 'Shared summary',
     projects: 'Projects',
+    // Burak's own links inside a room.
+    forYou: 'For you',
+    people: 'People',
   },
   status: {
     draft: 'Draft · Needs confirmation',
@@ -95,6 +98,10 @@ const en = {
       'It may have been switched off, or copied incorrectly. Ask the person who sent it to you for a new way in.',
     cannotClaim:
       'This acceptance can no longer be used. It may already have been used, or be more than two days old. Ask your consultant to accept you again.',
+    conversationFinished: 'This conversation has already been finished.',
+    conversationActive: 'A conversation is already open. It is shown on this page now.',
+    messageNotValid: 'That message could not be sent. Check that it is not empty, then try again.',
+    messageTooLong: 'That message could not be sent. It may be too long: shorten it, or split it into two.',
   },
   notices: {
     signedOut: 'You have been signed out. Ask for a new link below to carry on.',
@@ -110,6 +117,8 @@ const en = {
   room: {
     conversation: 'Conversation {number}',
     finished: 'Finished',
+    active: 'Active',
+    finishedOn: 'Finished {date}',
   },
   idea: {
     join: 'Join discussion',
@@ -142,32 +151,39 @@ const en = {
     visit: 'Visit website',
     empty: 'Nothing here yet.',
   },
-  join: {
-    title: 'Join the discussion',
-    intro: 'Tell us your name so the others know who is writing.',
-    nameLabel: 'Your name',
-    nameHint: 'The others will see this name.',
-    nameMissing: 'Write your name to continue.',
-    submit: 'Join discussion',
-  },
   discussion: {
-    title: 'Discussion',
-    sub: 'Short questions, open answers. Write whenever suits you.',
+    sub: 'Short questions. Answer in your own words, whenever suits you.',
+    pickLabel: 'Conversations',
     participants: 'Participants',
     close: 'Close',
-    notJoined: 'Not joined yet',
-    assistantRole: 'Asks questions to understand the idea',
     messageLabel: 'Message',
     placeholder: 'Write a message',
     send: 'Send',
-    replyWillFollow: 'A reply will follow.',
+    replyWillFollow: 'Sent. A reply will come here, though it may take a while.',
     translated: 'Translated',
-    translationPlaceholder: 'A translation appears here in the real app.',
-    scripted: 'Scripted example',
-    simulatedTitle: 'Replies here are examples',
-    simulatedBody:
-      'The assistant’s replies are scripted, not written by AI. Messages stay in this browser and are not shared.',
-    empty: 'No messages yet.',
+    left: 'no longer in this project',
+    retrying: 'Connection lost. New messages will appear when it is back.',
+    finishedNote: 'This conversation is finished. You can read it; to write, choose the current conversation above.',
+    finishedWaiting: 'This conversation is finished. You can still read it. If there is more to talk about, your consultant will start a new one.',
+    finish: 'Finish conversation',
+    finishTitle: 'Finish conversation {number}?',
+    finishBody:
+      'Nobody will be able to write in it any more, and this cannot be undone. Everyone can still read it.',
+    finishConfirm: 'Finish conversation',
+    cancel: 'Cancel',
+    start: 'Start conversation {number}',
+    empty: 'No messages yet. The first question will appear here, or you can write first.',
+    loading: 'Loading messages…',
+    emptyFinished: 'No messages were written in this conversation.',
+    finishedNoneConsultant: 'This conversation is finished. You can read it, or start a new one above.',
+    draftKept:
+      'Your consultant finished this conversation before your message was sent. Your text is still here, so you can copy it.',
+    draftKeptConsultant:
+      'This conversation was finished before your message was sent. Your text is still here, so you can copy it.',
+    charCount: '{count} of {max}',
+    newMessage: 'New message from {name}',
+    newerTitle: 'A newer conversation has started.',
+    newerGo: 'Go to conversation {number}',
   },
   summary: {
     title: 'Shared summary',

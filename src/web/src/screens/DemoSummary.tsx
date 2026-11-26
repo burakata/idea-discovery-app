@@ -2,7 +2,6 @@
 // remove and add, and the export. They work on the demo store, so this file is left out of
 // the api build (see Summary.tsx). The summary itself is SummaryView.
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { TextArea } from '../components/Field'
 import { TranslationLine } from '../components/MessageBubble'
@@ -10,23 +9,15 @@ import { StatementCard, type ReactionView } from '../components/StatementCard'
 import type { StatementGroup } from '../projects/types'
 import type { Room } from '../state/context'
 import { useDemoStore } from '../state/demoStore'
-import { roomPath } from '../state/roomRules'
 import type { Statement } from '../state/types'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import { SummaryView } from './SummaryView'
 import styles from './Summary.module.css'
 
-export default function DemoSummary({ room }: { room: Room }) {
-  const { state } = useDemoStore()
-  // A project Burak created in the demo has no demo room to react in or change.
-  return state.rooms[room.id] ? <DemoSummaryRoom room={room} /> : <SummaryView room={room} />
-}
-
-function DemoSummaryRoom({ room: shown }: { room: Room }) {
+export default function DemoSummary({ room: shown }: { room: Room }) {
   const { state, viewer, dispatch } = useDemoStore()
   const { t, lang, pick, personName, translationOf } = useT()
-  const navigate = useNavigate()
 
   const roomId = shown.id
   // Read live, not from the loaded room: reactions and edits change while the screen is open.
@@ -38,9 +29,6 @@ function DemoSummaryRoom({ room: shown }: { room: Room }) {
   const [text, setText] = useState('')
 
   const isConsultant = viewer.role === 'consultant'
-  const placeholderLine = (
-    <TranslationLine label={t.discussion.translated} placeholder={t.discussion.translationPlaceholder} />
-  )
 
   const closeForms = () => {
     setCorrecting(null)
@@ -50,11 +38,6 @@ function DemoSummaryRoom({ room: shown }: { room: Room }) {
   }
 
   const react = (statement: Statement, kind: 'right' | 'notRight') => {
-    // Reactions carry a name, so a person who has not joined is asked for one first.
-    if (!viewer.joined) {
-      navigate(`${roomPath(roomId, 'join')}?next=summary`)
-      return
-    }
     const mine = statement.reactions.find((reaction) => reaction.personId === viewer.id)
     if (mine?.kind === kind) {
       dispatch({ type: 'react', roomId, statementId: statement.id, kind: null })
@@ -143,7 +126,6 @@ function DemoSummaryRoom({ room: shown }: { room: Room }) {
       <StatementCard
         key={statement.id}
         text={picked.text}
-        note={picked.missing ? placeholderLine : undefined}
         status={statement.group === 'early' ? t.summary.awaiting : undefined}
         reactions={reactions}
       >
