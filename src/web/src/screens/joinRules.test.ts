@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { consultant } from '../strings/consultant'
-import { emailLine, entryView, joinCopiedMessage, nameWarning, POLL_MS, shouldPoll } from './joinRules'
+import { emailLine, entryView, joinCopiedMessage, nameWarning, POLL_MS, shouldPoll, viewOf } from './joinRules'
 
 const request = (change: Partial<Parameters<typeof nameWarning>[0]> = {}) => ({
   id: 'r',
@@ -36,12 +36,24 @@ describe('the waiting page polls only while it should', () => {
 
 describe('what a person sees on opening the link', () => {
   it('shows the form only when asking is open and this browser holds no request', () => {
-    expect(entryView('expired', true)).toBe('form')
+    expect(entryView('none', true)).toBe('form')
   })
 
   it('shows the same closed page for an unknown code and a switched-off project', () => {
     // Both reach the client as canAsk false with nothing to tell them apart.
-    expect(entryView('expired', false)).toBe('closed')
+    expect(entryView('none', false)).toBe('closed')
+  })
+
+  it('says a request of this browser has run out, instead of showing a blank form', () => {
+    expect(entryView('expired', true)).toBe('expired')
+    // Asking again re-checks the link: switched off since, it lands on the closed page.
+    expect(entryView('none', false)).toBe('closed')
+    expect(entryView('none', true)).toBe('form')
+  })
+
+  it('shows a request that vanishes while the page is open as run out', () => {
+    expect(viewOf('none')).toBe('expired')
+    expect(viewOf('pending')).toBe('pending')
   })
 
   it('shows the browser\'s own request instead of the form', () => {

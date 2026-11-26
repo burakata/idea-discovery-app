@@ -1582,4 +1582,50 @@ public class AskToJoinTests
         Assert.Equal("approved", answer.GetProperty("state").GetString());
         Assert.True(answer.GetProperty("forThisLink").GetBoolean());
     }
+
+    [Fact]
+    public async Task A_request_that_ran_out_is_stale_for_its_own_link_and_nothing_else()
+    {
+        using var r = new Rig();
+        var projectB = r.F.SeedProject("Project B");
+        var codeA = await r.Enable();
+        var codeB = await r.Enable(projectB);
+
+        var waiting = r.NewBrowser();
+        await r.Asked(waiting, codeA);
+        var (lapsed, _) = await r.ApprovedBrowser(codeA, "Can Demir");
+        var nobody = r.NewBrowser();
+
+        r.F.Clock.Advance(TimeSpan.FromHours(49));
+
+        Assert.Equal("{\"state\":\"stale\",\"forThisLink\":true}",
+            await (await waiting.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+        Assert.Equal("{\"state\":\"stale\",\"forThisLink\":true}",
+            await (await lapsed.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+
+        // Read with another project's link, or by a browser with no request, it is the no-request answer.
+        var none = "{\"state\":\"expired\",\"forThisLink\":false}";
+        Assert.Equal(none, await (await waiting.Get($"/join/request?code={codeB}")).Content.ReadAsStringAsync());
+        Assert.Equal(none, await (await nobody.Get($"/join/request?code={codeA}")).Content.ReadAsStringAsync());
+        // Without a code nothing changes.
+        Assert.Equal("{\"state\":\"expired\"}", await (await waiting.Get("/join/request")).Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task A_rejected_or_claimed_request_is_never_stale()
+    {
+        using var r = new Rig();
+        var code = await r.Enable();
+        var rejected = r.NewBrowser();
+        await r.Reject(await r.Asked(rejected, code));
+        var (claimed, _) = await r.ApprovedBrowser(code, "Can Demir");
+        Assert.Equal(HttpStatusCode.OK, (await r.Claim(claimed)).StatusCode);
+        r.F.Clock.Advance(TimeSpan.FromHours(100));
+
+        Assert.Equal("{\"state\":\"rejected\",\"forThisLink\":true}",
+            await (await rejected.Get($"/join/request?code={code}")).Content.ReadAsStringAsync());
+        // The claim cleared the cookie; a copy of the old one reads as used, not as stale.
+        Assert.Equal("{\"state\":\"expired\",\"forThisLink\":false}",
+            await (await claimed.Get($"/join/request?code={code}")).Content.ReadAsStringAsync());
+    }
 }

@@ -218,15 +218,17 @@ export function ask(
   }
 }
 
-// The same answers as the API: no request is "expired", whatever the reason.
+// The same answers as the API: "none" when this browser holds no request, one for another
+// link, or one already used; "expired" when its request for this link has run out.
 // With the project link's code, a request made on another project's link reads as no request.
 export function statusOf(state: AppState, now: Date, code?: string): JoinState {
   const request = mine(state)
-  if (!request) return 'expired'
-  if (code !== undefined && codeOf(state, request.projectId) !== code) return 'expired'
+  if (!request) return 'none'
+  if (code !== undefined && codeOf(state, request.projectId) !== code) return 'none'
   if (request.state === 'rejected') return 'rejected'
   if (request.state === 'pending') return waitingNow(request, now) ? 'pending' : 'expired'
-  return !request.claimed && approvedStill(request, now) ? 'approved' : 'expired'
+  if (request.claimed) return 'none'
+  return approvedStill(request, now) ? 'approved' : 'expired'
 }
 
 // Signs the demo in as the person Burak approved, once. The person's language on

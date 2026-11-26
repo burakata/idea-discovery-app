@@ -9,7 +9,7 @@ import { PublicPage } from '../components/PublicPage'
 import { useStore } from '../state/store'
 import { useT } from '../strings'
 import { useDemoT } from '../strings/demo'
-import { entryView, POLL_MS, shouldPoll, type JoinView } from './joinRules'
+import { entryView, POLL_MS, shouldPoll, viewOf, type JoinView } from './joinRules'
 import styles from './Public.module.css'
 
 // Demo only: both sides of asking to join are simulated in this browser.
@@ -35,6 +35,8 @@ export default function AskToJoin() {
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // After a refused claim the request is dead: Continue goes, so it cannot be pressed again.
+  const [claimDead, setClaimDead] = useState(false)
   const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden')
 
   // The store's functions change identity as the demo state changes; this runs once per link.
@@ -65,7 +67,7 @@ export default function AskToJoin() {
     if (!shouldPoll(view, visible)) return
     const timer = window.setInterval(() => {
       joinStatus(code).then(
-        (status) => setView(status),
+        (status) => setView(viewOf(status)),
         () => {}, // A missed answer is tried again at the next tick.
       )
     }, POLL_MS)
@@ -83,10 +85,23 @@ export default function AskToJoin() {
     setBusy(true)
     setError(null)
     try {
-      setView(await joinAsk(code, { name: name.trim(), email: email.trim() }))
+      setView(viewOf(await joinAsk(code, { name: name.trim(), email: email.trim() })))
     } catch (failure) {
       if (failure instanceof ApiError && failure.code === 'cannot_ask') setView('closed')
       else setError(t.errors[joinErrorKey(failure)])
+    }
+    setBusy(false)
+  }
+
+  // "Ask again" first checks the link still takes requests: if asking was switched off
+  // meanwhile the person lands on the closed page, not on a form that cannot work.
+  const askAgain = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      setView(entryView('none', await joinCanAsk(code)))
+    } catch (failure) {
+      setError(t.errors[joinErrorKey(failure)])
     }
     setBusy(false)
   }
@@ -99,8 +114,9 @@ export default function AskToJoin() {
       navigate('/', { replace: true })
     } catch (failure) {
       // A refused claim is final for this request; a lost connection is worth another try.
-      const key = failure instanceof ApiError && (failure.status === 0 || failure.status === 429) ? failure.key : 'cannotClaim'
-      setError(t.errors[key])
+      const retry = failure instanceof ApiError && (failure.status === 0 || failure.status === 429)
+      setError(t.errors[retry ? failure.key : 'cannotClaim'])
+      setClaimDead(!retry)
       setBusy(false)
     }
   }
@@ -180,7 +196,7 @@ export default function AskToJoin() {
               {error}
             </p>
           )}
-          {view === 'approved' && (
+          {view === 'approved' && !claimDead && (
             <div>
               <Button variant="primary" iconRight="arrowRight" disabled={busy} onClick={() => void proceed()}>
                 {busy ? a.continuing : a.continue}
@@ -189,7 +205,9 @@ export default function AskToJoin() {
           )}
           {view === 'expired' && (
             <div>
-              <Button onClick={() => setView('form')}>{a.askAgain}</Button>
+              <Button disabled={busy} onClick={() => void askAgain()}>
+                {a.askAgain}
+              </Button>
             </div>
           )}
         </Card>

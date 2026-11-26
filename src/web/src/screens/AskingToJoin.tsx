@@ -8,9 +8,10 @@ import { useStore } from '../state/store'
 import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import { demoPeople } from '../strings/demo'
-import { ApproveDialog, ConfirmDialog, JoinLinkDialog } from './AskingDialogs'
+import { ApproveDialog } from './AskingDialogs'
 import { emailLine, joinCopiedMessage, nameWarning } from './joinRules'
 import { deviceLabel } from './peopleRules'
+import { ConfirmDialog, LinkDialog } from './PeopleDialogs'
 import styles from './People.module.css'
 
 const a = c.people.asking
@@ -230,7 +231,16 @@ export function AskingToJoin({ projectId, onApproved }: { projectId: string; onA
           onClose={() => setDeciding(null)}
         />
       )}
-      {fallback && <JoinLinkDialog link={fallback} onClose={() => setFallback(null)} />}
+      {fallback && (
+        <LinkDialog
+          title={a.fallbackTitle}
+          body={a.fallbackBody}
+          fieldLabel={a.linkField}
+          demoNote={__DEMO__ ? demoPeople.joinLink : undefined}
+          link={fallback}
+          onClose={() => setFallback(null)}
+        />
+      )}
     </>
   )
 }

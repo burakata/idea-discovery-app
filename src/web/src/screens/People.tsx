@@ -240,7 +240,16 @@ export default function People() {
           onClose={() => setRemoving(null)}
         />
       )}
-      {fallback && <LinkDialog name={fallback.name} link={fallback.link} onClose={() => setFallback(null)} />}
+      {fallback && (
+        <LinkDialog
+          title={p.linkFallbackTitle}
+          body={fill(p.linkFallbackBody, { name: fallback.name })}
+          fieldLabel={fill(p.linkField, { name: fallback.name })}
+          demoNote={__DEMO__ ? demoPeople.sampleLink : undefined}
+          link={fallback.link}
+          onClose={() => setFallback(null)}
+        />
+      )}
     </Page>
   )
 }

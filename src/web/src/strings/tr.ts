@@ -55,27 +55,30 @@ const tr: Strings = {
     signedInAs: '{name} olarak giriş yaptınız',
   },
   askToJoin: {
-    title: 'Katılmak için başvurun',
-    intro: 'Buradan bir projeye katılmak için başvurabilirsiniz. Kimin katılacağına danışmanınız karar verir.',
-    closedTitle: 'Bu bağlantı açık değil',
+    title: 'Katılma isteği gönderin',
+    intro:
+      'Bu bağlantı, bir iş fikrinin konuşulmasına katılabilmeniz için paylaşıldı. Adınızı yazın; kimin katılacağına bu işi yürüten danışman karar verecek.',
+    closedTitle: 'Bu bağlantıyla katılamazsınız',
     checking: 'Bağlantı kontrol ediliyor…',
     nameLabel: 'Adınız',
-    nameHint: 'Danışmanınız bu adı görür.',
+    nameHint:
+      'Bu adı danışmanınız, katıldıktan sonra da diğer kişiler görür. Yalnızca harf kullanın; boşluk, kesme işareti, tire ve nokta olabilir.',
     nameMissing: 'Devam etmek için adınızı yazın.',
     emailLabel: 'E-posta adresiniz (isteğe bağlı)',
-    emailHint: 'Yalnızca danışmanınız sizi tanısın diye. Size hiçbir şey göndermek için kullanmayız.',
-    submit: 'Katılmak için başvur',
+    emailHint: 'Bunu yalnızca danışmanınız sizi tanıyabilsin diye soruyoruz. Bu adrese hiçbir şey göndermeyiz.',
+    submit: 'İstek gönder',
     sending: 'Gönderiliyor…',
-    pendingTitle: 'Danışmanınız bekleniyor',
+    pendingTitle: 'Danışmanınızın yanıtı bekleniyor',
     pending:
-      'İsteğiniz danışmanınızda. Bu sayfadan ayrılıp bu cihaz ve tarayıcıdan daha sonra tekrar bakabilirsiniz.',
+      'İsteğiniz danışmanınıza iletildi. Durumuna bakmak için iki gün içinde bu bağlantıyı aynı telefon ya da bilgisayarda, aynı yoldan yeniden açın.',
     rejectedTitle: 'İsteğiniz kabul edilmedi',
-    rejected: 'Danışmanınız bu isteği kabul etmedi. Bir yanlışlık olduğunu düşünüyorsanız danışmanınıza söyleyin.',
+    rejected:
+      'Danışman bu isteği kabul etmedi. Bir yanlışlık olduğunu düşünüyorsanız bağlantıyı size gönderen kişiye söyleyin.',
     expiredTitle: 'Bu isteğin süresi doldu',
-    expired: 'Zamanında yanıtlanmadı ya da artık kullanılamıyor. Yeniden başvurabilirsiniz.',
-    askAgain: 'Yeniden başvur',
+    expired: 'İki gün içinde yanıtlanmadı. Yeniden istek gönderebilirsiniz.',
+    askAgain: 'Yeniden istek gönder',
     approvedTitle: 'Katılabilirsiniz',
-    approved: 'Danışmanınız isteğinizi kabul etti. Projelerinizi görmek için Devam’a basın.',
+    approved: 'Danışmanınız isteğinizi kabul etti. Girmek için Devam’a basın.',
     continue: 'Devam',
     continuing: 'Açılıyor…',
     tryAgain: 'Tekrar dene',
@@ -86,10 +89,13 @@ const tr: Strings = {
     network: 'İnternet bağlantınız kesildi. Kontrol edip tekrar deneyin.',
     generic: 'Bir şeyler ters gitti. Tekrar deneyin.',
     nameNotValid:
-      'Bu ad veya e-posta adresi kullanılamadı. Adda harf, boşluk, kesme işareti, tire ve nokta olabilir.',
-    joinTryLater: 'Şu anda çok fazla istek bekliyor. Biraz sonra tekrar deneyin.',
-    joinClosed: 'Bu bağlantı katılma isteklerine açık değil. Danışmanınızdan bir davet isteyin.',
-    cannotClaim: 'Bu istek artık kullanılamaz. Danışmanınıza haber verin.',
+      'Bu adı kullanamadık. Yalnızca harf, boşluk, kesme işareti (\'), tire (-) ve nokta (.) kullanın; rakam ya da başka işaret olmasın.',
+    joinTryLater:
+      'Biraz sonra yeniden deneyin.',
+    joinClosed:
+      'Bağlantı kapatılmış ya da yanlış kopyalanmış olabilir. Size gönderen kişiden yeni bir bağlantı isteyin.',
+    cannotClaim:
+      'Bu onay artık kullanılamıyor. Daha önce kullanılmış ya da iki günden eski olabilir. Danışmanınızdan sizi yeniden kabul etmesini isteyin.',
   },
   notices: {
     signedOut: 'Oturumunuz kapandı. Devam etmek için aşağıdan yeni bir bağlantı isteyin.',

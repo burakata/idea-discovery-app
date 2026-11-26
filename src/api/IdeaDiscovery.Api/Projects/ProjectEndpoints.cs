@@ -13,6 +13,12 @@ public static class ProjectEndpoints
 
     private sealed record ProjectRequest(string? TitleEn, string? TitleTr, string? IntroEn, string? IntroTr);
     private sealed record LanguageRequest(string? Language);
+    private sealed record AskToJoinView(bool Enabled, string? Link);
+    private sealed record ProjectView(
+        Guid Id, string TitleEn, string TitleTr, string IntroEn, string IntroTr, string Status, DateTime CreatedAt,
+        object Members,
+        [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        AskToJoinView? AskToJoin);
 
     public static void MapProjects(this IEndpointRouteBuilder app)
     {
@@ -158,35 +164,18 @@ public static class ProjectEndpoints
                 ? (object)new { userId = r.Id, displayName = r.DisplayName, role = Role(r.Role), email = r.Email }
                 : new { userId = r.Id, displayName = r.DisplayName, role = Role(r.Role) })
             .ToList();
-        if (askToJoinFor is not null)
-        {
-            return new
-            {
-                id = project.Id,
-                titleEn = project.TitleEn, titleTr = project.TitleTr,
-                introEn = project.IntroEn, introTr = project.IntroTr,
-                status = project.Status,
-                createdAt = project.CreatedAt,
-                members,
-                askToJoin = new
-                {
-                    enabled = project.AskToJoinEnabled,
-                    // A switched-off link takes no requests, so none is offered.
-                    link = project.AskToJoinEnabled && project.JoinCode is not null
-                        ? ConsultantEndpoints.JoinLink(askToJoinFor, project.JoinCode)
-                        : null,
-                },
-            };
-        }
-        return new
-        {
-            id = project.Id,
-            titleEn = project.TitleEn, titleTr = project.TitleTr,
-            introEn = project.IntroEn, introTr = project.IntroTr,
-            status = project.Status,
-            createdAt = project.CreatedAt,
-            members,
-        };
+        // One shape for everyone; Burak's reads add `askToJoin`, and nobody else's carries the field.
+        var askToJoin = askToJoinFor is null
+            ? null
+            : new AskToJoinView(
+                project.AskToJoinEnabled,
+                // A switched-off link takes no requests, so none is offered.
+                project.AskToJoinEnabled && project.JoinCode is not null
+                    ? ConsultantEndpoints.JoinLink(askToJoinFor, project.JoinCode)
+                    : null);
+        return new ProjectView(
+            project.Id, project.TitleEn, project.TitleTr, project.IntroEn, project.IntroTr,
+            project.Status, project.CreatedAt, members, askToJoin);
     }
 
     private static string Role(MemberRole role) => role.ToString().ToLowerInvariant();

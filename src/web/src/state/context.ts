@@ -78,8 +78,10 @@ export type InviteOutcome =
   | { kind: 'tryLater' }
 
 // Ask to join (M1 PR 7c). The state of one request, as the person who asked sees it.
-// "expired" also covers a browser that holds no request: the API says no more.
-export type JoinState = 'pending' | 'approved' | 'rejected' | 'expired'
+// "expired": this browser's request for this link has run out. "none": this browser holds no
+// request for this link (none at all, one for another link, or one already used); the answer
+// is the same for all three, so it reveals nothing.
+export type JoinState = 'pending' | 'approved' | 'rejected' | 'expired' | 'none'
 
 export interface JoinInput {
   name: string

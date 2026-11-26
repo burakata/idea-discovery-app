@@ -108,7 +108,7 @@ describe('the api store: Burak\'s asking to join', () => {
   it('shows a request only on the link it was made on', async () => {
     const { session, calls } = setup()
     expect(await session.joinStatus('abc')).toBe('pending')
-    expect(await session.joinStatus('other')).toBe('expired')
+    expect(await session.joinStatus('other')).toBe('none')
     expect(calls).toContain('GET /api/join/request?code=other')
   })
 

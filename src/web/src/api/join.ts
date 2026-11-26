@@ -10,11 +10,13 @@ type Row = Record<string, unknown>
 const str = (value: unknown): string => (typeof value === 'string' ? value : '')
 const strOrNull = (value: unknown): string | null => (typeof value === 'string' ? value : null)
 
-const states: readonly JoinState[] = ['pending', 'approved', 'rejected', 'expired']
+const states: readonly JoinState[] = ['pending', 'approved', 'rejected']
 
-// A state this client does not know is shown as expired, never as approved.
+// The API's "stale" is a request of this browser for this link that has run out. Its
+// "expired" is the no-request answer. A state this client does not know is "none", never approved.
 export function toJoinState(body: Row | undefined): JoinState {
-  return states.find((state) => state === body?.state) ?? 'expired'
+  if (body?.state === 'stale') return 'expired'
+  return states.find((state) => state === body?.state) ?? 'none'
 }
 
 // Only an explicit true opens the form. An unknown code and a switched-off project
@@ -57,11 +59,11 @@ export function createJoinApi(api: ApiClient) {
     },
 
     // With the project link's code, the API says whether the request is for this link;
-    // a request for another link is read as no request at all.
+    // a request for another link is read as no request at all, and a run-out one of this link as "expired".
     async status(code?: string): Promise<JoinState> {
       const query = code === undefined ? '' : `?code=${id(code)}`
       const body = await api.get<Row>(`/join/request${query}`, quiet)
-      return body.forThisLink === false ? 'expired' : toJoinState(body)
+      return body.forThisLink === false ? 'none' : toJoinState(body)
     },
 
     claim: <T>() => api.post<T>('/join/claim', undefined, quiet),

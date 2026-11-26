@@ -172,7 +172,7 @@ describe('the demo: asking, waiting, and being approved', () => {
   it('answers a stranger\'s browser "expired", whatever happened to others', async () => {
     const { latest } = await asked()
     const other = { ...latest.current, myJoinRequest: null }
-    expect(join.statusOf(other, new Date())).toBe('expired')
+    expect(join.statusOf(other, new Date())).toBe('none')
   })
 
   it('shows a request only on the link it was made on', async () => {
@@ -180,8 +180,8 @@ describe('the demo: asking, waiting, and being approved', () => {
     const other = projects[1].id
     await actions.turnOnJoinLink(other)
     expect(await actions.joinStatus(join.defaultCode(home))).toBe('pending')
-    expect(await actions.joinStatus(join.defaultCode(other))).toBe('expired')
-    expect(join.statusOf(latest.current, new Date(), 'nope')).toBe('expired')
+    expect(await actions.joinStatus(join.defaultCode(other))).toBe('none')
+    expect(join.statusOf(latest.current, new Date(), 'nope')).toBe('none')
   })
 
   it('lets a request run out after 48 hours, for both sides', async () => {
@@ -207,7 +207,7 @@ describe('the demo: continuing', () => {
     expect(state.signedIn).toBe(true)
     const viewer = state.people[state.viewAs]
     expect(viewer).toMatchObject({ name: 'Işıl Yıldız', role: 'owner', roomId: home, language: 'tr' })
-    expect(await actions.joinStatus()).toBe('expired')
+    expect(await actions.joinStatus()).toBe('none')
     // Single use.
     expect((await refusal(() => actions.joinContinue())).code).toBe('cannot_claim')
   })

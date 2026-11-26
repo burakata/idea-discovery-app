@@ -9,14 +9,20 @@ export const POLL_MS = 7000
 // What the page shows. "form" and "closed" are the only views before a request exists.
 export type JoinView = 'form' | 'closed' | 'pending' | 'approved' | 'rejected' | 'expired'
 
-// What a returning browser sees. A request this browser holds wins over everything,
-// because it is the person's own: an approval can still be claimed after asking was
-// switched off. With no request ("expired" is also what the API says then) the form
-// shows only if asking is open. An unknown code and a switched-off project give the
+// What a returning browser sees. A request this browser holds for this link wins over
+// everything, because it is the person's own: an approval can still be claimed after asking
+// was switched off, and a run-out request is said to have run out. With no request for this
+// link the form shows only if asking is open. An unknown code and a switched-off project give the
 // same answer, so they land on the same view.
 export function entryView(status: JoinState, canAsk: boolean): JoinView {
-  if (status === 'pending' || status === 'approved' || status === 'rejected') return status
-  return canAsk ? 'form' : 'closed'
+  if (status === 'none') return canAsk ? 'form' : 'closed'
+  return status
+}
+
+// The view for a state read while the page is open (after asking, or while waiting). A
+// request that vanishes meanwhile is shown as run out.
+export function viewOf(status: JoinState): JoinView {
+  return status === 'none' ? 'expired' : status
 }
 
 // Only a waiting request is worth asking about, and only while the page is on screen.

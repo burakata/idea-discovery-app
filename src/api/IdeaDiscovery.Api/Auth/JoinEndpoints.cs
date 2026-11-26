@@ -162,6 +162,11 @@ public static class JoinEndpoints
             { State: JoinRequestState.Pending } => request.ExpiresAt > now ? "pending" : "expired",
             _ => request.ClaimedAt is null && request.ApprovedUntil >= now ? "approved" : "expired",
         };
+        // A request of this browser for this link that has run out (unanswered for 48 hours, or
+        // approved and not claimed in time) is "stale", so the page can say so. A missing or
+        // foreign request, a used approval and every answer without a code stay "expired".
+        if (forThisLink == true && state == "expired" && request is { State: not JoinRequestState.Rejected, ClaimedAt: null })
+            state = "stale";
         return forThisLink is null
             ? Results.Json(new { state })
             : Results.Json(new { state, forThisLink = forThisLink.Value });

@@ -59,9 +59,12 @@ describe('the join api: the person asking', () => {
     const { join, calls } = setup(() => json({ state: 'approved' }))
     expect(await join.status()).toBe('approved')
     expect(calls[0]).toMatchObject({ method: 'GET', url: '/api/join/request' })
-    for (const state of ['pending', 'approved', 'rejected', 'expired']) expect(toJoinState({ state })).toBe(state)
-    expect(toJoinState({ state: 'claimed' })).toBe('expired')
-    expect(toJoinState({})).toBe('expired')
+    for (const state of ['pending', 'approved', 'rejected']) expect(toJoinState({ state })).toBe(state)
+    // The API's "stale" is a run-out request of this link; its plain "expired" is no request.
+    expect(toJoinState({ state: 'stale' })).toBe('expired')
+    expect(toJoinState({ state: 'expired' })).toBe('none')
+    expect(toJoinState({ state: 'claimed' })).toBe('none')
+    expect(toJoinState({})).toBe('none')
   })
 
   it('asks about one link: a request for another link reads as none', async () => {
@@ -69,7 +72,7 @@ describe('the join api: the person asking', () => {
       json(url.endsWith('=mine') ? { state: 'approved', forThisLink: true } : { state: 'approved', forThisLink: false }),
     )
     expect(await join.status('mine')).toBe('approved')
-    expect(await join.status('other')).toBe('expired')
+    expect(await join.status('other')).toBe('none')
     expect(calls[1].url).toBe('/api/join/request?code=other')
   })
 
@@ -80,6 +83,11 @@ describe('the join api: the person asking', () => {
     expect(await off.join.asking('p1')).toBe(false)
     const owner = setup(() => json({ id: 'p1' }))
     expect(await owner.join.asking('p1')).toBe(false)
+  })
+
+  it('says a run-out request of this link has expired, which is not the same as none', async () => {
+    const { join } = setup(() => json({ state: 'stale', forThisLink: true }))
+    expect(await join.status('abc')).toBe('expired')
   })
 
   it('claims once approved', async () => {
@@ -122,8 +130,8 @@ describe('the join api: error codes for the person asking', () => {
   })
 
   it('says plainly that the link is not open, and what to do', () => {
-    expect(en.errors.joinClosed).toBe('This link isn’t open for requests. Ask your consultant for an invitation.')
-    expect(en.errors.cannotClaim).toBe('This request can no longer be used. Ask your consultant.')
+    expect(en.errors.joinClosed).toContain('Ask the person who sent it to you')
+    expect(en.errors.cannotClaim).toContain('Ask your consultant to accept you again')
   })
 })
 
