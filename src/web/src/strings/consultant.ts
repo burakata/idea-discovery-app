@@ -1,14 +1,11 @@
 // Text only Burak sees. English only, as recorded in docs/decisions.md.
 export const consultant = {
   nav: {
-    group: 'For you',
     queue: 'Waiting for you',
     notes: 'Private notes',
-    rooms: 'Projects',
     // Short labels for the link strip on phones.
     queueShort: 'Waiting',
     notesShort: 'Notes',
-    roomsShort: 'Projects',
     waiting: 'waiting for you',
   },
   languages: {

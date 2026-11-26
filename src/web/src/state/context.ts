@@ -57,6 +57,28 @@ export interface ConversationSummary {
   finishedAt: string | null
 }
 
+// One message of a conversation, the same in both builds. `assistant` and `tag` come only
+// from the demo's scripted assistant. A writer who has left the project has no role.
+// `translation` is empty until real translations exist (M2).
+export interface RoomMessage {
+  id: string
+  authorId: string
+  authorName: string
+  authorRole: 'consultant' | 'owner' | 'assistant' | null
+  authorLeft: boolean
+  text: string
+  language: Lang
+  translation: string | null
+  createdAt: string
+  tag?: 'scripted'
+}
+
+// New messages after a cursor, which is opaque: pass it back to read what follows.
+export interface MessagePage {
+  messages: RoomMessage[]
+  cursor: string
+}
+
 // What the idea page and the shared summary show. The API has none of it until M3, so
 // its lists are always empty; the demo fills them for the sample project.
 // A type, not an interface, so the A16 test can read it as a plain record of lists.
@@ -163,6 +185,13 @@ export interface Store {
   // A project's room, for the idea page and the shared summary (M1 PR 8a). Throws an
   // ApiError: a 404 when the project is gone or the person is not in it.
   loadRoom: (projectId: string) => Promise<Room>
+  // The discussion (M1 PR 8b). Refusals throw an ApiError; the screens show text for its `key`.
+  // Without a cursor, readMessages gives the whole conversation. Only Burak may finish or start.
+  listConversations: (projectId: string) => Promise<ConversationSummary[]>
+  readMessages: (projectId: string, number: number, cursor?: string) => Promise<MessagePage>
+  postMessage: (projectId: string, text: string) => Promise<RoomMessage>
+  finishConversation: (projectId: string) => Promise<void>
+  startConversation: (projectId: string) => Promise<ConversationSummary>
 
   // Burak's project and people actions (M1 PR 7b). They throw an ApiError when the
   // call is refused; the screens show text for its `consultantKey`. Both

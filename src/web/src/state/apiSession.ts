@@ -4,7 +4,7 @@
 import { ApiError, createApiClient, type ErrorKey } from '../api/client'
 import { bilingualFrom, createConsultantApi } from '../api/consultant'
 import { createJoinApi } from '../api/join'
-import { emptyContent, toConversations } from '../api/room'
+import { createConversationApi, emptyContent, toConversations } from '../api/room'
 import { browserLang, DEFAULT_LANG, isLang, type Lang } from '../languages'
 import { browserClipboard, copyLink, type Clipboard } from './copyLink'
 import { languageToSave } from './sessionRules'
@@ -121,6 +121,7 @@ export function createApiSession(options: SessionOptions = {}) {
 
   const consultantApi = createConsultantApi(api)
   const joinApi = createJoinApi(api)
+  const conversationApi = createConversationApi(api)
   const clipboard = () => options.clipboard ?? browserClipboard()
 
   // Loads can overlap (right after start, or during createProject). Only the newest
@@ -241,6 +242,12 @@ export function createApiSession(options: SessionOptions = {}) {
         content: emptyContent(),
       }
     },
+    // The discussion: checked and mapped in api/room.ts. A 401 or 404 is handled by the api client.
+    listConversations: conversationApi.list,
+    readMessages: conversationApi.read,
+    postMessage: conversationApi.post,
+    finishConversation: conversationApi.finish,
+    startConversation: conversationApi.start,
     invite: (projectId: string, input: InviteInput) => consultantApi.invite(projectId, input),
     listInvitations: consultantApi.listInvitations,
     revokeInvitation: consultantApi.revokeInvitation,

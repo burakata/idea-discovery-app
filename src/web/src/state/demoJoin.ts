@@ -137,7 +137,6 @@ export function approve(
     role: 'owner',
     name,
     language: DEFAULT_LANG,
-    joined: true,
     // The sample projects have a room to open; ones Burak made in the demo have none.
     roomId: projects.some((project) => project.id === request.projectId) ? request.projectId : null,
   }

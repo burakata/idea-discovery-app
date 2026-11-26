@@ -4,19 +4,17 @@ import styles from './MessageBubble.module.css'
 
 interface TranslationProps {
   label: string
-  // Leave text empty to show the placeholder instead.
-  text?: string
-  placeholder: string
+  text: string
 }
 
-export function TranslationLine({ label, text, placeholder }: TranslationProps) {
+export function TranslationLine({ label, text }: TranslationProps) {
   return (
-    <p className={`${styles.translation} ${text ? '' : styles.placeholder}`}>
+    <p className={styles.translation}>
       <span className={styles.translationLabel}>
         <Icon name="translate" size={14} />
         {label}
       </span>
-      {text ?? placeholder}
+      {text}
     </p>
   )
 }

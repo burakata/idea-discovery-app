@@ -5,7 +5,6 @@ import { Card, Empty, NoticeBox, SectionTitle } from '../components/Card'
 import { HeroArt } from '../components/HeroArt'
 import { Icon } from '../components/Icon'
 import { JobFlow } from '../components/JobFlow'
-import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
 import type { Room } from '../state/context'
 import { hasDiscussion, roomPath } from '../state/roomRules'
@@ -22,18 +21,12 @@ export default function Idea() {
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 
   const steps = content.jobFlow.map((step) => {
-    const who = pick(step.who)
-    const what = pick(step.what)
     return {
       id: step.id,
       icon: step.icon,
-      who: who.text,
-      what: what.text,
+      who: pick(step.who).text,
+      what: pick(step.what).text,
       unknown: step.unknown,
-      note:
-        who.missing || what.missing ? (
-          <TranslationLine label={t.discussion.translated} placeholder={t.discussion.translationPlaceholder} />
-        ) : undefined,
     }
   })
 

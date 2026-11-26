@@ -72,8 +72,18 @@ export interface JobFlowProposal {
 
 export type QueueItem = MessageDraft | StatementProposal | JobFlowProposal
 
-export interface Room {
+// One conversation of a demo room: the same shape as the API's, with its messages.
+export interface DemoConversation {
+  number: number
+  state: 'active' | 'finished'
+  startedAt: string
+  finishedAt: string | null
   messages: Message[]
+}
+
+export interface Room {
+  // Oldest first. At most one is active.
+  conversations: DemoConversation[]
   statements: Statement[]
   jobFlow: JobFlowStep[]
   queue: QueueItem[]
@@ -121,7 +131,7 @@ export interface AppState {
   viewAs: string
   people: Record<string, Person>
   rooms: Record<string, Room>
-  // Burak's project and people screens. Projects he creates in the demo have no room.
+  // Burak's project and people screens. A project he creates gets an empty room.
   created: string[]
   texts: Record<string, DemoTexts>
   members: Record<string, DemoMember[]>

@@ -70,9 +70,9 @@ npm --prefix src/web run dev:api
 ```
 
 The last two run the real client against a local API; sign in with a link
-from the emails saved in `src/api/IdeaDiscovery.Api/emails/`. The room
-idea page and the shared summary use the API; the discussion follows in M1 PR 8b
-and is demo-only until then.
+from the emails saved in `src/api/IdeaDiscovery.Api/emails/`. The room's
+idea page, shared summary and discussion use the API; Burak's queue and
+private notes are demo-only until the API has them.
 
 ## What is where
 

@@ -10,8 +10,14 @@ const en = {
     short: 'Preview',
     explain: 'The assistant and sharing are simulated. Everything stays in this browser.',
     viewAs: 'View as',
-    notJoined: 'not joined yet',
     reset: 'Reset demo',
+  },
+  // The scripted assistant in the discussion, and what it simulates.
+  discussion: {
+    scripted: 'Scripted example',
+    simulatedTitle: 'Replies here are examples',
+    simulatedBody:
+      'The assistant’s replies are scripted, not written by AI. Messages stay in this browser and are not shared.',
   },
   sample: {
     tag: 'Demo',
@@ -35,8 +41,13 @@ const tr: DemoStrings = {
     explain:
       'Yapay zekâ yardımcısı ve paylaşım gerçek değil, yalnızca nasıl çalışacağını gösterir. Her şey bu tarayıcıda kalır.',
     viewAs: 'Kimin gözünden',
-    notJoined: 'henüz katılmadı',
     reset: 'Demoyu sıfırla',
+  },
+  discussion: {
+    scripted: 'Örnek yanıt',
+    simulatedTitle: 'Buradaki yanıtlar örnektir',
+    simulatedBody:
+      'Yardımcının yanıtları önceden yazılmıştır, yapay zekâ yazmıyor. Mesajlar bu tarayıcıda kalır, kimseyle paylaşılmaz.',
   },
   sample: {
     tag: 'Demo',

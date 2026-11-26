@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ConversationSummary, Room } from './context'
-import { hasDiscussion, roomPath, shownConversation } from './roomRules'
+import { conversationToShow, hasDiscussion, roomPath, shownConversation } from './roomRules'
 
 const conversation = (number: number, state: ConversationSummary['state']): ConversationSummary => ({
   number,
@@ -47,5 +47,32 @@ describe('whether a room has a Discussion', () => {
 
   it('has none without a conversation', () => {
     expect(hasDiscussion(room([]))).toBe(false)
+  })
+})
+
+describe('the conversation the Discussion shows', () => {
+  const list = [conversation(1, 'finished'), conversation(2, 'finished'), conversation(3, 'active')]
+
+  it('is the active one when the address names none', () => {
+    expect(conversationToShow(list, null)).toBe(3)
+  })
+
+  it('is the latest finished one when none is active', () => {
+    expect(conversationToShow(list.slice(0, 2), null)).toBe(2)
+  })
+
+  it('is the one the address names, when the room has it', () => {
+    expect(conversationToShow(list, '1')).toBe(1)
+  })
+
+  it('falls back to the default for an address that names nothing real', () => {
+    for (const requested of ['9', '0', '-1', 'abc', '', '2.5', '1e0']) {
+      expect(conversationToShow(list, requested), requested).toBe(3)
+    }
+  })
+
+  it('is nothing in a room with no conversation', () => {
+    expect(conversationToShow([], null)).toBeUndefined()
+    expect(conversationToShow([], '1')).toBeUndefined()
   })
 })

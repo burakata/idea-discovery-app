@@ -6,6 +6,7 @@ import { PrototypeBar } from './components/PrototypeBar'
 import { DemoRoomLayout, demoRoutes } from './DemoRoutes'
 import { RoomLayout } from './RoomLayout'
 import AskToJoin from './screens/AskToJoin'
+import Discussion from './screens/Discussion'
 import Home from './screens/Home'
 import Idea from './screens/Idea'
 import People from './screens/People'
@@ -70,8 +71,9 @@ function AppRoutes() {
       <Route element={<SignedInOnly />}>
         <Route path="/projects/:projectId" element={__DEMO__ ? <DemoRoomLayout /> : <RoomLayout />}>
           <Route index element={<Idea />} />
+          <Route path="discussion" element={<Discussion />} />
           <Route path="summary" element={<Summary />} />
-          {/* The demo's Discussion, queue and notes. Discussion joins the api build in PR 8b. */}
+          {/* The demo's queue and private notes. */}
           {__DEMO__ && demoRoutes}
         </Route>
       </Route>

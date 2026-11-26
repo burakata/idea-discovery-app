@@ -71,16 +71,15 @@ describe('translationLine', () => {
     expect(translationLine({ lang: 'tr', text: 'Selam', translation: 'Hi' }, 'en', en)).toEqual({
       label: en.discussion.translated,
       text: 'Hi',
-      placeholder: en.discussion.translationPlaceholder,
     })
     expect(translationLine({ lang: 'en', text: 'Hi', translation: 'Selam' }, 'tr', tr)?.label).toBe(
       tr.discussion.translated,
     )
   })
 
-  it('still returns the line, with no text, when the translation is not there yet', () => {
-    const line = translationLine({ lang: 'tr', text: 'Selam' }, 'en', en)
-    expect(line?.text).toBeUndefined()
-    expect(line?.placeholder).toBe(en.discussion.translationPlaceholder)
+  // Burak decided on 2026-11-26: until a real translation exists (M2), nothing is shown, not a placeholder.
+  it('shows no line when the translation is not there yet', () => {
+    expect(translationLine({ lang: 'tr', text: 'Selam' }, 'en', en)).toBeUndefined()
+    expect(translationLine({ lang: 'tr', text: 'Selam', translation: '' }, 'en', en)).toBeUndefined()
   })
 })

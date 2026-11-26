@@ -3,16 +3,16 @@ import { Page, PageTitle } from '../components/AppShell'
 import { Card, Empty, NoticeBox } from '../components/Card'
 import { Pill } from '../components/Pill'
 import { sampleNotes } from '../demo/seed'
-import type { Project } from '../projects/types'
+import type { Room } from '../state/context'
 import { useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
 import { demoConsultant } from '../strings/demo'
 import styles from './Notes.module.css'
 
 export default function Notes() {
-  const project = useOutletContext<Project>()
+  const room = useOutletContext<Room>()
   const { time } = useT()
-  const note = sampleNotes[project.id]
+  const note = sampleNotes[room.id]
 
   return (
     <Page narrow>

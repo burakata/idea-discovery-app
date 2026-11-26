@@ -20,13 +20,15 @@ function refusal(run: () => unknown): ApiError {
 }
 
 describe('the demo: projects', () => {
-  it('creates a project with Burak as its only member, and no room', () => {
+  it('creates a project with Burak as its only member, and an empty room with Conversation 1', () => {
     const id = demo.newProjectId(createInitialState())
     const state = reducer(createInitialState(), { type: 'createProject', id, draft })
     expect(demo.projectIds(state)).toContain(id)
     expect(demo.textsOf(state, id)).toEqual(draft)
     expect(demo.detailsOf(state, id).members.map((member) => member.displayName)).toEqual(['Burak'])
-    expect(state.rooms[id]).toBeUndefined()
+    // Changed in PR 8b: like the API, creating a project opens Conversation 1 (decision 2026-11-20).
+    expect(state.rooms[id].conversations).toMatchObject([{ number: 1, state: 'active', finishedAt: null, messages: [] }])
+    expect(state.rooms[id].statements).toEqual([])
   })
 
   it('edits a sample project without losing its people', () => {
