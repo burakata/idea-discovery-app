@@ -61,6 +61,11 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
      such as `tom@example.test` (the demo people's addresses are
      `<name>@example.test`, so Tom is added at once), copy a link (a labelled
      sample), look at someone's sign-ins and end one, and remove a member.
+  9. As Burak, on **People**, press **Turn on and copy link** under "Asking
+     to join", open that link (or `/join/demo-home-meals`), and ask to join
+     as a new person. Switch **View as** back to Burak, approve the request
+     on People, then open the link again and press **Continue**: you are in
+     as the new person.
 
 | Person | Role | Starts as |
 |---|---|---|
@@ -95,6 +100,7 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
 | Translations of the seeded messages are hand-written. Anything typed in the demo shows "A translation appears here in the real app." | Translations from `prompts/translate.md` for every message, correction and statement |
 | The language of a typed message is taken to be the writer's language setting | Detect the language actually written |
 | The seeded discussion, reactions and proposals are **invented**. No owner said any of it. Nothing starts as confirmed | Real messages and reactions from the real owners |
+| Asking to join keeps the request in this browser's storage; nothing is sent, and the link is a labelled sample | A random project link Burak switches on; the request is tied to the asking browser by a private cookie, and Burak approves it in the app |
 | "View as" decides who you are | Each person signs in on their own device with a one-time link from their email, a link Burak copies, or an approved request to join |
 | `?as=burak&lang=tr` in the address sets the viewer and language | Must not exist. It would expose Burak's queue to anyone |
 | Everything is saved in this browser's local storage | A server and database shared by everyone in the room |
