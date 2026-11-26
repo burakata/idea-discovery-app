@@ -8,9 +8,9 @@ import type { Person, Written } from '../state/types'
 
 const stringsByLang: Record<Lang, Strings> = { en, tr }
 
-// Burak's own screens (queue, private notes, rooms) are English only, so the
+// Burak's own room screens (queue, private notes) are English only, so the
 // whole screen stays in English there, whatever his language setting is.
-const consultantScreen = /^\/rooms\/?$|\/(queue|notes)\/?$/
+const consultantScreen = /^\/projects\/[^/]+\/(queue|notes)\/?$/
 
 // Burak's project form and People screen: /projects/new, /projects/<id>/edit, /projects/<id>/people.
 const projectScreens = /^\/projects\/(new|[^/]+\/(edit|people))\/?$/

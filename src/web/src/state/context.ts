@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react'
 import type { ErrorKey } from '../api/client'
 import type { Lang } from '../languages'
-import type { Bilingual, Text } from '../projects/types'
+import type { Bilingual, JobFlowStep, SimilarBusiness, Text } from '../projects/types'
+import type { Statement } from './types'
 
 // Who is signed in. The same in both builds.
 export interface Me {
@@ -16,12 +17,11 @@ export type SessionStatus = 'checking' | 'signedOut' | 'signedIn'
 // A neutral message shown on the home or the list after the app moved the person there.
 export type NoticeKey = 'signedOut' | 'signedOutByYou' | 'projectGone'
 
-// One project in the person's list. `to` is set where the project can be opened.
+// One project in the person's list. Every card opens the project's room.
 export interface ProjectCard {
   id: string
   title: Text
   lead?: Text
-  to?: string
 }
 
 // Burak's project form: every language in languages.ts, so no language is named here.
@@ -43,7 +43,41 @@ export interface ProjectDetails extends ProjectDraft {
   members: Member[]
 }
 
-export type InvitationState = 'open' | 'accepted' | 'revoked' | 'expired'
+// A project's room (M1 PR 8a). Everyone in it sees the same, so members carry no email.
+export interface RoomMember {
+  userId: string
+  displayName: string
+  role: 'consultant' | 'owner'
+}
+
+export interface ConversationSummary {
+  number: number
+  state: 'active' | 'finished'
+  startedAt: string
+  finishedAt: string | null
+}
+
+// What the idea page and the shared summary show. The API has none of it until M3, so
+// its lists are always empty; the demo fills them for the sample project.
+// A type, not an interface, so the A16 test can read it as a plain record of lists.
+export type IdeaContent = {
+  jobFlow: JobFlowStep[]
+  understanding: Text[]
+  openQuestions: Text[]
+  similarBusinesses: SimilarBusiness[]
+  statements: Statement[]
+}
+
+export interface Room {
+  id: string
+  title: Bilingual
+  intro: Bilingual
+  members: RoomMember[]
+  conversations: ConversationSummary[]
+  content: IdeaContent
+}
+
+export type InvitationState ='open' | 'accepted' | 'revoked' | 'expired'
 
 export interface Invitation {
   id: string
@@ -126,6 +160,10 @@ export interface Store {
   // `chosenLanguage` is set only if the person changed the switch on the sign-in page.
   redeem: (token: string | null, chosenLanguage: Lang | null) => Promise<void>
   signOut: () => Promise<void>
+  // A project's room, for the idea page and the shared summary (M1 PR 8a). Throws an
+  // ApiError: a 404 when the project is gone or the person is not in it.
+  loadRoom: (projectId: string) => Promise<Room>
+
   // Burak's project and people actions (M1 PR 7b). They throw an ApiError when the
   // call is refused; the screens show text for its `consultantKey`. Both
   // implementations reload the project list after a change to it.

@@ -5,17 +5,37 @@ import { isEnglishOnly, pickText, screenLang, translationLine } from './index'
 
 describe('screenLang', () => {
   it('keeps the consultant screens in English whatever the viewer language', () => {
-    for (const path of ['/rooms', '/rooms/', '/p/idea/queue', '/p/idea/queue/', '/p/idea/notes']) {
+    for (const path of ['/projects/idea/queue', '/projects/idea/queue/', '/projects/idea/notes']) {
       expect(isEnglishOnly(path)).toBe(true)
       expect(screenLang(path, 'tr')).toBe('en')
     }
   })
 
-  it('uses the viewer language on every other screen', () => {
-    for (const path of ['/', '/rooms/abc', '/p/idea', '/p/idea/discussion', '/p/idea/summary']) {
+  it('uses the viewer language on the room screens, even for a project called queue or notes', () => {
+    for (const path of [
+      '/projects/idea',
+      '/projects/idea/discussion',
+      '/projects/idea/summary',
+      '/projects/queue',
+      '/projects/notes/summary',
+    ]) {
       expect(isEnglishOnly(path)).toBe(false)
+      expect(isEnglishOnly(path, true)).toBe(false)
       expect(screenLang(path, 'tr')).toBe('tr')
       expect(screenLang(path, 'en')).toBe('en')
+    }
+  })
+
+  it('uses the viewer language on the home page, except for the consultant', () => {
+    expect(isEnglishOnly('/')).toBe(false)
+    expect(screenLang('/', 'tr')).toBe('tr')
+    expect(isEnglishOnly('/', true)).toBe(true)
+  })
+
+  it('keeps the consultant forms and people screen in English for the consultant only', () => {
+    for (const path of ['/projects/new', '/projects/idea/edit', '/projects/idea/people']) {
+      expect(isEnglishOnly(path, true)).toBe(true)
+      expect(isEnglishOnly(path)).toBe(false)
     }
   })
 })

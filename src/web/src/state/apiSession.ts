@@ -4,10 +4,21 @@
 import { ApiError, createApiClient, type ErrorKey } from '../api/client'
 import { bilingualFrom, createConsultantApi } from '../api/consultant'
 import { createJoinApi } from '../api/join'
+import { emptyContent, toConversations } from '../api/room'
 import { browserLang, DEFAULT_LANG, isLang, type Lang } from '../languages'
 import { browserClipboard, copyLink, type Clipboard } from './copyLink'
 import { languageToSave } from './sessionRules'
-import type { InviteInput, JoinInput, JoinState, Me, NoticeKey, ProjectCard, ProjectDraft, SessionStatus } from './context'
+import type {
+  InviteInput,
+  JoinInput,
+  JoinState,
+  Me,
+  NoticeKey,
+  ProjectCard,
+  ProjectDraft,
+  Room,
+  SessionStatus,
+} from './context'
 
 const LANGUAGE_KEY = 'idea-discovery-rooms-language'
 
@@ -212,6 +223,24 @@ export function createApiSession(options: SessionOptions = {}) {
       await loadProjects()
     },
     getProject: consultantApi.getProject,
+
+    // The room: the project and its conversations. A 404 or 401 is handled by the api
+    // client (the "project gone" notice, or signing out) before it is thrown here.
+    async loadRoom(projectId: string): Promise<Room> {
+      const [project, conversations] = await Promise.all([
+        consultantApi.getProject(projectId),
+        api.get<unknown>(`/projects/${encodeURIComponent(projectId)}/conversations`),
+      ])
+      return {
+        id: project.id,
+        title: project.title,
+        intro: project.intro,
+        // Emails are Burak's alone; the room never carries them.
+        members: project.members.map(({ userId, displayName, role }) => ({ userId, displayName, role })),
+        conversations: toConversations(conversations),
+        content: emptyContent(),
+      }
+    },
     invite: (projectId: string, input: InviteInput) => consultantApi.invite(projectId, input),
     listInvitations: consultantApi.listInvitations,
     revokeInvitation: consultantApi.revokeInvitation,

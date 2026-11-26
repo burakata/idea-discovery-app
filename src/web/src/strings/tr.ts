@@ -108,10 +108,24 @@ const tr: Strings = {
     empty: 'Gösterilecek proje yok. Bir proje bekliyorsanız danışmanınıza sorun.',
     open: 'Projeyi aç',
   },
+  room: {
+    conversation: 'Görüşme {number}',
+    finished: 'Tamamlandı',
+  },
   idea: {
     join: 'Sohbete katıl',
     purposeTitle: 'Bu ne için?',
+    purposePoints: [
+      'Fikri basitçe özetlemek',
+      'Benzer işlere bakıp hangisinin daha yakın olduğunu görmek',
+      'İlk görüşlerinizi almak',
+    ],
     notYetTitle: 'Henüz ne yapmıyoruz?',
+    notYetPoints: [
+      'Teknik ayrıntıları konuşmuyoruz',
+      'Bir özellik listesi kesinleştirmiyoruz',
+      'Yazılımın maliyetini ya da ne kadar süreceğini konuşmuyoruz',
+    ],
     flowTitle: 'Bir iş nasıl ilerleyebilir?',
     flowSub: 'Bir işin baştan sona ilk hâli. Yanlışsa lütfen düzeltin.',
     unknownStep: 'Henüz bilinmiyor',
@@ -119,11 +133,13 @@ const tr: Strings = {
     understandingSub: 'Kısa bir konuşmadan. Buradaki hiçbir şey kesin değil.',
     interpretationsTitle: 'İlk yorumlar',
     unclearTitle: 'Henüz net olmayanlar',
+    unclearSub: 'Yanıtlamanızı istediğimiz sorular.',
     noteTitle: 'Bunlar ilk yorumlarımız',
     note: 'Bunlar not ve varsayımdır, kesinleşmiş istekler değildir. Neyin doğru, neyin farklı olduğunu bize söyleyin.',
     seeSummary: 'Ortak özeti aç',
     similarTitle: 'Benzer işler',
     similarSub: 'Yalnızca konuşmaya yardımcı olsun diye. Fikriniz bunlardan birine benzemek zorunda değil.',
+    similarQuestion: 'Bunlardan hangisi fikrinize en yakın, farklı olan ne olurdu?',
     visit: 'Web sitesine bak',
     empty: 'Buraya henüz bir şey yazılmadı.',
   },
@@ -171,6 +187,7 @@ const tr: Strings = {
     sendCorrection: 'Gönder',
     cancel: 'Vazgeç',
     empty: 'Henüz bir şey yok.',
+    nothingShared: 'Henüz paylaşılan bir şey yok.',
   },
 }
 

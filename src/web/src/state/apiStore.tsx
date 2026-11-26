@@ -1,5 +1,5 @@
 // The API data source for React: it connects the session in apiSession.ts to the
-// Store every screen reads. The room screens come in M1 PR 8.
+// Store every screen reads.
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 import { createApiSession, type ApiSession } from './apiSession'
 import { StoreContext, type Store } from './context'
@@ -37,6 +37,7 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     createProject: session.createProject,
     saveProject: session.saveProject,
     getProject: session.getProject,
+    loadRoom: session.loadRoom,
     invite: session.invite,
     listInvitations: session.listInvitations,
     revokeInvitation: session.revokeInvitation,

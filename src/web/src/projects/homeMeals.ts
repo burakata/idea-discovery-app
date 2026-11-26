@@ -63,28 +63,11 @@ export const homeMeals: Project = {
   status: { en: 'Early idea · draft', tr: 'İlk fikir · taslak' },
   icon: 'idea',
   intro: {
-    eyebrow: { en: 'Early idea · let’s clarify it together', tr: 'İlk fikir · birlikte netleştirelim' },
     title: { en: 'Tell us what you have in mind.', tr: 'Aklınızdaki işi birlikte anlayalım.' },
     lead: {
       en: 'This page is for understanding the business you have in mind and hearing your first thoughts. For now the goal is not detail, but to make the idea clear in simple terms.',
       tr: 'Bu sayfa, aklınızdaki işi anlamak ve ilk düşüncelerinizi duymak için. Şimdilik amaç ayrıntıya girmek değil, fikri basitçe netleştirmek.',
     },
-    purpose: [
-      { en: 'Summarise the idea in simple terms', tr: 'Fikri basitçe özetlemek' },
-      {
-        en: 'Look at similar businesses and see which feel closest',
-        tr: 'Benzer işlere bakıp hangisinin daha yakın olduğunu görmek',
-      },
-      { en: 'Hear your first feedback', tr: 'İlk görüşlerinizi almak' },
-    ],
-    notYet: [
-      { en: 'We are not discussing technical details', tr: 'Teknik ayrıntıları konuşmuyoruz' },
-      { en: 'We are not finalising a list of features', tr: 'Bir özellik listesi kesinleştirmiyoruz' },
-      {
-        en: 'We are not discussing what the software would cost or how long it would take',
-        tr: 'Yazılımın maliyetini ya da ne kadar süreceğini konuşmuyoruz',
-      },
-    ],
   },
   jobFlow: [
     {
@@ -155,10 +138,6 @@ export const homeMeals: Project = {
       },
     },
   ],
-  similarQuestion: {
-    en: 'Which of these feels closest to your idea, and what would be different?',
-    tr: 'Bunlardan hangisi fikrinize en yakın, farklı olan ne olurdu?',
-  },
   participants: [
     { id: 'elif', role: 'owner', name: 'Elif Yıldız', language: 'tr', joined: true },
     { id: 'hasan', role: 'owner', name: 'Hasan Aksoy', language: 'tr', joined: false },

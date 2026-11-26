@@ -7,20 +7,16 @@ export const example: Project = {
   status: { en: 'Not started', tr: 'Başlamadı' },
   icon: 'idea',
   intro: {
-    eyebrow: { en: 'Example', tr: 'Örnek' },
     title: { en: 'A second room, still empty.', tr: 'İkinci bir oda, henüz boş.' },
     lead: {
       en: 'Each idea gets its own room. Nothing has been written for this one yet.',
       tr: 'Her fikrin kendi odası olur. Bu oda için henüz bir şey yazılmadı.',
     },
-    purpose: [],
-    notYet: [],
   },
   jobFlow: [],
   understanding: [],
   unclear: [],
   similarBusinesses: [],
-  similarQuestion: { en: '', tr: '' },
   participants: [burak, assistant],
   statements: [],
 }

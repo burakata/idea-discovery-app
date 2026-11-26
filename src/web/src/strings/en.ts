@@ -107,10 +107,24 @@ const en = {
     empty: 'There are no projects to show. If you expected one, ask your consultant.',
     open: 'Open project',
   },
+  room: {
+    conversation: 'Conversation {number}',
+    finished: 'Finished',
+  },
   idea: {
     join: 'Join discussion',
     purposeTitle: 'What this is for',
+    purposePoints: [
+      'Summarise the idea in simple terms',
+      'Look at similar businesses and see which feel closest',
+      'Hear your first feedback',
+    ],
     notYetTitle: 'What we are not doing yet',
+    notYetPoints: [
+      'We are not discussing technical details',
+      'We are not finalising a list of features',
+      'We are not discussing what the software would cost or how long it would take',
+    ],
     flowTitle: 'How one job might run',
     flowSub: 'Our first picture of a job from start to finish. Please correct it.',
     unknownStep: 'Not known yet',
@@ -118,11 +132,13 @@ const en = {
     understandingSub: 'From a short conversation. Nothing here is settled.',
     interpretationsTitle: 'Early interpretations',
     unclearTitle: 'What is still unclear',
+    unclearSub: 'Questions we would like you to answer.',
     noteTitle: 'These are our early interpretations',
     note: 'They are notes and assumptions, not agreed requirements. Tell us what is right and what is different.',
     seeSummary: 'Open shared summary',
     similarTitle: 'Similar businesses',
     similarSub: 'Only here to help the conversation. Your idea does not have to match any of them.',
+    similarQuestion: 'Which of these feels closest to your idea, and what would be different?',
     visit: 'Visit website',
     empty: 'Nothing has been written here yet.',
   },
@@ -170,6 +186,7 @@ const en = {
     sendCorrection: 'Send',
     cancel: 'Cancel',
     empty: 'Nothing here yet.',
+    nothingShared: 'Nothing has been shared yet.',
   },
 }
 
