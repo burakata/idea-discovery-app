@@ -7,21 +7,21 @@ import { Icon } from '../components/Icon'
 import { JobFlow } from '../components/JobFlow'
 import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
-import type { Project } from '../projects/types'
-import { useDemoStore } from '../state/demoStore'
+import type { Room } from '../state/context'
+import { hasDiscussion, roomPath } from '../state/roomRules'
 import { useT } from '../strings'
 import styles from './Idea.module.css'
 
+// The idea page, the same for every project and both builds: the project's own title,
+// introduction and content, and the app's own text around them.
 export default function Idea() {
-  const project = useOutletContext<Project>()
-  const { state } = useDemoStore()
+  const room = useOutletContext<Room>()
   const { t, pick } = useT()
 
-  const base = `/rooms/${project.id}`
-  const { intro } = project
+  const { content } = room
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 
-  const steps = state.rooms[project.id].jobFlow.map((step) => {
+  const steps = content.jobFlow.map((step) => {
     const who = pick(step.who)
     const what = pick(step.what)
     return {
@@ -41,48 +41,49 @@ export default function Idea() {
     <Page>
       <section className={styles.hero}>
         <div>
-          <p className={styles.eyebrow}>{pick(intro.eyebrow).text}</p>
-          <h1>{pick(intro.title).text}</h1>
-          <p className={styles.lead}>{pick(intro.lead).text}</p>
-          <div className={styles.actions}>
-            <Button variant="primary" iconRight="arrowRight" to={`${base}/discussion`}>
-              {t.idea.join}
-            </Button>
-          </div>
+          <h1>{pick(room.title).text}</h1>
+          <p className={styles.lead}>{pick(room.intro).text}</p>
+          {hasDiscussion(room) && (
+            <div className={styles.actions}>
+              <Button variant="primary" iconRight="arrowRight" to={roomPath(room.id, 'discussion')}>
+                {t.idea.join}
+              </Button>
+            </div>
+          )}
         </div>
         <div className={styles.art}>
           <HeroArt />
         </div>
       </section>
 
-      {intro.purpose.length > 0 && (
-        <div className={styles.two}>
-          <Card>
-            <h2 className={styles.cardTitle}>{t.idea.purposeTitle}</h2>
-            <ul className={styles.list}>
-              {intro.purpose.map((item) => (
-                <li key={item.en} className={styles.yes}>
-                  <Icon name="check" size={18} />
-                  {pick(item).text}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <Card>
-            <h2 className={styles.cardTitle}>{t.idea.notYetTitle}</h2>
-            <ul className={styles.list}>
-              {intro.notYet.map((item) => (
-                <li key={item.en} className={styles.no}>
-                  <Icon name="close" size={18} />
-                  {pick(item).text}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      )}
+      <div className={styles.two}>
+        <Card>
+          <h2 className={styles.cardTitle}>{t.idea.purposeTitle}</h2>
+          <ul className={styles.list}>
+            {t.idea.purposePoints.map((item, index) => (
+              <li key={index} className={styles.bullet}>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card>
+          <h2 className={styles.cardTitle}>{t.idea.notYetTitle}</h2>
+          <ul className={styles.list}>
+            {t.idea.notYetPoints.map((item, index) => (
+              <li key={index} className={styles.no}>
+                <Icon name="close" size={18} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
 
-      <SectionTitle title={t.idea.flowTitle} sub={t.idea.flowSub} aside={steps.length > 0 && needsConfirmation} />
+      <SectionTitle
+        title={t.idea.flowTitle}
+        sub={steps.length > 0 ? t.idea.flowSub : undefined}
+        aside={steps.length > 0 && needsConfirmation} />
       {steps.length > 0 ? (
         <JobFlow steps={steps} unknownLabel={t.idea.unknownStep} />
       ) : (
@@ -91,38 +92,25 @@ export default function Idea() {
 
       <SectionTitle
         title={t.idea.understandingTitle}
-        sub={t.idea.understandingSub}
-        aside={project.understanding.length > 0 && needsConfirmation}
+        sub={content.understanding.length > 0 ? t.idea.understandingSub : undefined}
+        aside={content.understanding.length > 0 && needsConfirmation}
       />
-      {project.understanding.length > 0 ? (
+      {content.understanding.length > 0 ? (
         <>
-          <div className={styles.two}>
-            <Card>
-              <h3 className={styles.cardTitle}>{t.idea.interpretationsTitle}</h3>
-              <ul className={styles.list}>
-                {project.understanding.map((item) => (
-                  <li key={item.en} className={styles.point}>
-                    <Icon name="early" size={18} />
-                    {pick(item).text}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <Card>
-              <h3 className={styles.cardTitle}>{t.idea.unclearTitle}</h3>
-              <ul className={styles.list}>
-                {project.unclear.map((item) => (
-                  <li key={item.en} className={styles.point}>
-                    <Icon name="question" size={18} />
-                    {pick(item).text}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </div>
+          <Card>
+            <h3 className={styles.cardTitle}>{t.idea.interpretationsTitle}</h3>
+            <ul className={styles.list}>
+              {content.understanding.map((item, index) => (
+                <li key={index} className={styles.point}>
+                  <Icon name="early" size={18} />
+                  {pick(item).text}
+                </li>
+              ))}
+            </ul>
+          </Card>
           <div className={styles.note}>
             <NoticeBox title={t.idea.noteTitle}>{t.idea.note}</NoticeBox>
-            <Button variant="quiet" iconRight="arrowRight" to={`${base}/summary`}>
+            <Button variant="quiet" iconRight="arrowRight" to={roomPath(room.id, 'summary')}>
               {t.idea.seeSummary}
             </Button>
           </div>
@@ -132,15 +120,34 @@ export default function Idea() {
       )}
 
       <SectionTitle
-        title={t.idea.similarTitle}
-        sub={t.idea.similarSub}
-        aside={project.similarBusinesses.length > 0 && <Pill>{t.status.examplesOnly}</Pill>}
+        title={t.idea.unclearTitle}
+        sub={content.openQuestions.length > 0 ? t.idea.unclearSub : undefined}
       />
-      {project.similarBusinesses.length > 0 ? (
+      {content.openQuestions.length > 0 ? (
+        <Card>
+          <ul className={styles.list}>
+            {content.openQuestions.map((item, index) => (
+              <li key={index} className={styles.point}>
+                <Icon name="question" size={18} />
+                {pick(item).text}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : (
+        <Empty>{t.idea.empty}</Empty>
+      )}
+
+      <SectionTitle
+        title={t.idea.similarTitle}
+        sub={content.similarBusinesses.length > 0 ? t.idea.similarSub : undefined}
+        aside={content.similarBusinesses.length > 0 && <Pill>{t.status.examplesOnly}</Pill>}
+      />
+      {content.similarBusinesses.length > 0 ? (
         <>
           <div className={styles.similar}>
-            {project.similarBusinesses.map((business) => (
-              <Card key={business.name.en} className={styles.business}>
+            {content.similarBusinesses.map((business, index) => (
+              <Card key={index} className={styles.business}>
                 <p className={styles.how}>{pick(business.how).text}</p>
                 <div className={styles.brandRow}>
                   <Pill tone="neutral">{pick(business.name).text}</Pill>
@@ -154,7 +161,7 @@ export default function Idea() {
               </Card>
             ))}
           </div>
-          <p className={styles.question}>{pick(project.similarQuestion).text}</p>
+          <p className={styles.question}>{t.idea.similarQuestion}</p>
         </>
       ) : (
         <Empty>{t.idea.empty}</Empty>

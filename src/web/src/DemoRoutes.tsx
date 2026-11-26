@@ -1,70 +1,58 @@
-// The demo's room screens. The real room screens come in M1 PR 8; until then the
-// api build has no rooms, so this file is left out of it (see App.tsx).
+// The demo's own room screens: Discussion, the join page, Burak's queue and private
+// notes. The api build leaves this file out (see App.tsx); Discussion joins it in M1 PR 8b.
 import type { ReactNode } from 'react'
-import { Navigate, Outlet, Route, useParams } from 'react-router-dom'
-import { AppShell } from './components/AppShell'
+import { Navigate, Outlet, Route, useOutletContext, useParams } from 'react-router-dom'
+import { RoomLayout } from './RoomLayout'
 import { findProject } from './projects'
 import Discussion from './screens/Discussion'
-import Idea from './screens/Idea'
 import Join from './screens/Join'
 import Notes from './screens/Notes'
 import Queue from './screens/Queue'
-import Summary from './screens/Summary'
+import type { Room } from './state/context'
 import { useDemoStore } from './state/demoStore'
-import { useStore } from './state/store'
+import { roomPath } from './state/roomRules'
 
-// Rooms are for signed-in people only.
-function SignedInOnly() {
-  const { status } = useStore()
-  return status === 'signedIn' ? <Outlet /> : <Navigate to="/" replace />
+// The shared room frame, with Burak's waiting count from the demo store.
+export function DemoRoomLayout() {
+  const { projectId = '' } = useParams()
+  const { state } = useDemoStore()
+  return <RoomLayout queueCount={state.rooms[projectId]?.queue.length ?? 0} />
 }
 
-// Owners see only their own room.
-function RoomLayout() {
-  const { roomId } = useParams()
-  const { state, viewer } = useDemoStore()
-  const project = findProject(roomId)
-  if (!project) return <Navigate to="/" replace />
-  if (viewer.role === 'owner' && viewer.roomId !== project.id) return <Navigate to="/" replace />
-  return (
-    <AppShell project={project} queueCount={state.rooms[project.id].queue.length}>
-      <Outlet context={project} />
-    </AppShell>
-  )
+// These screens read the sample project's own config and its demo room. A project Burak
+// creates in the demo has neither, so it goes back to the idea page.
+function SampleRoomOnly() {
+  const room = useOutletContext<Room>()
+  const project = findProject(room.id)
+  return project ? <Outlet context={project} /> : <Navigate to={roomPath(room.id)} replace />
 }
 
 function ConsultantOnly({ children }: { children: ReactNode }) {
   const { viewer } = useDemoStore()
-  const { roomId } = useParams()
-  if (viewer.role !== 'consultant') return <Navigate to={roomId ? `/rooms/${roomId}` : '/'} replace />
+  const { projectId } = useParams()
+  if (viewer.role !== 'consultant') return <Navigate to={projectId ? roomPath(projectId) : '/'} replace />
   return children
 }
 
 export const demoRoutes = (
-  <Route element={<SignedInOnly />}>
-    {/* The old list of rooms: the project list at / replaced it. */}
-    <Route path="/rooms" element={<Navigate to="/" replace />} />
-    <Route path="/rooms/:roomId" element={<RoomLayout />}>
-      <Route index element={<Idea />} />
-      <Route path="join" element={<Join />} />
-      <Route path="discussion" element={<Discussion />} />
-      <Route path="summary" element={<Summary />} />
-      <Route
-        path="queue"
-        element={
-          <ConsultantOnly>
-            <Queue />
-          </ConsultantOnly>
-        }
-      />
-      <Route
-        path="notes"
-        element={
-          <ConsultantOnly>
-            <Notes />
-          </ConsultantOnly>
-        }
-      />
-    </Route>
+  <Route element={<SampleRoomOnly />}>
+    <Route path="join" element={<Join />} />
+    <Route path="discussion" element={<Discussion />} />
+    <Route
+      path="queue"
+      element={
+        <ConsultantOnly>
+          <Queue />
+        </ConsultantOnly>
+      }
+    />
+    <Route
+      path="notes"
+      element={
+        <ConsultantOnly>
+          <Notes />
+        </ConsultantOnly>
+      }
+    />
   </Route>
 )

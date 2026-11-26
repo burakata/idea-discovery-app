@@ -131,7 +131,7 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
   question 9.)
 - With approval on, an owner sees "A reply will follow." for as long as Burak
   takes. Nothing tells them when it arrives.
-- Burak's own screens (queue, private notes, rooms) are always English and
+- Burak's own screens (queue, private notes) are always English and
   have no language switch. On the shared summary his controls stay English
   even when he reads the summary in Turkish.
 

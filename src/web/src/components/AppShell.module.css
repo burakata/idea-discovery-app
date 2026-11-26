@@ -41,6 +41,12 @@
   letter-spacing: -0.3px;
 }
 
+.crumbSub {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-muted-strong);
+}
+
 .topRight {
   display: flex;
   align-items: center;

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import type { Project } from '../projects/types'
+import type { Room } from '../state/context'
+import { hasDiscussion, roomPath, shownConversation } from '../state/roomRules'
 import { useStore } from '../state/store'
 import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
@@ -53,49 +54,63 @@ function DemoNote() {
 }
 
 interface ShellProps {
-  // A room (demo only until M1 PR 8). Without one, the shell shows the person's project list.
-  project?: Project
+  // Without a room, the shell shows the person's project list.
+  room?: Room
   // Burak's waiting count for the room; demo only.
   queueCount?: number
   children: ReactNode
 }
 
 // Navy sidebar on desktop; compact header and bottom navigation on phones.
-export function AppShell({ project, queueCount = 0, children }: ShellProps) {
+export function AppShell({ room, queueCount = 0, children }: ShellProps) {
   const { me, setLanguage, signOut, actionError } = useStore()
   const { t, lang, englishOnly, pick } = useT()
   const { pathname } = useLocation()
   const isConsultant = me?.isConsultant === true
-  const base = project ? `/rooms/${project.id}` : ''
+  const base = room ? roomPath(room.id) : ''
 
-  const sections: NavItem[] = project
+  const sections: NavItem[] = room
     ? [
         { to: base, icon: 'idea', label: t.nav.idea, end: true },
-        { to: `${base}/discussion`, icon: 'discussion', label: t.nav.discussion },
+        // The Discussion screen joins the api build in PR 8b.
+        ...(hasDiscussion(room)
+          ? [{ to: `${base}/discussion`, icon: 'discussion' as const, label: t.nav.discussion }]
+          : []),
         { to: `${base}/summary`, icon: 'summary', label: t.nav.summary },
       ]
     : [{ to: '/', icon: 'rooms', label: t.nav.projects, end: true }]
 
-  // Burak's own screens are the demo's until M1 PR 7b.
-  const consultantItems: NavItem[] = !__DEMO__ ? [] : [
-    ...(project
-      ? [
-          {
-            to: `${base}/queue`,
-            icon: 'queue' as const,
-            label: c.nav.queue,
-            short: c.nav.queueShort,
-            count: queueCount,
-            countLabel: c.nav.waiting,
-          },
-          { to: `${base}/notes`, icon: 'notes' as const, label: c.nav.notes, short: c.nav.notesShort },
-        ]
-      : []),
-    // Back to the list; on the list itself the sections already hold it.
-    ...(project ? [{ to: '/', icon: 'rooms' as const, label: c.nav.rooms, short: c.nav.roomsShort, end: true }] : []),
-  ]
+  // Burak's own items. The queue and private notes are the demo's until the API has them, and
+  // only a demo room with a conversation (a sample one) has either.
+  const consultantItems: NavItem[] = room
+    ? [
+        { to: `${base}/people`, icon: 'people', label: c.projects.people, short: c.projects.people },
+        ...(__DEMO__ && hasDiscussion(room)
+          ? [
+              {
+                to: `${base}/queue`,
+                icon: 'queue' as const,
+                label: c.nav.queue,
+                short: c.nav.queueShort,
+                count: queueCount,
+                countLabel: c.nav.waiting,
+              },
+              { to: `${base}/notes`, icon: 'notes' as const, label: c.nav.notes, short: c.nav.notesShort },
+            ]
+          : []),
+        // Back to the list; on the list itself the sections already hold it.
+        { to: '/', icon: 'rooms', label: c.nav.rooms, short: c.nav.roomsShort, end: true },
+      ]
+    : []
 
-  const title = project ? pick(project.name).text : isConsultant ? c.projects.title : t.projects.title
+  const title = room ? pick(room.title).text : isConsultant ? c.projects.title : t.projects.title
+  const conversation = room ? shownConversation(room.conversations) : undefined
+  const conversationLine = conversation
+    ? [
+        fill(t.room.conversation, { number: String(conversation.number) }),
+        ...(conversation.state === 'finished' ? [t.room.finished] : []),
+      ].join(' · ')
+    : null
   // The draft pill belongs to the room's three sections, not to Join or Burak's screens.
   const signedInAs = me ? fill(t.auth.signedInAs, { name: me.displayName }) : null
   const onSection = sections.some((section) => section.to === pathname)
@@ -113,25 +128,25 @@ export function AppShell({ project, queueCount = 0, children }: ShellProps) {
           </div>
         </div>
 
-        {project && (
+        {room && (
           <div>
             <div className={styles.label}>{t.nav.project}</div>
             <div className={styles.project}>
               <span className={styles.projectIcon}>
-                <Icon name={project.icon} />
+                <Icon name="idea" />
               </span>
               <div>
                 <strong>{title}</strong>
-                <small>{pick(project.status).text}</small>
+                {conversationLine && <small>{conversationLine}</small>}
               </div>
             </div>
             <NavList items={sections} className={styles.nav} />
           </div>
         )}
 
-        {!project && <NavList items={sections} className={styles.nav} />}
+        {!room && <NavList items={sections} className={styles.nav} />}
 
-        {isConsultant && __DEMO__ && consultantItems.length > 0 && (
+        {isConsultant && consultantItems.length > 0 && (
           <div>
             <div className={styles.label}>{c.nav.group}</div>
             <NavList items={consultantItems} className={styles.nav} />
@@ -146,14 +161,16 @@ export function AppShell({ project, queueCount = 0, children }: ShellProps) {
           <div className={styles.crumb}>
             <span className={styles.crumbPath}>{t.app.name} / </span>
             {/* On phones the rooms list shows the app's name here, as its own title follows. */}
-            {!project && <span className={`${styles.crumbName} ${styles.phoneOnly}`}>{t.app.name}</span>}
-            <span className={project ? styles.crumbName : `${styles.crumbName} ${styles.desktopOnly}`}>
+            {!room && <span className={`${styles.crumbName} ${styles.phoneOnly}`}>{t.app.name}</span>}
+            <span className={room ? styles.crumbName : `${styles.crumbName} ${styles.desktopOnly}`}>
               {title}
             </span>
+            {/* On desktop the sidebar already says it. */}
+            {conversationLine && <small className={`${styles.crumbSub} ${styles.phoneOnly}`}>{conversationLine}</small>}
           </div>
           <div className={styles.topRight}>
             {signedInAs && <span className={styles.who}>{signedInAs}</span>}
-            {onSection && project && project.statements.length > 0 && (
+            {onSection && room && room.content.statements.length > 0 && (
               <span className={styles.status}>
                 <Pill tone="amber">{t.status.draft}</Pill>
               </span>
@@ -179,7 +196,7 @@ export function AppShell({ project, queueCount = 0, children }: ShellProps) {
         </header>
 
         {signedInAs && <p className={styles.whoPhone}>{signedInAs}</p>}
-        {isConsultant && __DEMO__ && project && <NavList items={consultantItems} className={styles.strip} compact />}
+        {isConsultant && room && <NavList items={consultantItems} className={styles.strip} compact />}
 
         {actionError && (
           <div className={styles.alert}>
@@ -189,7 +206,7 @@ export function AppShell({ project, queueCount = 0, children }: ShellProps) {
 
         <div className={styles.content}>{children}</div>
 
-        {project && <NavList items={sections} className={styles.bottomNav} />}
+        {room && <NavList items={sections} className={styles.bottomNav} />}
       </div>
     </div>
   )

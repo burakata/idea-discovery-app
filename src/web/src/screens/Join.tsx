@@ -7,6 +7,7 @@ import { TextInput } from '../components/Field'
 import { Icon } from '../components/Icon'
 import type { Project } from '../projects/types'
 import { useDemoStore } from '../state/demoStore'
+import { roomPath } from '../state/roomRules'
 import { useT } from '../strings'
 import styles from './Join.module.css'
 
@@ -20,7 +21,7 @@ export default function Join() {
 
   // Once joined, carry on to where the person was heading.
   const next = params.get('next') === 'summary' ? 'summary' : 'discussion'
-  if (viewer.joined) return <Navigate to={`/rooms/${project.id}/${next}`} replace />
+  if (viewer.joined) return <Navigate to={roomPath(project.id, next)} replace />
 
   const submit = (event: FormEvent) => {
     event.preventDefault()

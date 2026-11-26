@@ -1,6 +1,6 @@
 // The demo data source: seed data and a simulated sign-in, saved in local storage.
 // Only the demo build includes this file (see App.tsx and store.tsx).
-import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useReducer, useRef, useState, type ReactNode } from 'react'
 import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
@@ -11,6 +11,7 @@ import {
   type InviteInput,
   type JoinInput,
   type Me,
+  type NoticeKey,
   type ProjectCard,
   type ProjectDraft,
   type Store,
@@ -18,6 +19,7 @@ import {
 import { browserClipboard, copyLink } from './copyLink'
 import * as joinRules from './demoJoin'
 import * as peopleRules from './demoPeople'
+import { roomOf } from './demoRoom'
 import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
@@ -438,7 +440,7 @@ export function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-// What the room screens use. Only the demo has it: the real room screens come in M1 PR 8.
+// What the demo-only room screens use (discussion, queue, notes and the summary's actions).
 interface DemoStore {
   state: AppState
   viewer: Person
@@ -449,8 +451,7 @@ interface DemoStore {
 const DemoContext = createContext<DemoStore | null>(null)
 
 function cardsFor(state: AppState, viewer: Person): ProjectCard[] {
-  // Owners see the projects they are in, even if there is one; Burak sees all. The
-  // sample projects have a room; the ones Burak creates in the demo have none.
+  // Owners see the projects they are in, even if there is one; Burak sees all.
   return peopleRules
     .projectIds(state)
     .filter(
@@ -459,10 +460,7 @@ function cardsFor(state: AppState, viewer: Person): ProjectCard[] {
     )
     .map((id) => {
       const texts = peopleRules.textsOf(state, id)!
-      const hasRoom = projects.some((project) => project.id === id)
-      // An owner removed from a sample project has lost its room as well.
-      const open = hasRoom && (viewer.role === 'consultant' || viewer.roomId === id)
-      return { id, title: texts.title, lead: texts.intro, to: open ? `/rooms/${id}` : undefined }
+      return { id, title: texts.title, lead: texts.intro }
     })
 }
 
@@ -599,6 +597,8 @@ export function createConsultantActions(
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  // The one message the demo can leave on the list: a room that could not be opened.
+  const [notice, setNotice] = useState<NoticeKey | null>(null)
   const viewer = state.people[state.viewAs]
   // The newest state, kept in step with every change the people actions make, so
   // a read right after a change sees it without waiting for a new render.
@@ -627,13 +627,33 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setLanguage: (lang) => dispatch(state.signedIn ? { type: 'language', lang } : { type: 'guestLanguage', lang }),
     projects: state.signedIn ? cardsFor(state, viewer) : null,
     projectsError: null,
-    notice: null,
+    notice,
     actionError: null,
     // No email is sent in the demo; the screen says so.
     requestLink: async () => {},
-    redeem: async (_token, chosenLanguage) => dispatch({ type: 'signIn', language: chosenLanguage ?? undefined }),
-    signOut: async () => dispatch({ type: 'signOut' }),
-    demoSignIn: () => dispatch({ type: 'signIn', language: state.guestLanguage }),
+    redeem: async (_token, chosenLanguage) => {
+      setNotice(null)
+      dispatch({ type: 'signIn', language: chosenLanguage ?? undefined })
+    },
+    signOut: async () => {
+      setNotice(null)
+      dispatch({ type: 'signOut' })
+    },
+    demoSignIn: () => {
+      setNotice(null)
+      dispatch({ type: 'signIn', language: state.guestLanguage })
+    },
+    // A refusal leaves the same "project gone" notice on the list as the api build does.
+    loadRoom: async (projectId) => {
+      try {
+        const room = roomOf(latest.current, projectId)
+        setNotice(null)
+        return room
+      } catch (failure) {
+        if (failure instanceof ApiError && failure.status === 404) setNotice('projectGone')
+        throw failure
+      }
+    },
 
     ...createConsultantActions(
       latest,

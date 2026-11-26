@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon'
 import { MessageBubble } from '../components/MessageBubble'
 import type { Project } from '../projects/types'
 import { useDemoStore } from '../state/demoStore'
+import { roomPath } from '../state/roomRules'
 import { useT } from '../strings'
 import styles from './Discussion.module.css'
 
@@ -26,7 +27,7 @@ export default function Discussion() {
     endRef.current?.scrollIntoView({ block: 'end' })
   }, [room.messages.length])
 
-  if (!viewer.joined) return <Navigate to={`/rooms/${project.id}/join?next=discussion`} replace />
+  if (!viewer.joined) return <Navigate to={`${roomPath(project.id, 'join')}?next=discussion`} replace />
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault()
