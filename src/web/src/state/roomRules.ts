@@ -13,8 +13,9 @@ export function shownConversation(conversations: ConversationSummary[]): Convers
 }
 
 // Whether the room's Discussion nav item and Join discussion button show. The one rule for
-// both: there is a conversation to join, and the build has a Discussion screen. Only the
-// demo has one, until PR 8b. A demo project Burak created has no conversation.
+// both: the room has a conversation (finished ones stay readable), and the build has a
+// Discussion screen. Only the demo has one, until PR 8b. A demo project Burak created has
+// no conversation.
 export function hasDiscussion(room: Room): boolean {
-  return __DEMO__ /* until PR 8b */ && shownConversation(room.conversations)?.state === 'active'
+  return __DEMO__ /* until PR 8b */ && room.conversations.length > 0
 }

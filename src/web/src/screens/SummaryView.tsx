@@ -57,9 +57,8 @@ export function SummaryView({ room, statements = room.content.statements, render
           <Empty>{t.summary.nothingShared}</Empty>
         </div>
       )}
-      {/* With nothing shared the one line says it all, unless Burak can add to the groups. */}
       <div className={styles.groups}>
-        {(!none || renderAdd) && groups.map((group) => {
+        {groups.map((group) => {
           const inGroup = statements.filter((statement) => statement.group === group.key)
           return (
             <section key={group.key} className={`${styles.group} ${styles[group.key]}`}>

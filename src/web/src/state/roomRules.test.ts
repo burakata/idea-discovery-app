@@ -39,13 +39,13 @@ describe('the conversation the header names', () => {
 describe('whether a room has a Discussion', () => {
   const room = (conversations: ConversationSummary[]) => ({ conversations }) as Room
 
-  it('has one in the demo when there is an active conversation to join', () => {
+  it('has one in the demo when the room has any conversation, finished ones included', () => {
     expect(__DEMO__).toBe(true)
     expect(hasDiscussion(room([conversation(1, 'active')]))).toBe(true)
+    expect(hasDiscussion(room([conversation(1, 'finished')]))).toBe(true)
   })
 
-  it('has none without a conversation, or when every conversation is finished', () => {
+  it('has none without a conversation', () => {
     expect(hasDiscussion(room([]))).toBe(false)
-    expect(hasDiscussion(room([conversation(1, 'finished')]))).toBe(false)
   })
 })
