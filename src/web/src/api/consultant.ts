@@ -57,6 +57,7 @@ function toMember(row: Row): Member {
 export function toProject(body: Row): ProjectDetails {
   return {
     id: str(body.id),
+    imageVersion: strOrNull(body.imageVersion),
     title: bilingualFrom(body, 'title'),
     intro: bilingualFrom(body, 'intro'),
     members: Array.isArray(body.members) ? (body.members as Row[]).map(toMember) : [],
@@ -95,6 +96,11 @@ export function toInviteOutcome(body: Row): InviteOutcome {
   return { kind: 'invited' }
 }
 
+// The API's limit for an uploaded image (ProjectImageEndpoints.MaxFileBytes).
+export const IMAGE_MAX_BYTES = 5 * 1024 * 1024
+// The name of the file field (ProjectImageEndpoints.FieldName).
+const IMAGE_FIELD = 'file'
+
 export function createConsultantApi(api: ApiClient) {
   const id = encodeURIComponent
   return {
@@ -111,6 +117,26 @@ export function createConsultantApi(api: ApiClient) {
     async getProject(projectId: string, quiet = false): Promise<ProjectDetails> {
       return toProject(await api.get<Row>(`/projects/${id(projectId)}`, quiet ? { expectMissing: true } : undefined))
     },
+
+    // Returns the new version. A file over the limit is refused here, as the API would, so
+    // the person is told at once instead of after the whole file has gone up.
+    async uploadImage(projectId: string, file: File): Promise<string> {
+      if (file.size > IMAGE_MAX_BYTES) throw new ApiError(413, null)
+      const form = new FormData()
+      form.append(IMAGE_FIELD, file, file.name)
+      const body = await api.postForm<Row>(`/consultant/projects/${id(projectId)}/image`, form)
+      const version = strOrNull(body.imageVersion)
+      if (!version) throw new ApiError(502, null)
+      return version
+    },
+
+    async removeImage(projectId: string): Promise<void> {
+      await api.post(`/consultant/projects/${id(projectId)}/image/remove`)
+    },
+
+    // The address of a project's image; the version makes a new image a new address.
+    imageUrl: (projectId: string, version: string): string =>
+      api.url(`/projects/${id(projectId)}/image?v=${encodeURIComponent(version)}`),
 
     async invite(projectId: string, input: InviteInput): Promise<InviteOutcome> {
       try {

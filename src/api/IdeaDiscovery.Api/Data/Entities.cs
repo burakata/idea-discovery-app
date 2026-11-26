@@ -46,6 +46,19 @@ public class Project
     public string? JoinCode { get; set; }
 }
 
+// A project's one image, always re-encoded WebP. Kept apart from Project so
+// project reads never load the bytes. Version changes on every replacement.
+public class ProjectImage
+{
+    public Guid ProjectId { get; set; }
+    public string ContentType { get; set; } = "image/webp";
+    public byte[] Bytes { get; set; } = [];
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public string Version { get; set; } = "";
+}
+
 public enum JoinRequestState { Pending, Approved, Rejected }
 
 // A person's request to join a project. Nothing typed here is a verified fact.

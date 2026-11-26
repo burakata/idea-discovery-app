@@ -61,7 +61,8 @@ consultant; **Reset demo** starts again. [PROTOTYPE.md](PROTOTYPE.md) lists
 what is simulated.
 
 **The API** needs the .NET 10 SDK. It has sign-in by email link, projects,
-invitations, asking to join, and conversations:
+invitations, asking to join, conversations, and one image per project
+(re-encoded on the server with SkiaSharp):
 
 ```
 dotnet test src/api

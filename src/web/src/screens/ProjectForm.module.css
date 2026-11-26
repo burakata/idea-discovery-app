@@ -38,6 +38,36 @@
   color: var(--color-red);
 }
 
+/* The same frame as the idea page's hero, so Burak sees how it will be cropped. */
+.preview {
+  display: block;
+  width: 100%;
+  max-width: var(--size-art);
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+}
+
+.file {
+  width: 100%;
+  min-height: var(--size-touch);
+  font-size: var(--text-body);
+}
+
+.file::file-selector-button {
+  min-height: var(--size-touch);
+  margin-right: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

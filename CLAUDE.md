@@ -126,7 +126,9 @@ asking to join (`/join/*`), projects and members (`/projects`,
 (`/consultant/projects/{id}/invitations`, `/consultant/invitations/{id}/revoke`),
 and conversations and messages (`/projects/{id}/conversations`, its
 `{number}/messages` and `active/messages`, and Burak's
-`/consultant/projects/{id}/conversations` start and `active/finish`).
+`/consultant/projects/{id}/conversations` start and `active/finish`),
+and the project image (`GET /projects/{id}/image` for members, Burak's
+`POST /consultant/projects/{id}/image` and `.../image/remove`).
 - Install: `npm --prefix src/web install`
 - Run the demo: `npm --prefix src/web run dev` (http://localhost:5173)
 - Run against the API: start the API (`dotnet run --project

@@ -73,6 +73,11 @@ export const demoConsultant = {
     'This note is a hand-written sample. In the real app the assistant writes a new one when you ask.',
 }
 
+// Burak's Edit project screen in the demo.
+export const demoProjectForm = {
+  imageNote: 'This is the demo: the image stays in this browser, and it can be up to 1 MB.',
+}
+
 // Burak's people screen in the demo: what it simulates, in plain words.
 export const demoPeople = {
   note: 'This is the demo: no email is sent, the links are samples that open nothing, and the sign-ins are invented.',

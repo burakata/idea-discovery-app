@@ -171,6 +171,7 @@ app.MapAuth();
 app.MapJoin();
 app.MapConsultant();
 app.MapProjects();
+app.MapProjectImages();
 app.MapConversations();
 
 app.Run();

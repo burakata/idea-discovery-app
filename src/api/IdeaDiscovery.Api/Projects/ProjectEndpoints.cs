@@ -16,7 +16,7 @@ public static class ProjectEndpoints
     private sealed record AskToJoinView(bool Enabled, string? Link);
     private sealed record ProjectView(
         Guid Id, string TitleEn, string TitleTr, string IntroEn, string IntroTr, string Status, DateTime CreatedAt,
-        object Members,
+        string? ImageVersion, object Members,
         [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
         AskToJoinView? AskToJoin);
 
@@ -173,9 +173,12 @@ public static class ProjectEndpoints
                 project.AskToJoinEnabled && project.JoinCode is not null
                     ? ConsultantEndpoints.JoinLink(askToJoinFor, project.JoinCode)
                     : null);
+        // Only the version is read, never the image bytes.
+        var imageVersion = await db.ProjectImages.AsNoTracking()
+            .Where(i => i.ProjectId == project.Id).Select(i => i.Version).SingleOrDefaultAsync();
         return new ProjectView(
             project.Id, project.TitleEn, project.TitleTr, project.IntroEn, project.IntroTr,
-            project.Status, project.CreatedAt, members, askToJoin);
+            project.Status, project.CreatedAt, imageVersion, members, askToJoin);
     }
 
     private static string Role(MemberRole role) => role.ToString().ToLowerInvariant();

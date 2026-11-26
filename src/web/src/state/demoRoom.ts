@@ -71,6 +71,7 @@ export function roomOf(state: AppState, projectId: string): Room {
     id: projectId,
     title: details.title,
     intro: details.intro,
+    imageVersion: details.imageVersion,
     members: details.members.map(({ userId, displayName, role }) => ({ userId, displayName, role })),
     conversations: own ? own.conversations.map(summaryOf) : [],
     content,

@@ -6,6 +6,12 @@ export function roomPath(projectId: string, section = ''): string {
   return `/projects/${encodeURIComponent(projectId)}${section ? `/${section}` : ''}`
 }
 
+// Whether the idea page's hero shows the project's image instead of the illustration: the
+// project has one, and that version has not failed to load.
+export function showsHeroImage(imageVersion: string | null, failedVersion: string | null): imageVersion is string {
+  return imageVersion !== null && imageVersion !== failedVersion
+}
+
 // The conversation the room's header names: the active one, else the latest.
 export function shownConversation(conversations: ConversationSummary[]): ConversationSummary | undefined {
   const latest = [...conversations].sort((a, b) => b.number - a.number)

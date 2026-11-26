@@ -40,6 +40,8 @@ export interface Member {
 
 export interface ProjectDetails extends ProjectDraft {
   id: string
+  // Changes with every new image; null when the project has none.
+  imageVersion: string | null
   members: Member[]
 }
 
@@ -94,6 +96,7 @@ export interface Room {
   id: string
   title: Bilingual
   intro: Bilingual
+  imageVersion: string | null
   members: RoomMember[]
   conversations: ConversationSummary[]
   content: IdeaContent
@@ -199,6 +202,12 @@ export interface Store {
   createProject: (draft: ProjectDraft) => Promise<string>
   saveProject: (id: string, draft: ProjectDraft) => Promise<void>
   getProject: (id: string) => Promise<ProjectDetails>
+  // The project image (M1 PR 8c). Only Burak sets or removes it; members see it on the idea
+  // page. Upload returns the new version; refusals throw an ApiError. `projectImageUrl` is
+  // the address to show, the demo's data URL in the demo.
+  uploadProjectImage: (projectId: string, file: File) => Promise<string>
+  removeProjectImage: (projectId: string) => Promise<void>
+  projectImageUrl: (projectId: string, version: string) => string
   invite: (projectId: string, input: InviteInput) => Promise<InviteOutcome>
   listInvitations: (projectId: string) => Promise<Invitation[]>
   revokeInvitation: (invitationId: string) => Promise<void>

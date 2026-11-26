@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, type ConsultantErrorKey } from '../api/client'
 import { Page, PageTitle } from '../components/AppShell'
@@ -9,13 +9,15 @@ import type { ProjectDraft } from '../state/context'
 import { useStore } from '../state/store'
 import { fill } from '../strings'
 import { consultant as c } from '../strings/consultant'
+import { demoProjectForm } from '../strings/demo'
+import { ConfirmDialog } from './PeopleDialogs'
 import { cleanDraft, emptyDraft, formGroups, PROJECT_LIMITS, validateDraft } from './projectFormRules'
 import styles from './ProjectForm.module.css'
 
 // Create a project, or edit one: the same form, prefilled when editing.
 export default function ProjectForm() {
   const { projectId } = useParams()
-  const { createProject, saveProject, getProject } = useStore()
+  const { createProject, saveProject, getProject, uploadProjectImage, removeProjectImage, projectImageUrl } = useStore()
   const navigate = useNavigate()
   const t = c.projectForm
   const [draft, setDraft] = useState<ProjectDraft | null>(projectId ? null : emptyDraft())
@@ -23,12 +25,25 @@ export default function ProjectForm() {
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<ConsultantErrorKey | null>(null)
   const [gone, setGone] = useState(false)
+  // The project image changes at once, apart from Save.
+  const [imageVersion, setImageVersion] = useState<string | null>(null)
+  const [imageBusy, setImageBusy] = useState(false)
+  const [imageError, setImageError] = useState<ConsultantErrorKey | null>(null)
+  const [imageNote, setImageNote] = useState<string | null>(null)
+  const [removing, setRemoving] = useState(false)
+  const [removeError, setRemoveError] = useState<ConsultantErrorKey | null>(null)
+  const [focusFile, setFocusFile] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!projectId) return
     let current = true
     getProject(projectId).then(
-      (project) => current && setDraft({ title: project.title, intro: project.intro }),
+      (project) => {
+        if (!current) return
+        setDraft({ title: project.title, intro: project.intro })
+        setImageVersion(project.imageVersion)
+      },
       (error: unknown) => {
         if (!current) return
         // A project that is gone sends Burak back to his list.
@@ -42,6 +57,13 @@ export default function ProjectForm() {
     // Loaded once per project: the store's functions change identity as the demo state changes.
   }, [projectId])
 
+  // After a removal the Remove button is gone: focus goes to the file field, not to the page.
+  useEffect(() => {
+    if (!focusFile) return
+    fileRef.current?.focus()
+    setFocusFile(false)
+  }, [focusFile])
+
   if (gone) return <Navigate to="/" replace />
 
   const errors = draft ? validateDraft(draft) : {}
@@ -51,6 +73,43 @@ export default function ProjectForm() {
     if (!draft) return
     setDraft({ ...draft, [kind]: { ...draft[kind], [lang]: value } })
     setFailure(null)
+  }
+
+  const chooseImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    if (!file || !projectId || imageBusy) return
+    setImageBusy(true)
+    setImageError(null)
+    setImageNote(null)
+    try {
+      setImageVersion(await uploadProjectImage(projectId, file))
+      setImageNote(t.imageSaved)
+    } catch (error) {
+      setImageError(error instanceof ApiError ? error.consultantKey : 'generic')
+    } finally {
+      setImageBusy(false)
+      // So that choosing the same file again, after a refusal, still counts as a change.
+      input.value = ''
+    }
+  }
+
+  const removeImage = async () => {
+    if (!projectId || imageBusy) return
+    setImageBusy(true)
+    setRemoveError(null)
+    try {
+      await removeProjectImage(projectId)
+      setImageVersion(null)
+      setImageError(null)
+      setImageNote(t.imageRemoved)
+      setRemoving(false)
+      setFocusFile(true)
+    } catch (error) {
+      setRemoveError(error instanceof ApiError ? error.consultantKey : 'generic')
+    } finally {
+      setImageBusy(false)
+    }
   }
 
   const submit = async (event: FormEvent) => {
@@ -119,6 +178,53 @@ export default function ProjectForm() {
               </fieldset>
             )
           })}
+          {editing && projectId && (
+            <fieldset className={styles.group}>
+              <legend>{t.imageTitle}</legend>
+              {__DEMO__ && <NoticeBox>{demoProjectForm.imageNote}</NoticeBox>}
+              {imageVersion ? (
+                <img
+                  className={styles.preview}
+                  src={projectImageUrl(projectId, imageVersion)}
+                  alt={t.imageAlt}
+                />
+              ) : (
+                <p className={styles.hint}>{t.imageNone}</p>
+              )}
+              <label htmlFor="project-image">
+                {imageBusy ? t.imageUploading : imageVersion ? t.imageReplace : t.imageChoose}
+              </label>
+              <input
+                ref={fileRef}
+                id="project-image"
+                className={styles.file}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={imageBusy}
+                aria-describedby="project-image-note"
+                onChange={chooseImage}
+              />
+              <p id="project-image-note" className={styles.hint}>
+                {t.imageHint} {t.imageDecoration}
+              </p>
+              {/* Always on the page, so a screen reader announces what appears in it. */}
+              <div aria-live="polite">
+                {imageError && (
+                  <div role="alert">
+                    <NoticeBox tone="amber">{c.errors[imageError]}</NoticeBox>
+                  </div>
+                )}
+                {imageNote && !imageError && <p className={styles.hint}>{imageNote}</p>}
+              </div>
+              {imageVersion && (
+                <div className={styles.actions}>
+                  <Button variant="secondary" disabled={imageBusy} onClick={() => setRemoving(true)}>
+                    {t.imageRemove}
+                  </Button>
+                </div>
+              )}
+            </fieldset>
+          )}
           {failure && (
             <div role="alert">
               <NoticeBox tone="amber">{c.errors[failure]}</NoticeBox>
@@ -133,6 +239,21 @@ export default function ProjectForm() {
             </Button>
           </div>
         </form>
+      )}
+      {removing && (
+        <ConfirmDialog
+          title={t.imageRemoveTitle}
+          body={t.imageRemoveBody}
+          confirmLabel={imageBusy ? t.imageRemoving : t.imageRemoveConfirm}
+          danger
+          busy={imageBusy}
+          error={removeError}
+          onConfirm={removeImage}
+          onClose={() => {
+            setRemoving(false)
+            setRemoveError(null)
+          }}
+        />
       )}
     </Page>
   )

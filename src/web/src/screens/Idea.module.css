@@ -36,6 +36,18 @@
   width: var(--size-art-phone);
 }
 
+/* The same frame as the illustration (4:3, up to its width), so nothing moves when it loads. */
+.photo {
+  display: block;
+  width: 100%;
+  max-width: var(--size-art);
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--color-art-ground);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+}
+
 .two {
   display: grid;
   gap: var(--space-4);

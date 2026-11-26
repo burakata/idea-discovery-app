@@ -224,6 +224,9 @@ export function createApiSession(options: SessionOptions = {}) {
       await loadProjects()
     },
     getProject: consultantApi.getProject,
+    uploadProjectImage: consultantApi.uploadImage,
+    removeProjectImage: consultantApi.removeImage,
+    projectImageUrl: consultantApi.imageUrl,
 
     // The room: the project and its conversations. A 404 or 401 is handled by the api
     // client (the "project gone" notice, or signing out) before it is thrown here.
@@ -236,6 +239,7 @@ export function createApiSession(options: SessionOptions = {}) {
         id: project.id,
         title: project.title,
         intro: project.intro,
+        imageVersion: project.imageVersion,
         // Emails are Burak's alone; the room never carries them.
         members: project.members.map(({ userId, displayName, role }) => ({ userId, displayName, role })),
         conversations: toConversations(conversations),

@@ -69,6 +69,11 @@ npm --prefix src/web run build:demo -- --base=/idea-discovery-app/
      as a new person. Switch **View as** back to Burak, approve the request
      on People, then open the link again and press **Continue**: you are in
      as the new person.
+  10. As Burak, press **Edit project** (on People), then choose a PNG, JPEG
+      or WebP image under "Project image" (up to 1 MB in the demo; the real
+      app takes 5 MB). Open the project's idea page, or View as an owner who
+      is a member: the image replaces the illustration. Remove it from the
+      Edit project screen. The image stays in this browser.
 
 | Person | Role | Starts as |
 |---|---|---|
