@@ -75,7 +75,7 @@ const tr: Strings = {
     rejected:
       'Danışman bu isteği kabul etmedi. Bir yanlışlık olduğunu düşünüyorsanız bağlantıyı size gönderen kişiye söyleyin.',
     expiredTitle: 'Bu isteğin süresi doldu',
-    expired: 'İki gün içinde yanıtlanmadı. Yeniden istek gönderebilirsiniz.',
+    expired: 'İki gün içinde yanıtlanmadı ya da kullanılmadı. Yeniden istek gönderebilirsiniz.',
     askAgain: 'Yeniden istek gönder',
     approvedTitle: 'Katılabilirsiniz',
     approved: 'Danışmanınız isteğinizi kabul etti. Girmek için Devam’a basın.',

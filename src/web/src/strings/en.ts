@@ -74,7 +74,7 @@ const en = {
     rejected:
       'The consultant did not accept this request. If you think this is a mistake, tell the person who sent you the link.',
     expiredTitle: 'This request has expired',
-    expired: 'It was not answered within two days. You can ask again.',
+    expired: 'It was not answered, or not used, within two days. You can ask again.',
     askAgain: 'Ask again',
     approvedTitle: 'You can join',
     approved: 'Your consultant accepted your request. Press Continue to go in.',
