@@ -4,6 +4,10 @@
   align-items: start;
 }
 
+.none {
+  margin-bottom: var(--space-4);
+}
+
 .group {
   background: var(--color-paper);
   border: 1px solid var(--color-line);

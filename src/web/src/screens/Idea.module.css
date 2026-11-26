@@ -1,5 +1,4 @@
 .hero {
-  position: relative;
   display: grid;
   gap: var(--space-5);
   padding: var(--space-6) var(--space-5);
@@ -21,7 +20,7 @@
   color: var(--color-muted-strong);
 }
 
-/* On phones the buttons stack on the left and the illustration sits beside them. */
+/* On phones the text, the buttons and then the illustration follow each other. */
 .actions {
   display: flex;
   flex-direction: column;
@@ -30,11 +29,10 @@
   margin-top: var(--space-5);
 }
 
-/* Small and tucked into the corner on phones, so the first screen is not all hero. */
+/* Small and under the text on phones, so it never covers it. */
 .art {
-  position: absolute;
-  right: var(--space-4);
-  bottom: var(--space-5);
+  display: flex;
+  justify-self: end;
   width: var(--size-art-phone);
 }
 
@@ -64,8 +62,15 @@
   margin-top: 3px;
 }
 
-.yes svg {
-  color: var(--color-green);
+/* A plain dot, not a tick: these are things we hope to do, not finished steps. */
+.bullet::before {
+  content: '';
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-top: 0.6em;
+  background: var(--color-muted);
+  border-radius: 50%;
 }
 
 .no svg {
@@ -134,9 +139,8 @@
   }
 
   .art {
-    position: static;
-    display: flex;
     justify-content: center;
+    justify-self: stretch;
     width: auto;
   }
 

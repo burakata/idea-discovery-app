@@ -8,7 +8,7 @@ import { JobFlow } from '../components/JobFlow'
 import { TranslationLine } from '../components/MessageBubble'
 import { Pill } from '../components/Pill'
 import type { Room } from '../state/context'
-import { HAS_DISCUSSION, roomPath } from '../state/roomRules'
+import { hasDiscussion, roomPath } from '../state/roomRules'
 import { useT } from '../strings'
 import styles from './Idea.module.css'
 
@@ -43,8 +43,7 @@ export default function Idea() {
         <div>
           <h1>{pick(room.title).text}</h1>
           <p className={styles.lead}>{pick(room.intro).text}</p>
-          {/* Until PR 8b the Discussion screen is the demo's only. */}
-          {HAS_DISCUSSION && (
+          {hasDiscussion(room) && (
             <div className={styles.actions}>
               <Button variant="primary" iconRight="arrowRight" to={roomPath(room.id, 'discussion')}>
                 {t.idea.join}
@@ -61,9 +60,8 @@ export default function Idea() {
         <Card>
           <h2 className={styles.cardTitle}>{t.idea.purposeTitle}</h2>
           <ul className={styles.list}>
-            {t.idea.purposePoints.map((item) => (
-              <li key={item} className={styles.yes}>
-                <Icon name="check" size={18} />
+            {t.idea.purposePoints.map((item, index) => (
+              <li key={index} className={styles.bullet}>
                 {item}
               </li>
             ))}
@@ -72,8 +70,8 @@ export default function Idea() {
         <Card>
           <h2 className={styles.cardTitle}>{t.idea.notYetTitle}</h2>
           <ul className={styles.list}>
-            {t.idea.notYetPoints.map((item) => (
-              <li key={item} className={styles.no}>
+            {t.idea.notYetPoints.map((item, index) => (
+              <li key={index} className={styles.no}>
                 <Icon name="close" size={18} />
                 {item}
               </li>
@@ -82,7 +80,10 @@ export default function Idea() {
         </Card>
       </div>
 
-      <SectionTitle title={t.idea.flowTitle} sub={t.idea.flowSub} aside={steps.length > 0 && needsConfirmation} />
+      <SectionTitle
+        title={t.idea.flowTitle}
+        sub={steps.length > 0 ? t.idea.flowSub : undefined}
+        aside={steps.length > 0 && needsConfirmation} />
       {steps.length > 0 ? (
         <JobFlow steps={steps} unknownLabel={t.idea.unknownStep} />
       ) : (
@@ -91,7 +92,7 @@ export default function Idea() {
 
       <SectionTitle
         title={t.idea.understandingTitle}
-        sub={t.idea.understandingSub}
+        sub={content.understanding.length > 0 ? t.idea.understandingSub : undefined}
         aside={content.understanding.length > 0 && needsConfirmation}
       />
       {content.understanding.length > 0 ? (
@@ -99,8 +100,8 @@ export default function Idea() {
           <Card>
             <h3 className={styles.cardTitle}>{t.idea.interpretationsTitle}</h3>
             <ul className={styles.list}>
-              {content.understanding.map((item) => (
-                <li key={item.en ?? item.tr} className={styles.point}>
+              {content.understanding.map((item, index) => (
+                <li key={index} className={styles.point}>
                   <Icon name="early" size={18} />
                   {pick(item).text}
                 </li>
@@ -118,12 +119,15 @@ export default function Idea() {
         <Empty>{t.idea.empty}</Empty>
       )}
 
-      <SectionTitle title={t.idea.unclearTitle} sub={t.idea.unclearSub} />
+      <SectionTitle
+        title={t.idea.unclearTitle}
+        sub={content.openQuestions.length > 0 ? t.idea.unclearSub : undefined}
+      />
       {content.openQuestions.length > 0 ? (
         <Card>
           <ul className={styles.list}>
-            {content.openQuestions.map((item) => (
-              <li key={item.en ?? item.tr} className={styles.point}>
+            {content.openQuestions.map((item, index) => (
+              <li key={index} className={styles.point}>
                 <Icon name="question" size={18} />
                 {pick(item).text}
               </li>
@@ -136,14 +140,14 @@ export default function Idea() {
 
       <SectionTitle
         title={t.idea.similarTitle}
-        sub={t.idea.similarSub}
+        sub={content.similarBusinesses.length > 0 ? t.idea.similarSub : undefined}
         aside={content.similarBusinesses.length > 0 && <Pill>{t.status.examplesOnly}</Pill>}
       />
       {content.similarBusinesses.length > 0 ? (
         <>
           <div className={styles.similar}>
-            {content.similarBusinesses.map((business) => (
-              <Card key={business.name.en} className={styles.business}>
+            {content.similarBusinesses.map((business, index) => (
+              <Card key={index} className={styles.business}>
                 <p className={styles.how}>{pick(business.how).text}</p>
                 <div className={styles.brandRow}>
                   <Pill tone="neutral">{pick(business.name).text}</Pill>

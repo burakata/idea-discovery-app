@@ -71,7 +71,8 @@ npm --prefix src/web run dev:api
 
 The last two run the real client against a local API; sign in with a link
 from the emails saved in `src/api/IdeaDiscovery.Api/emails/`. The room
-screens use the API from M1 PR 8; until then they are demo-only.
+idea page and the shared summary use the API; the discussion follows in M1 PR 8b
+and is demo-only until then.
 
 ## What is where
 

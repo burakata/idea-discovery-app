@@ -44,14 +44,8 @@ export interface StartingStatement {
 export interface Project {
   id: string
   name: Bilingual
-  status: Bilingual
-  // Shown beside the project's name in the sidebar and the rooms list.
-  icon: 'idea'
   // What this is for and what is not done yet are the app's own text (strings/), not the project's.
-  intro: {
-    title: Bilingual
-    lead: Bilingual
-  }
+  intro: Bilingual
   jobFlow: JobFlowStep[]
   understanding: Bilingual[]
   unclear: Bilingual[]

@@ -13,14 +13,14 @@ import { useT } from './strings'
 export function RoomLayout({ queueCount }: { queueCount?: number }) {
   const { projectId = '' } = useParams()
   const { pathname } = useLocation()
-  const { loadRoom } = useStore()
+  const { loadRoom, me } = useStore()
   const { t } = useT()
   const [room, setRoom] = useState<Room | null>(null)
   const [problem, setProblem] = useState<unknown>(null)
 
-  // Loaded again when the person moves inside the room, so a change made on another
-  // screen (a new title, a job-flow step the demo's Burak approved) shows at once. The old
-  // room stays on screen meanwhile.
+  // Loaded again when the person moves inside the room, or the viewer changes (the demo's
+  // View as), so a change made on another screen (a new title, a job-flow step the demo's
+  // Burak approved) shows at once. The old room stays on screen meanwhile.
   useEffect(() => {
     let current = true
     loadRoom(projectId).then(
@@ -36,8 +36,9 @@ export function RoomLayout({ queueCount }: { queueCount?: number }) {
     return () => {
       current = false
     }
-    // The demo's loadRoom changes identity on every change of its state; only the place matters.
-  }, [projectId, pathname])
+    // The demo's loadRoom changes identity on every change of its state; only the place and
+    // the viewer matter.
+  }, [projectId, pathname, me?.id])
 
   // The project is gone, or this person is not in it. The api client has set the notice.
   // A 401 signs the person out, and the signed-in route above sends them home.

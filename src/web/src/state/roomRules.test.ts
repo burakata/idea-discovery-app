@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ConversationSummary } from './context'
-import { roomPath, shownConversation } from './roomRules'
+import type { ConversationSummary, Room } from './context'
+import { hasDiscussion, roomPath, shownConversation } from './roomRules'
 
 const conversation = (number: number, state: ConversationSummary['state']): ConversationSummary => ({
   number,
@@ -33,5 +33,19 @@ describe('the conversation the header names', () => {
 
   it('is nothing when there are no conversations', () => {
     expect(shownConversation([])).toBeUndefined()
+  })
+})
+
+describe('whether a room has a Discussion', () => {
+  const room = (conversations: ConversationSummary[]) => ({ conversations }) as Room
+
+  it('has one in the demo when there is an active conversation to join', () => {
+    expect(__DEMO__).toBe(true)
+    expect(hasDiscussion(room([conversation(1, 'active')]))).toBe(true)
+  })
+
+  it('has none without a conversation, or when every conversation is finished', () => {
+    expect(hasDiscussion(room([]))).toBe(false)
+    expect(hasDiscussion(room([conversation(1, 'finished')]))).toBe(false)
   })
 })

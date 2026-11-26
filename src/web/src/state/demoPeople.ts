@@ -77,7 +77,7 @@ export function textsOf(state: AppState, projectId: string): DemoTexts | undefin
   const own = state.texts[projectId]
   if (own) return own
   const sample = projects.find((project) => project.id === projectId)
-  return sample ? { title: sample.name, intro: sample.intro.lead } : undefined
+  return sample ? { title: sample.name, intro: sample.intro } : undefined
 }
 
 export function projectIds(state: AppState): string[] {

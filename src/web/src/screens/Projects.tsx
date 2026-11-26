@@ -45,7 +45,7 @@ export default function Projects() {
                 <Icon name="idea" size={24} />
               </span>
               <div className={styles.name}>
-                <h2>{pick(project.title).text}</h2>
+                <h2 id={`project-${project.id}`}>{pick(project.title).text}</h2>
               </div>
             </div>
           )
@@ -55,11 +55,15 @@ export default function Projects() {
           if (!consultant) {
             return (
               <li key={project.id}>
-                <Link className={styles.cardLink} to={roomPath(project.id)}>
+                <Link
+                  className={styles.cardLink}
+                  to={roomPath(project.id)}
+                  aria-labelledby={`project-${project.id} open-${project.id}`}
+                >
                   <Card className={styles.project}>
                     {heading}
                     {lead}
-                    <span className={styles.open}>
+                    <span className={styles.open} id={`open-${project.id}`}>
                       {t.projects.open}
                       <Icon name="arrowRight" size={18} />
                     </span>

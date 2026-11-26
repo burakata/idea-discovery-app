@@ -39,6 +39,8 @@ export function SummaryView({ room, statements = room.content.statements, render
     { key: 'open', icon: 'question', title: t.summary.open, help: t.summary.openHelp },
   ]
 
+  const none = statements.length === 0
+
   const plainStatement = (statement: Statement) => (
     <StatementCard
       key={statement.id}
@@ -50,9 +52,14 @@ export function SummaryView({ room, statements = room.content.statements, render
   return (
     <Page>
       <PageTitle title={t.summary.title} sub={t.summary.sub} aside={aside} />
-      {statements.length === 0 && <Empty>{t.summary.nothingShared}</Empty>}
+      {none && (
+        <div className={styles.none}>
+          <Empty>{t.summary.nothingShared}</Empty>
+        </div>
+      )}
+      {/* With nothing shared the one line says it all, unless Burak can add to the groups. */}
       <div className={styles.groups}>
-        {groups.map((group) => {
+        {(!none || renderAdd) && groups.map((group) => {
           const inGroup = statements.filter((statement) => statement.group === group.key)
           return (
             <section key={group.key} className={`${styles.group} ${styles[group.key]}`}>
@@ -78,7 +85,7 @@ export function SummaryView({ room, statements = room.content.statements, render
                 {inGroup.length > 0 ? (
                   <ul className={styles.items}>{inGroup.map(renderStatement ?? plainStatement)}</ul>
                 ) : (
-                  <Empty>{t.summary.empty}</Empty>
+                  !none && <Empty>{t.summary.empty}</Empty>
                 )}
                 {renderAdd && group.key !== 'confirmed' && <div className={styles.add}>{renderAdd(group.key)}</div>}
               </div>

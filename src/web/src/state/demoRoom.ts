@@ -7,8 +7,9 @@ import type { ConversationSummary, Room } from './context'
 import * as peopleRules from './demoPeople'
 import type { AppState } from './types'
 
-// The demo has no conversations yet (PR 8b adds them): every room has one active
-// Conversation 1, started on a fixed day so the function stays pure.
+// The demo has no conversations yet (PR 8b adds them): a sample room has one active
+// Conversation 1, started on a fixed day so the function stays pure. A project Burak
+// created has none, so it has no Discussion either.
 const SAMPLE_CONVERSATIONS: ConversationSummary[] = [
   { number: 1, state: 'active', startedAt: '2026-11-12T09:00:00.000Z', finishedAt: null },
 ]
@@ -39,7 +40,7 @@ export function roomOf(state: AppState, projectId: string): Room {
     title: details.title,
     intro: details.intro,
     members: details.members.map(({ userId, displayName, role }) => ({ userId, displayName, role })),
-    conversations: SAMPLE_CONVERSATIONS.map((conversation) => ({ ...conversation })),
+    conversations: own ? SAMPLE_CONVERSATIONS.map((conversation) => ({ ...conversation })) : [],
     content,
   }
 }

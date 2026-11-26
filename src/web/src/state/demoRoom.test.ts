@@ -28,6 +28,15 @@ describe('the demo room: who may open it', () => {
     expect([notMember.status, notMember.code]).toEqual([missing.status, missing.code])
   })
 
+  it('refuses at once when View as switches to an owner who is not a member', () => {
+    const asBurak = viewingAs('burak')
+    expect(roomOf(asBurak, example.id).id).toBe(example.id)
+    const asElif = reducer(asBurak, { type: 'viewAs', id: 'elif' })
+    expect(refusal(() => roomOf(asElif, example.id)).status).toBe(404)
+    // And back: Burak can open it again.
+    expect(roomOf(reducer(asElif, { type: 'viewAs', id: 'burak' }), example.id).id).toBe(example.id)
+  })
+
   it('refuses an owner who was removed from the project', () => {
     const removed = reducer(viewingAs('elif'), {
       type: 'removeMember',
@@ -56,7 +65,7 @@ describe('the demo room: what it holds', () => {
     const state = viewingAs('burak')
     const room = roomOf(state, home.id)
     expect(room.title).toEqual(home.name)
-    expect(room.intro).toEqual(home.intro.lead)
+    expect(room.intro).toEqual(home.intro)
     expect(room.content.jobFlow).toEqual(state.rooms[home.id].jobFlow)
     expect(room.content.statements).toEqual(state.rooms[home.id].statements)
     expect(room.content.understanding).toEqual(home.understanding)
@@ -80,6 +89,11 @@ describe('the demo room: what it holds', () => {
         { number: 1, state: 'active', finishedAt: null },
       ])
     }
+  })
+
+  it('has no conversation in a project Burak created, so it has no Discussion', () => {
+    const created = reducer(viewingAs('burak'), { type: 'createProject', id: 'new-1', draft })
+    expect(roomOf(created, 'new-1').conversations).toEqual([])
   })
 
   it('has no content at all in the second sample project', () => {

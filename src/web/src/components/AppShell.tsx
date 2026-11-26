@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { Room } from '../state/context'
-import { HAS_DISCUSSION, roomPath, shownConversation } from '../state/roomRules'
+import { hasDiscussion, roomPath, shownConversation } from '../state/roomRules'
 import { useStore } from '../state/store'
 import { fill, useT } from '../strings'
 import { consultant as c } from '../strings/consultant'
@@ -73,18 +73,19 @@ export function AppShell({ room, queueCount = 0, children }: ShellProps) {
     ? [
         { to: base, icon: 'idea', label: t.nav.idea, end: true },
         // The Discussion screen joins the api build in PR 8b.
-        ...(HAS_DISCUSSION
+        ...(hasDiscussion(room)
           ? [{ to: `${base}/discussion`, icon: 'discussion' as const, label: t.nav.discussion }]
           : []),
         { to: `${base}/summary`, icon: 'summary', label: t.nav.summary },
       ]
     : [{ to: '/', icon: 'rooms', label: t.nav.projects, end: true }]
 
-  // Burak's own items. The queue and private notes are the demo's until the API has them.
+  // Burak's own items. The queue and private notes are the demo's until the API has them, and
+  // only a demo room with a conversation (a sample one) has either.
   const consultantItems: NavItem[] = room
     ? [
         { to: `${base}/people`, icon: 'people', label: c.projects.people, short: c.projects.people },
-        ...(__DEMO__
+        ...(__DEMO__ && hasDiscussion(room)
           ? [
               {
                 to: `${base}/queue`,

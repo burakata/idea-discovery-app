@@ -1,6 +1,6 @@
 // The demo data source: seed data and a simulated sign-in, saved in local storage.
 // Only the demo build includes this file (see App.tsx and store.tsx).
-import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useReducer, useRef, useState, type ReactNode } from 'react'
 import { seeds, startingViewer } from '../demo/seed'
 import { scriptLine } from '../demo/script'
 import { projects } from '../projects'
@@ -11,6 +11,7 @@ import {
   type InviteInput,
   type JoinInput,
   type Me,
+  type NoticeKey,
   type ProjectCard,
   type ProjectDraft,
   type Store,
@@ -596,6 +597,8 @@ export function createConsultantActions(
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState)
+  // The one message the demo can leave on the list: a room that could not be opened.
+  const [notice, setNotice] = useState<NoticeKey | null>(null)
   const viewer = state.people[state.viewAs]
   // The newest state, kept in step with every change the people actions make, so
   // a read right after a change sees it without waiting for a new render.
@@ -624,14 +627,33 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setLanguage: (lang) => dispatch(state.signedIn ? { type: 'language', lang } : { type: 'guestLanguage', lang }),
     projects: state.signedIn ? cardsFor(state, viewer) : null,
     projectsError: null,
-    notice: null,
+    notice,
     actionError: null,
     // No email is sent in the demo; the screen says so.
     requestLink: async () => {},
-    redeem: async (_token, chosenLanguage) => dispatch({ type: 'signIn', language: chosenLanguage ?? undefined }),
-    signOut: async () => dispatch({ type: 'signOut' }),
-    demoSignIn: () => dispatch({ type: 'signIn', language: state.guestLanguage }),
-    loadRoom: async (projectId) => roomOf(latest.current, projectId),
+    redeem: async (_token, chosenLanguage) => {
+      setNotice(null)
+      dispatch({ type: 'signIn', language: chosenLanguage ?? undefined })
+    },
+    signOut: async () => {
+      setNotice(null)
+      dispatch({ type: 'signOut' })
+    },
+    demoSignIn: () => {
+      setNotice(null)
+      dispatch({ type: 'signIn', language: state.guestLanguage })
+    },
+    // A refusal leaves the same "project gone" notice on the list as the api build does.
+    loadRoom: async (projectId) => {
+      try {
+        const room = roomOf(latest.current, projectId)
+        setNotice(null)
+        return room
+      } catch (failure) {
+        if (failure instanceof ApiError && failure.status === 404) setNotice('projectGone')
+        throw failure
+      }
+    },
 
     ...createConsultantActions(
       latest,
