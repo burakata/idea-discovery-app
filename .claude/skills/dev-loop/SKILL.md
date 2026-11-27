@@ -151,6 +151,10 @@ The pull request description, and the message to Burak, say:
 - which decisions were recorded;
 - what is left.
 
+Keep `README.md` up to date. When a change alters what it says (the status,
+what works, how to run it, what is where), update it in the same pull request
+(Burak, 2026-11-27).
+
 Rules:
 - Never push to `main` directly. Never force-push.
 - `main` only accepts a pull request whose required CI checks pass
