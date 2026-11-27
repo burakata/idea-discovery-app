@@ -12,7 +12,7 @@ import {
   toDataUrl,
 } from './demoImage'
 import { roomOf } from './demoRoom'
-import { createInitialState } from './demoStore'
+import { createConsultantActions, createInitialState, reducer, saveState } from './demoStore'
 import { showsHeroImage } from './roomRules'
 
 const bytes = (...values: number[]) => new Uint8Array(values)
@@ -104,5 +104,41 @@ describe('the idea page hero', () => {
     expect(showsHeroImage('v1', 'v1')).toBe(false)
     // A new image after a failed one gets its chance.
     expect(showsHeroImage('v2', 'v1')).toBe(true)
+  })
+})
+
+describe('the demo project image: a full browser storage', () => {
+  const home = projects[0].id
+  const full = {
+    setItem: () => {
+      throw new DOMException('full', 'QuotaExceededError')
+    },
+  }
+  const file = new File([PNG], 'photo.png', { type: 'image/png' })
+
+  it('saving the state reports a full storage instead of throwing', () => {
+    expect(saveState(createInitialState(), full)).toBe(false)
+    expect(saveState(createInitialState(), { setItem: () => undefined })).toBe(true)
+  })
+
+  it('refuses the upload with 413 and leaves the state unchanged', async () => {
+    const latest = { current: reducer(createInitialState(), { type: 'viewAs', id: 'burak' }) }
+    const before = latest.current
+    const dispatched: unknown[] = []
+    const actions = createConsultantActions(latest, (action) => dispatched.push(action), undefined, '', '', full)
+
+    await expect(actions.uploadProjectImage(home, file)).rejects.toMatchObject({ status: 413 })
+
+    expect(latest.current).toBe(before)
+    expect(dispatched).toEqual([])
+  })
+
+  it('applies the upload when the storage takes it', async () => {
+    const latest = { current: reducer(createInitialState(), { type: 'viewAs', id: 'burak' }) }
+    const actions = createConsultantActions(latest, () => undefined, undefined, '', '', { setItem: () => undefined })
+
+    const version = await actions.uploadProjectImage(home, file)
+
+    expect(imageVersionOf(latest.current, home)).toBe(version)
   })
 })

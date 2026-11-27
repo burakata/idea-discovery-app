@@ -76,7 +76,7 @@ export const consultant = {
     tryLater: 'Too many invitations went to this address today. Try again tomorrow.',
     requestNotWaiting: 'This request was already answered or has run out. Refresh the list.',
     imageNotValid: 'That file is not a PNG, JPEG or WebP image, or it could not be read. Choose another.',
-    imageTooLarge: 'That image is too large. Choose one up to 5 MB.',
+    imageTooLarge: 'That image is too large. Choose a smaller one.',
     notFound: 'That no longer exists. Reload the page.',
     tooManyTries: 'Too many tries. Wait a little, then try again.',
     network: 'Connection lost. Check your internet and try again.',

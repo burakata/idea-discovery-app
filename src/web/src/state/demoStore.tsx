@@ -111,6 +111,17 @@ export function createInitialState(): AppState {
   }
 }
 
+// Saves the demo state. False when the browser refuses (a full quota): the demo keeps
+// working from memory, and nothing throws.
+export function saveState(state: AppState, storage: Pick<Storage, 'setItem'> = localStorage): boolean {
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
+  } catch {
+    return false
+  }
+}
+
 function loadState(): AppState {
   let state = createInitialState()
   try {
@@ -498,6 +509,8 @@ export function createConsultantActions(
   // Where the demo's own pages live, so a copied sample link opens the demo's ask-to-join page.
   linkBase = '',
   device = '',
+  // Where the demo saves itself; a test passes one that is full.
+  storage?: Pick<Storage, 'setItem'>,
 ) {
   const apply = (action: Action) => {
     latest.current = reducer(latest.current, action)
@@ -547,7 +560,10 @@ export function createConsultantActions(
       if (file.size > imageRules.DEMO_IMAGE_MAX_BYTES) throw new ApiError(413, null)
       const bytes = new Uint8Array(await file.arrayBuffer())
       const type = imageRules.checkImage(bytes)
-      apply({ type: 'setImage', projectId, dataUrl: imageRules.toDataUrl(bytes, type) })
+      const action: Action = { type: 'setImage', projectId, dataUrl: imageRules.toDataUrl(bytes, type) }
+      // An image that does not fit in the browser's storage is refused, and nothing changes.
+      if (!saveState(reducer(latest.current, action), storage)) throw new ApiError(413, null)
+      apply(action)
       return imageRules.imageVersionOf(latest.current, projectId)!
     },
     removeProjectImage: async (projectId) => {
@@ -689,7 +705,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   latest.current = state
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    saveState(state)
   }, [state])
 
   const me: Me | null = state.signedIn

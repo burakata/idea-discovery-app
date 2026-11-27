@@ -13,17 +13,45 @@ public static class ProjectImageTestSupport
     public static string RemoveUrl(Guid projectId) => $"/consultant/projects/{projectId}/image/remove";
 
     // A solid image, or one whose left half is red and right half blue.
-    private static SKBitmap Bitmap(int width, int height, bool halves)
+    // With quadrants: top left green, bottom left red, the right half blue, so that all eight
+    // turns and mirrors of the picture look different.
+    private static SKBitmap Bitmap(int width, int height, bool halves, bool quadrants = false)
     {
         var bitmap = new SKBitmap(width, height);
         using var canvas = new SKCanvas(bitmap);
-        canvas.Clear(halves ? SKColors.Red : new SKColor(30, 120, 200));
-        if (halves)
+        canvas.Clear(halves || quadrants ? SKColors.Red : new SKColor(30, 120, 200));
+        if (halves || quadrants)
         {
-            using var paint = new SKPaint { Color = SKColors.Blue };
-            canvas.DrawRect(width / 2f, 0, width - width / 2f, height, paint);
+            using var blue = new SKPaint { Color = SKColors.Blue };
+            canvas.DrawRect(width / 2f, 0, width - width / 2f, height, blue);
+        }
+        if (quadrants)
+        {
+            using var green = new SKPaint { Color = SKColors.Lime };
+            canvas.DrawRect(0, 0, width / 2f, height / 2f, green);
         }
         return bitmap;
+    }
+
+    // Left half transparent, right half opaque red.
+    public static SKBitmap HalfTransparent(int width = 64, int height = 64)
+    {
+        var bitmap = new SKBitmap(width, height);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.Transparent);
+        using var paint = new SKPaint { Color = SKColors.Red };
+        canvas.DrawRect(width / 2f, 0, width - width / 2f, height, paint);
+        return bitmap;
+    }
+
+    public static byte[] Encoded(SKBitmap bitmap, SKEncodedImageFormat format) => Encode(bitmap, format);
+
+    // A real PNG of many pixels that is tiny on disk: one grey level.
+    public static byte[] SolidGreyPng(int width, int height)
+    {
+        using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
+        bitmap.Erase(SKColors.Gray);
+        return Encode(bitmap, SKEncodedImageFormat.Png);
     }
 
     private static byte[] Encode(SKBitmap bitmap, SKEncodedImageFormat format) =>
@@ -40,9 +68,10 @@ public static class ProjectImageTestSupport
 
     // A JPEG with an EXIF block (APP1) after the start marker: an orientation
     // and a GPS block with a latitude reference, built byte by byte.
-    public static byte[] JpegWithExif(int width, int height, int orientation, bool halves = false)
+    public static byte[] JpegWithExif(
+        int width, int height, int orientation, bool halves = false, bool quadrants = false, bool markers = false)
     {
-        var jpeg = Jpeg(width, height, halves);
+        var jpeg = Encode(Bitmap(width, height, halves, quadrants), SKEncodedImageFormat.Jpeg);
         var tiff = new List<byte>();
         void U16(int v) { tiff.Add((byte)v); tiff.Add((byte)(v >> 8)); }
         void U32(int v) { U16(v & 0xFFFF); U16(v >> 16); }
@@ -56,13 +85,73 @@ public static class ProjectImageTestSupport
         U16(1);
         U16(0x0001); U16(2); U32(2); tiff.AddRange(new byte[] { (byte)'N', 0, 0, 0 });
         U32(0);
+        // Text after the structure, still inside the EXIF block.
+        if (markers) tiff.AddRange(Encoding.ASCII.GetBytes(ExifMarker));
 
         var payload = new List<byte>();
         payload.AddRange("Exif\0\0"u8.ToArray());
         payload.AddRange(tiff);
         var segment = new List<byte> { 0xFF, 0xE1, (byte)((payload.Count + 2) >> 8), (byte)(payload.Count + 2) };
         segment.AddRange(payload);
-        return [.. jpeg.Take(2), .. segment, .. jpeg.Skip(2)];
+        var more = new List<byte>(segment);
+        if (markers)
+        {
+            more.AddRange(Segment(0xE1, Encoding.ASCII.GetBytes("http://ns.adobe.com/xap/1.0/\0<x:xmpmeta>" + XmpMarker + "</x:xmpmeta>")));
+            more.AddRange(Segment(0xE2, [.. "ICC_PROFILE\0"u8.ToArray(), 1, 1, .. Encoding.ASCII.GetBytes(IccMarker)]));
+            more.AddRange(Segment(0xFE, Encoding.ASCII.GetBytes(CommentMarker)));
+        }
+        return [.. jpeg.Take(2), .. more, .. jpeg.Skip(2)];
+    }
+
+    public const string ExifMarker = "MARKER-EXIF-GPS-HOME";
+    public const string XmpMarker = "MARKER-XMP-AUTHOR";
+    public const string IccMarker = "MARKER-ICC-PROFILE";
+    public const string CommentMarker = "MARKER-COM-CAMERA";
+
+    private static byte[] Segment(byte marker, byte[] payload) =>
+        [0xFF, marker, (byte)((payload.Length + 2) >> 8), (byte)(payload.Length + 2), .. payload];
+
+    // A two-frame animated WebP, built by hand from two still images: the first frame is
+    // red, the second blue. Skia cannot write animations, so the frames are wrapped here.
+    public static byte[] AnimatedWebP(int size = 16)
+    {
+        byte[] Still(SKColor colour)
+        {
+            using var bitmap = new SKBitmap(size, size);
+            bitmap.Erase(colour);
+            return Encode(bitmap, SKEncodedImageFormat.Webp);
+        }
+        // The image chunk of a still file: everything after "RIFF", the size and "WEBP".
+        byte[] ImageChunk(byte[] still) => still[12..];
+        static void U24(List<byte> into, int v) { into.Add((byte)v); into.Add((byte)(v >> 8)); into.Add((byte)(v >> 16)); }
+        static void U32(List<byte> into, int v) { U24(into, v); into.Add((byte)(v >> 24)); }
+        static byte[] Chunk(string type, List<byte> data)
+        {
+            var chunk = new List<byte>(Encoding.ASCII.GetBytes(type));
+            U32(chunk, data.Count);
+            chunk.AddRange(data);
+            if (data.Count % 2 == 1) chunk.Add(0);
+            return [.. chunk];
+        }
+
+        var body = new List<byte>(Encoding.ASCII.GetBytes("WEBP"));
+        var vp8x = new List<byte> { 0x02, 0, 0, 0 };
+        U24(vp8x, size - 1); U24(vp8x, size - 1);
+        body.AddRange(Chunk("VP8X", vp8x));
+        var anim = new List<byte> { 255, 255, 255, 255, 0, 0 };
+        body.AddRange(Chunk("ANIM", anim));
+        foreach (var colour in new[] { SKColors.Red, SKColors.Blue })
+        {
+            var frame = new List<byte>();
+            U24(frame, 0); U24(frame, 0); U24(frame, size - 1); U24(frame, size - 1); U24(frame, 100);
+            frame.Add(0);
+            frame.AddRange(ImageChunk(Still(colour)));
+            body.AddRange(Chunk("ANMF", frame));
+        }
+        var file = new List<byte>(Encoding.ASCII.GetBytes("RIFF"));
+        U32(file, body.Count);
+        file.AddRange(body);
+        return [.. file];
     }
 
     // A PNG whose header says width x height but whose pixels are one empty

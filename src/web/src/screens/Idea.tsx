@@ -23,6 +23,7 @@ export default function Idea() {
   const [failedVersion, setFailedVersion] = useState<string | null>(null)
 
   const { content } = room
+  const heroVersion = showsHeroImage(room.imageVersion, failedVersion) ? room.imageVersion : null
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 
   const steps = content.jobFlow.map((step) => {
@@ -49,13 +50,13 @@ export default function Idea() {
             </div>
           )}
         </div>
-        <div className={styles.art}>
-          {showsHeroImage(room.imageVersion, failedVersion) ? (
+        <div className={`${styles.art} ${heroVersion ? styles.artPhoto : ''}`}>
+          {heroVersion ? (
             <img
               className={styles.photo}
-              src={projectImageUrl(room.id, room.imageVersion)}
+              src={projectImageUrl(room.id, heroVersion)}
               alt=""
-              onError={() => setFailedVersion(room.imageVersion)}
+              onError={() => setFailedVersion(heroVersion)}
             />
           ) : (
             <HeroArt />

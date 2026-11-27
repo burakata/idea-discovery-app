@@ -1,6 +1,8 @@
 using IdeaDiscovery.Api.Auth;
+using IdeaDiscovery.Api.Conversations;
 using IdeaDiscovery.Api.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using SkiaSharp;
@@ -22,6 +24,10 @@ public static class ProjectImageEndpoints
     public const int MaxOutputSide = 1600;
     private const int OutputQuality = 80;
     private const string OutputType = "image/webp";
+
+    // One decode at a time: a large image takes tens of megabytes while it is decoded, and
+    // several at once on a small server would add up. Uploads are Burak's and rare.
+    private static readonly SemaphoreSlim DecodeGate = new(1, 1);
 
     public static void MapProjectImages(this IEndpointRouteBuilder app)
     {
@@ -57,7 +63,9 @@ public static class ProjectImageEndpoints
             Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
             // Refused before the body is read. The request-size metadata below
-            // enforces it for bodies with no declared length.
+            // enforces it for bodies with no declared length. That chunked-body limit is
+            // Kestrel's: the test server does not enforce it, so PR 9 must check it
+            // against the real server.
             if (http.Request.ContentLength > MaxRequestBytes) return TooLarge();
             var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
@@ -65,7 +73,10 @@ public static class ProjectImageEndpoints
             var upload = await ReadUpload(http);
             if (upload.Refusal is not null) return upload.Refusal;
 
-            var output = ReEncode(upload.Bytes!);
+            Output? output;
+            await DecodeGate.WaitAsync();
+            try { output = ReEncode(upload.Bytes!); }
+            finally { DecodeGate.Release(); }
             if (output is null) return NotValid();
 
             var now = clock.GetUtcNow().UtcDateTime;
@@ -85,7 +96,8 @@ public static class ProjectImageEndpoints
             AuditLog.Add(db, clock, "project_image_set", SessionValidation.UserId(http.User), Ip(http), project.Id);
             await db.SaveChangesAsync();
             return Results.Ok(new { imageVersion = version });
-        }).WithMetadata(new RequestSizeLimitAttribute(MaxRequestBytes));
+        }).RequireRateLimiting(ConversationEndpoints.PostRateLimit)
+          .WithMetadata(new RequestSizeLimitAttribute(MaxRequestBytes));
 
         // Removing when there is no image is not an error: the result is the same, 204.
         consultant.MapPost("/projects/{projectId:guid}/image/remove", async (
@@ -155,8 +167,10 @@ public static class ProjectImageEndpoints
             if (width < 1 || height < 1 || width > MaxSide || height > MaxSide || (long)width * height > MaxPixels)
                 return null;
 
-            // The first frame only, then at most 1600 px on the long edge, then upright.
-            using var decoded = SKBitmap.Decode(codec);
+            // The first frame only, then at most 1600 px on the long edge, then upright. When
+            // a step has nothing to do it returns its input, so Dispose runs twice on one
+            // bitmap, which Skia allows.
+            using var decoded = Decode(codec);
             if (decoded is null) return null;
             using var sized = Downsize(decoded);
             using var upright = Orient(sized, codec.EncodedOrigin);
@@ -170,10 +184,32 @@ public static class ProjectImageEndpoints
         }
     }
 
+    // The first frame. A source far above the output size is decoded at the largest reduced
+    // size the codec offers that is still at least as big as needed, to save memory.
+    private static SKBitmap? Decode(SKCodec codec)
+    {
+        var size = codec.Info.Size;
+        var longest = Math.Max(size.Width, size.Height);
+        if (longest > MaxOutputSide * 2)
+        {
+            // Codecs may round down to a size under the one asked for; ask again for more.
+            for (var scale = (float)MaxOutputSide / longest; scale < 1; scale *= 1.5f)
+            {
+                var scaled = codec.GetScaledDimensions(scale);
+                if (Math.Max(scaled.Width, scaled.Height) >= MaxOutputSide) { size = scaled; break; }
+            }
+        }
+        var info = new SKImageInfo(size.Width, size.Height);
+        var bitmap = new SKBitmap(info);
+        if (codec.GetPixels(info, bitmap.GetPixels()) == SKCodecResult.Success) return bitmap;
+        bitmap.Dispose();
+        return null;
+    }
+
     private static SKBitmap Downsize(SKBitmap source)
     {
         var longest = Math.Max(source.Width, source.Height);
-        if (longest <= MaxOutputSide) return source.Copy();
+        if (longest <= MaxOutputSide) return source;
         var scale = (double)MaxOutputSide / longest;
         var info = new SKImageInfo(
             Math.Max(1, (int)Math.Round(source.Width * scale)),
@@ -198,6 +234,7 @@ public static class ProjectImageEndpoints
             SKEncodedOrigin.LeftBottom => (Matrix(0, 1, 0, -1, 0, w), true),
             _ => (SKMatrix.Identity, false),
         };
+        if (origin is SKEncodedOrigin.TopLeft or SKEncodedOrigin.Default) return source;
         var result = new SKBitmap(new SKImageInfo(swap ? source.Height : source.Width, swap ? source.Width : source.Height));
         using var canvas = new SKCanvas(result);
         canvas.Clear(SKColors.Transparent);

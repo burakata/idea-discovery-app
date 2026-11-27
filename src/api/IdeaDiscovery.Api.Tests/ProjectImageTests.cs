@@ -307,9 +307,31 @@ public class ProjectImageTests
         Assert.Equal("image_not_valid", await r.Burak.ErrorCode(response));
     }
 
-    // A real, decodable PNG that is only long or tall: it would be accepted
-    // but for the side limit.
-    private static byte[] PngRow(int width, int height) => Png(width, height);
+    [Fact]
+    public async Task An_image_with_too_many_pixels_but_sides_within_the_limit_is_refused_before_decoding()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+
+        // 64 megapixels, each side under 10,000: only a header, so only the pixel limit can refuse it.
+        var response = await r.Burak.UploadImage(r.ProjectId, PngWithHeader(8000, 8000));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("image_not_valid", await r.Burak.ErrorCode(response));
+    }
+
+    [Fact]
+    public async Task A_real_image_just_over_40_megapixels_is_refused_and_one_just_under_is_accepted()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+
+        var over = await r.Burak.UploadImage(r.ProjectId, SolidGreyPng(8000, 5001));
+        var under = await r.Burak.UploadImage(r.ProjectId, SolidGreyPng(8000, 5000));
+
+        Assert.Equal(HttpStatusCode.BadRequest, over.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, under.StatusCode);
+    }
 
     [Fact]
     public async Task An_image_at_the_side_limit_is_accepted()
@@ -329,8 +351,11 @@ public class ProjectImageTests
     {
         using var f = new RoomsFactory();
         var r = await NewRoom(f);
-        var source = JpegWithExif(200, 100, orientation: 1);
-        Assert.Contains("Exif", System.Text.Encoding.ASCII.GetString(source));
+        var source = JpegWithExif(200, 100, orientation: 1, markers: true);
+        // The source really carries each kind of hidden data, so the checks below can fail.
+        var sourceText = System.Text.Encoding.Latin1.GetString(source);
+        string[] markers = [ExifMarker, XmpMarker, IccMarker, CommentMarker];
+        foreach (var marker in markers) Assert.Contains(marker, sourceText);
 
         await r.Burak.SetImage(r.ProjectId, source);
         var served = await Served(r.Owner, r.ProjectId);
@@ -339,9 +364,107 @@ public class ProjectImageTests
         Assert.DoesNotContain("EXIF", chunks);
         Assert.DoesNotContain("XMP ", chunks);
         Assert.DoesNotContain("ICCP", chunks);
-        var text = System.Text.Encoding.ASCII.GetString(served);
+        var text = System.Text.Encoding.Latin1.GetString(served);
+        foreach (var marker in markers) Assert.DoesNotContain(marker, text);
         Assert.DoesNotContain("Exif", text);
-        Assert.DoesNotContain("GPS", text);
+        Assert.DoesNotContain("ICC_PROFILE", text);
+        Assert.DoesNotContain("xmpmeta", text);
+    }
+
+    public static TheoryData<int, bool> Origins => new()
+    {
+        { 1, false }, { 2, false }, { 3, false }, { 4, false },
+        { 5, true }, { 6, true }, { 7, true }, { 8, true },
+    };
+
+    // Where a pixel of the stored picture lands once the EXIF origin is applied: the
+    // EXIF specification's eight cases.
+    private static (int X, int Y) Upright(int origin, int x, int y, int w, int h) => origin switch
+    {
+        1 => (x, y),
+        2 => (w - 1 - x, y),
+        3 => (w - 1 - x, h - 1 - y),
+        4 => (x, h - 1 - y),
+        5 => (y, x),
+        6 => (h - 1 - y, x),
+        7 => (h - 1 - y, w - 1 - x),
+        _ => (y, w - 1 - x),
+    };
+
+    [Theory]
+    [MemberData(nameof(Origins))]
+    public async Task Every_EXIF_orientation_comes_back_upright(int origin, bool swapped)
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+        const int w = 200, h = 100;
+        await r.Burak.SetImage(r.ProjectId, JpegWithExif(w, h, origin, quadrants: true));
+
+        using var bitmap = SKBitmap.Decode(await Served(r.Owner, r.ProjectId));
+
+        Assert.Equal(swapped ? (h, w) : (w, h), (bitmap.Width, bitmap.Height));
+        // The middle of each coloured part of the stored picture, and the colour it must have.
+        foreach (var (x, y, colour) in new[] { (50, 25, "green"), (50, 75, "red"), (150, 50, "blue") })
+        {
+            var (ux, uy) = Upright(origin, x, y, w, h);
+            var pixel = bitmap.GetPixel(ux, uy);
+            var ok = colour switch
+            {
+                "green" => pixel.Green > 200 && pixel.Red < 90 && pixel.Blue < 90,
+                "red" => pixel.Red > 200 && pixel.Green < 90 && pixel.Blue < 90,
+                _ => pixel.Blue > 200 && pixel.Red < 90 && pixel.Green < 90,
+            };
+            Assert.True(ok, $"origin {origin}: expected {colour} at ({ux},{uy}) but found {pixel}");
+        }
+    }
+
+    [Theory]
+    [InlineData("png")]
+    [InlineData("webp")]
+    public async Task Transparency_is_kept(string type)
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+        using var source = HalfTransparent();
+        await r.Burak.SetImage(r.ProjectId,
+            Encoded(source, type == "png" ? SKEncodedImageFormat.Png : SKEncodedImageFormat.Webp));
+
+        using var bitmap = SKBitmap.Decode(await Served(r.Owner, r.ProjectId));
+
+        Assert.True(bitmap.GetPixel(10, 32).Alpha < 10, "the transparent half became opaque");
+        var solid = bitmap.GetPixel(54, 32);
+        Assert.True(solid.Alpha > 245 && solid.Red > 200, $"the opaque half changed: {solid}");
+    }
+
+    [Fact]
+    public async Task An_animated_WebP_keeps_only_its_first_frame()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+        var source = AnimatedWebP();
+        Assert.Contains("ANMF", WebPChunks(source));
+
+        await r.Burak.SetImage(r.ProjectId, source);
+        var served = await Served(r.Owner, r.ProjectId);
+
+        Assert.DoesNotContain("ANMF", WebPChunks(served));
+        Assert.DoesNotContain("ANIM", WebPChunks(served));
+        using var bitmap = SKBitmap.Decode(served);
+        var pixel = bitmap.GetPixel(8, 8);
+        Assert.True(pixel.Red > 200 && pixel.Blue < 90, $"the first frame is red, found {pixel}");
+    }
+
+    [Fact]
+    public async Task Uploads_are_limited_per_person()
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+
+        // Cheap refusals count too: 30 a minute, then 429.
+        for (var i = 0; i < 30; i++)
+            Assert.Equal(HttpStatusCode.BadRequest, (await r.Burak.UploadImage(r.ProjectId, Html)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await r.Burak.UploadImage(r.ProjectId, Png())).StatusCode);
     }
 
     [Fact]
@@ -371,6 +494,21 @@ public class ProjectImageTests
         var r = await NewRoom(f);
 
         await r.Burak.SetImage(r.ProjectId, Jpeg(3000, 1500));
+
+        using var bitmap = SKBitmap.Decode(await Served(r.Owner, r.ProjectId));
+        Assert.Equal((1600, 800), (bitmap.Width, bitmap.Height));
+    }
+
+    [Theory]
+    [InlineData("jpeg")]
+    [InlineData("png")]
+    public async Task A_6000_px_image_decoded_at_a_reduced_size_still_ends_at_1600_px(string type)
+    {
+        using var f = new RoomsFactory();
+        var r = await NewRoom(f);
+        var source = type == "jpeg" ? Jpeg(6000, 3000) : Png(6000, 3000);
+
+        await r.Burak.SetImage(r.ProjectId, source);
 
         using var bitmap = SKBitmap.Decode(await Served(r.Owner, r.ProjectId));
         Assert.Equal((1600, 800), (bitmap.Width, bitmap.Height));

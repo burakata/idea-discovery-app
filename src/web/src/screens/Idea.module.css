@@ -36,11 +36,16 @@
   width: var(--size-art-phone);
 }
 
-/* The same frame as the illustration (4:3, up to its width), so nothing moves when it loads. */
+/* On phones the image takes the card's full width, under the text. */
+.artPhoto {
+  width: 100%;
+  justify-self: stretch;
+}
+
+/* The same frame as the illustration on desktop (4:3, up to its width), so nothing moves when it loads. */
 .photo {
   display: block;
   width: 100%;
-  max-width: var(--size-art);
   aspect-ratio: 4 / 3;
   object-fit: cover;
   background: var(--color-art-ground);
@@ -148,6 +153,10 @@
   .actions {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+
+  .photo {
+    max-width: var(--size-art);
   }
 
   .art {

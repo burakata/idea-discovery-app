@@ -179,8 +179,10 @@ export default function ProjectForm() {
             )
           })}
           {editing && projectId && (
-            <fieldset className={styles.group}>
-              <legend>{t.imageTitle}</legend>
+            <section className={styles.group} aria-labelledby="project-image-title">
+              <h2 id="project-image-title" className={styles.groupTitle}>
+                {t.imageTitle}
+              </h2>
               {__DEMO__ && <NoticeBox>{demoProjectForm.imageNote}</NoticeBox>}
               {imageVersion ? (
                 <img
@@ -200,22 +202,22 @@ export default function ProjectForm() {
                 className={styles.file}
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                disabled={imageBusy}
                 aria-describedby="project-image-note"
                 onChange={chooseImage}
               />
               <p id="project-image-note" className={styles.hint}>
                 {t.imageHint} {t.imageDecoration}
               </p>
-              {/* Always on the page, so a screen reader announces what appears in it. */}
-              <div aria-live="polite">
-                {imageError && (
-                  <div role="alert">
-                    <NoticeBox tone="amber">{c.errors[imageError]}</NoticeBox>
-                  </div>
-                )}
-                {imageNote && !imageError && <p className={styles.hint}>{imageNote}</p>}
-              </div>
+              {/* A refusal is an alert; a success is a status. Each is announced once. The field
+                  stays enabled while uploading so keyboard focus is never lost. */}
+              {imageError && (
+                <div role="alert">
+                  <NoticeBox tone="amber">{c.errors[imageError]}</NoticeBox>
+                </div>
+              )}
+              <p role="status" className={styles.hint}>
+                {imageError ? '' : imageNote}
+              </p>
               {imageVersion && (
                 <div className={styles.actions}>
                   <Button variant="secondary" disabled={imageBusy} onClick={() => setRemoving(true)}>
@@ -223,7 +225,7 @@ export default function ProjectForm() {
                   </Button>
                 </div>
               )}
-            </fieldset>
+            </section>
           )}
           {failure && (
             <div role="alert">

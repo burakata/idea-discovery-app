@@ -21,6 +21,12 @@
   font-weight: var(--weight-bold);
 }
 
+.groupTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
 .group label {
   font-weight: var(--weight-medium);
 }
