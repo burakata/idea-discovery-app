@@ -10,7 +10,12 @@ how a job runs and how money is made. It is not the owners' business app, and
 it does not judge whether the idea will work. Owners can use it in English or
 Turkish.
 
-**Status:** Phase 1 in progress: M0 done, M1 underway. See the
+**Status:** Phase 1 in progress. M0 is done, and M1 is nearly done. Against
+the real API, people sign in with email links, the consultant creates
+projects and invites people, people can ask to join, and the room has its
+idea page, a shared discussion and the shared summary's empty state. Still to
+come in M1: the last room screens and deployment. There is no AI yet; it
+comes in M2. See the
 [milestones](https://github.com/burakata/idea-discovery-app/milestones).
 
 ## How it works
@@ -60,9 +65,9 @@ as**, in the strip at the top, switches between the owners and the
 consultant; **Reset demo** starts again. [PROTOTYPE.md](PROTOTYPE.md) lists
 what is simulated.
 
-**The API** needs the .NET 10 SDK. It has sign-in by email link, projects,
-invitations, asking to join, conversations, and one image per project
-(re-encoded on the server with SkiaSharp):
+**The API** needs the .NET 10 SDK. It has sign-in by email link, projects and
+their images (re-encoded on the server with SkiaSharp), invitations, asking
+to join, and conversations:
 
 ```
 dotnet test src/api
