@@ -192,7 +192,8 @@ export interface Store {
   // Without a cursor, readMessages gives the whole conversation. Only Burak may finish or start.
   listConversations: (projectId: string) => Promise<ConversationSummary[]>
   readMessages: (projectId: string, number: number, cursor?: string) => Promise<MessagePage>
-  postMessage: (projectId: string, text: string) => Promise<RoomMessage>
+  // Posts to the named conversation only: 409 when it is no longer the active one.
+  postMessage: (projectId: string, number: number, text: string) => Promise<RoomMessage>
   finishConversation: (projectId: string) => Promise<void>
   startConversation: (projectId: string) => Promise<ConversationSummary>
 

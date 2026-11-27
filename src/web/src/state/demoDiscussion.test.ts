@@ -37,7 +37,7 @@ describe('the demo discussion: writing', () => {
   it('puts a sent message in the active conversation, under the writer’s own name and role', async () => {
     const demo = demoAs('elif')
     const before = (await heldBy(demo, 1)).length
-    const sent = await demo.room.postMessage(home.id, '  Merhaba  ')
+    const sent = await demo.room.postMessage(home.id, 1, '  Merhaba  ')
     expect(sent).toMatchObject({
       authorId: 'elif',
       authorName: 'Elif Yıldız',
@@ -56,21 +56,33 @@ describe('the demo discussion: writing', () => {
     const demo = demoAs('burak')
     await demo.room.finishConversation(home.id)
     await demo.room.startConversation(home.id)
-    const sent = await demo.room.postMessage(home.id, 'A fresh start')
+    const sent = await demo.room.postMessage(home.id, 2, 'A fresh start')
     expect((await heldBy(demo, 2)).map((message) => message.id)).toEqual([sent.id])
     // The first conversation did not change.
     expect((await heldBy(demo, 1)).some((message) => message.id === sent.id)).toBe(false)
   })
 
+  it('refuses a message for a conversation that was finished and replaced, and stores it nowhere', async () => {
+    const demo = demoAs('burak')
+    const before = (await heldBy(demo, 1)).length
+    await demo.room.finishConversation(home.id)
+    await demo.room.startConversation(home.id)
+    const refused = await refusal(demo.room.postMessage(home.id, 1, 'Meant for one'))
+    expect([refused.status, refused.code]).toEqual([409, 'no_active_conversation'])
+    expect(await heldBy(demo, 1)).toHaveLength(before)
+    expect(await heldBy(demo, 2)).toEqual([])
+    expect((await refusal(demo.room.postMessage(home.id, 9, 'Nowhere'))).status).toBe(404)
+  })
+
   it('refuses an empty message and a message that is too long', async () => {
     const demo = demoAs('elif')
-    expect((await refusal(demo.room.postMessage(home.id, '   '))).status).toBe(400)
-    expect((await refusal(demo.room.postMessage(home.id, 'x'.repeat(4001)))).status).toBe(413)
+    expect((await refusal(demo.room.postMessage(home.id, 1, '   '))).status).toBe(400)
+    expect((await refusal(demo.room.postMessage(home.id, 1, 'x'.repeat(4001)))).status).toBe(413)
   })
 
   it('refuses someone who is not in the project, like a project that does not exist', async () => {
-    const missing = await refusal(demoAs('elif').room.postMessage('nope', 'Hi'))
-    const notMember = await refusal(demoAs('elif').room.postMessage(projects[1].id, 'Hi'))
+    const missing = await refusal(demoAs('elif').room.postMessage('nope', 1, 'Hi'))
+    const notMember = await refusal(demoAs('elif').room.postMessage(projects[1].id, 1, 'Hi'))
     expect([notMember.status, notMember.code]).toEqual([missing.status, missing.code])
     expect(notMember.status).toBe(404)
     expect((await refusal(demoAs('elif').room.readMessages(projects[1].id, 1))).status).toBe(404)
@@ -80,7 +92,7 @@ describe('the demo discussion: writing', () => {
     const demo = demoAs('elif')
     const queued = demo.latest.current.rooms[home.id].queue.length
     const messages = (await heldBy(demo, 1)).length
-    await demo.room.postMessage(home.id, 'Hello')
+    await demo.room.postMessage(home.id, 1, 'Hello')
     expect(demo.latest.current.rooms[home.id].queue.length).toBe(queued + 1)
     expect(await heldBy(demo, 1)).toHaveLength(messages + 1)
   })
@@ -101,7 +113,7 @@ describe('the demo discussion: finishing and starting', () => {
 
     // The server-side rule: nothing can be written, however the screen is used.
     const owner = demoAs('elif', demo.latest.current)
-    const refused = await refusal(owner.room.postMessage(home.id, 'Too late'))
+    const refused = await refusal(owner.room.postMessage(home.id, 1, 'Too late'))
     expect([refused.status, refused.code]).toEqual([409, 'no_active_conversation'])
     expect(refused.key).toBe('conversationFinished')
     expect(await heldBy(owner, 1)).toEqual(messages)
@@ -152,7 +164,7 @@ describe('the demo discussion: messages and readers', () => {
     const demo = demoAs('elif')
     const first = await demo.room.readMessages(home.id, 1)
     expect((await demo.room.readMessages(home.id, 1, first.cursor)).messages).toEqual([])
-    const sent = await demo.room.postMessage(home.id, 'One more')
+    const sent = await demo.room.postMessage(home.id, 1, 'One more')
     const next = await demo.room.readMessages(home.id, 1, first.cursor)
     expect(next.messages).toEqual([sent])
     expect((await refusal(demo.room.readMessages(home.id, 1, 'garbage'))).status).toBe(400)
@@ -194,7 +206,7 @@ describe('a project Burak creates in the demo', () => {
     const id = await demo.projects.createProject(draft)
     expect(await demo.room.listConversations(id)).toMatchObject([{ number: 1, state: 'active', finishedAt: null }])
     expect((await demo.room.readMessages(id, 1)).messages).toEqual([])
-    const sent = await demo.room.postMessage(id, 'First words')
+    const sent = await demo.room.postMessage(id, 1, 'First words')
     expect(sent).toMatchObject({ authorId: 'burak', authorRole: 'consultant' })
     expect((await demo.room.readMessages(id, 1)).messages).toEqual([sent])
   })

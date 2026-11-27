@@ -392,14 +392,15 @@ public class ConversationsTests
         [
             "/projects/{projectId:guid}/conversations",
             "/projects/{projectId:guid}/conversations/{number}/messages",
-            "/projects/{projectId:guid}/conversations/active/messages",
             "/consultant/projects/{projectId:guid}/conversations/active/finish",
             "/consultant/projects/{projectId:guid}/conversations",
         ];
         foreach (var pattern in expected)
         {
-            var endpoint = Assert.Single(routes, e => e.RoutePattern.RawText == pattern);
-            Assert.Null(endpoint.Metadata.GetMetadata<IAllowAnonymous>());
+            // The {number}/messages pattern is both the read (GET) and the post (POST).
+            var endpoints = routes.Where(e => e.RoutePattern.RawText == pattern).ToList();
+            Assert.NotEmpty(endpoints);
+            Assert.All(endpoints, endpoint => Assert.Null(endpoint.Metadata.GetMetadata<IAllowAnonymous>()));
         }
     }
 
