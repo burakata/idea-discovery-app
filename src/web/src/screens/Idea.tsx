@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { Page } from '../components/AppShell'
 import { Button } from '../components/Button'
@@ -7,7 +8,8 @@ import { Icon } from '../components/Icon'
 import { JobFlow } from '../components/JobFlow'
 import { Pill } from '../components/Pill'
 import type { Room } from '../state/context'
-import { hasDiscussion, roomPath } from '../state/roomRules'
+import { hasDiscussion, roomPath, showsHeroImage } from '../state/roomRules'
+import { useStore } from '../state/store'
 import { useT } from '../strings'
 import styles from './Idea.module.css'
 
@@ -16,8 +18,12 @@ import styles from './Idea.module.css'
 export default function Idea() {
   const room = useOutletContext<Room>()
   const { t, pick } = useT()
+  const { projectImageUrl } = useStore()
+  // The version that failed to load: that image is replaced by the illustration.
+  const [failedVersion, setFailedVersion] = useState<string | null>(null)
 
   const { content } = room
+  const heroVersion = showsHeroImage(room.imageVersion, failedVersion) ? room.imageVersion : null
   const needsConfirmation = <Pill tone="amber">{t.status.needsConfirmation}</Pill>
 
   const steps = content.jobFlow.map((step) => {
@@ -44,8 +50,17 @@ export default function Idea() {
             </div>
           )}
         </div>
-        <div className={styles.art}>
-          <HeroArt />
+        <div className={`${styles.art} ${heroVersion ? styles.artPhoto : ''}`}>
+          {heroVersion ? (
+            <img
+              className={styles.photo}
+              src={projectImageUrl(room.id, heroVersion)}
+              alt=""
+              onError={() => setFailedVersion(heroVersion)}
+            />
+          ) : (
+            <HeroArt />
+          )}
         </div>
       </section>
 

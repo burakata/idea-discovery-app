@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<JoinRequest> JoinRequests => Set<JoinRequest>();
     public DbSet<SignInToken> SignInTokens => Set<SignInToken>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
+    public DbSet<ProjectImage> ProjectImages => Set<ProjectImage>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<MessageTranslation> MessageTranslations => Set<MessageTranslation>();
@@ -98,6 +99,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(x => x.IpAddress).HasMaxLength(64);
             e.HasIndex(x => x.UserId);
             e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<ProjectImage>(e =>
+        {
+            e.HasKey(x => x.ProjectId);
+            e.Property(x => x.Version).HasMaxLength(64);
+            e.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<Conversation>(e =>

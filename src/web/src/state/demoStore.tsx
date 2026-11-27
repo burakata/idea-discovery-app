@@ -17,6 +17,7 @@ import {
   type Store,
 } from './context'
 import { browserClipboard, copyLink } from './copyLink'
+import * as imageRules from './demoImage'
 import * as joinRules from './demoJoin'
 import * as peopleRules from './demoPeople'
 import * as roomRules from './demoRoom'
@@ -24,7 +25,7 @@ import type { AppState, Message, Person, QueueItem, Room } from './types'
 
 const STORAGE_KEY = 'idea-discovery-rooms-demo'
 // Raise this when the saved shape or the seed changes, so old demo data is dropped.
-const VERSION = 9
+const VERSION = 10
 const AUTO_REPLY_DELAY_MS = 1500
 
 type Action =
@@ -48,6 +49,8 @@ type Action =
   | { type: 'startConversation'; roomId: string; now: string }
   | { type: 'createProject'; id: string; draft: ProjectDraft; now?: string }
   | { type: 'saveProject'; id: string; draft: ProjectDraft }
+  | { type: 'setImage'; projectId: string; dataUrl: string }
+  | { type: 'removeImage'; projectId: string }
   | { type: 'invite'; projectId: string; input: InviteInput; now: string }
   | { type: 'revokeInvitation'; invitationId: string }
   | { type: 'endSession'; sessionId: string; now: string }
@@ -105,6 +108,17 @@ export function createInitialState(): AppState {
     people,
     rooms,
     ...peopleRules.initialPeopleState(people),
+  }
+}
+
+// Saves the demo state. False when the browser refuses (a full quota): the demo keeps
+// working from memory, and nothing throws.
+export function saveState(state: AppState, storage: Pick<Storage, 'setItem'> = localStorage): boolean {
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(state))
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -409,6 +423,12 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'saveProject':
       return peopleRules.saveProject(state, action.id, action.draft)
 
+    case 'setImage':
+      return imageRules.setImage(state, action.projectId, action.dataUrl)
+
+    case 'removeImage':
+      return imageRules.removeImage(state, action.projectId)
+
     case 'invite':
       return attempt(state, () => peopleRules.invite(state, action.projectId, action.input, new Date(action.now)).state)
 
@@ -489,6 +509,8 @@ export function createConsultantActions(
   // Where the demo's own pages live, so a copied sample link opens the demo's ask-to-join page.
   linkBase = '',
   device = '',
+  // Where the demo saves itself; a test passes one that is full.
+  storage?: Pick<Storage, 'setItem'>,
 ) {
   const apply = (action: Action) => {
     latest.current = reducer(latest.current, action)
@@ -499,6 +521,9 @@ export function createConsultantActions(
     | 'createProject'
     | 'saveProject'
     | 'getProject'
+    | 'uploadProjectImage'
+    | 'removeProjectImage'
+    | 'projectImageUrl'
     | 'invite'
     | 'listInvitations'
     | 'revokeInvitation'
@@ -529,6 +554,23 @@ export function createConsultantActions(
       apply({ type: 'saveProject', id, draft })
     },
     getProject: async (id) => peopleRules.detailsOf(latest.current, id),
+    uploadProjectImage: async (projectId, file) => {
+      if (!peopleRules.textsOf(latest.current, projectId)) throw new ApiError(404, null)
+      // The size is checked before the file is read, as the API does.
+      if (file.size > imageRules.DEMO_IMAGE_MAX_BYTES) throw new ApiError(413, null)
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const type = imageRules.checkImage(bytes)
+      const action: Action = { type: 'setImage', projectId, dataUrl: imageRules.toDataUrl(bytes, type) }
+      // An image that does not fit in the browser's storage is refused, and nothing changes.
+      if (!saveState(reducer(latest.current, action), storage)) throw new ApiError(413, null)
+      apply(action)
+      return imageRules.imageVersionOf(latest.current, projectId)!
+    },
+    removeProjectImage: async (projectId) => {
+      if (!peopleRules.textsOf(latest.current, projectId)) throw new ApiError(404, null)
+      apply({ type: 'removeImage', projectId })
+    },
+    projectImageUrl: (projectId, version) => imageRules.imageUrlOf(latest.current, projectId, version),
     invite: async (projectId, input) => {
       const now = new Date()
       const { outcome } = peopleRules.invite(latest.current, projectId, input, now)
@@ -663,7 +705,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   latest.current = state
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    saveState(state)
   }, [state])
 
   const me: Me | null = state.signedIn

@@ -53,11 +53,13 @@ const consultantCodeKeys: Record<string, ConsultantErrorKey> = {
   cannot_remove_consultant: 'cannotRemoveConsultant',
   try_later: 'tryLater',
   request_not_waiting: 'requestNotWaiting',
+  image_not_valid: 'imageNotValid',
 }
 
 export function consultantErrorKey(status: number, code: string | null): ConsultantErrorKey {
   if (code && code in consultantCodeKeys) return consultantCodeKeys[code]
   if (status === 404) return 'notFound'
+  if (status === 413) return 'imageTooLarge'
   if (status === 429) return 'tooManyTries'
   if (status === 0) return 'network'
   return 'generic'
@@ -97,6 +99,9 @@ interface RequestOptions {
   expectMissing?: boolean
 }
 
+// Where the API answers, on the page's own origin. The one place that knows the prefix.
+const url = (path: string) => `/api${path}`
+
 export function createApiClient(options: ApiClientOptions = {}) {
   const send = options.fetch ?? ((input, init) => fetch(input, init))
   let csrf: string | null = null
@@ -112,14 +117,16 @@ export function createApiClient(options: ApiClientOptions = {}) {
 
   async function call(method: string, path: string, body?: unknown, token?: string): Promise<Response> {
     const headers: Record<string, string> = {}
-    if (body !== undefined) headers['Content-Type'] = 'application/json'
+    // A form goes as it is: the browser sets its Content-Type, with the boundary.
+    const isForm = typeof FormData !== 'undefined' && body instanceof FormData
+    if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
     if (token) headers['X-CSRF-TOKEN'] = token
     try {
-      return await send(`/api${path}`, {
+      return await send(url(path), {
         method,
         headers,
         credentials: 'same-origin',
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
       })
     } catch {
       throw new ApiError(0, null)
@@ -160,6 +167,10 @@ export function createApiClient(options: ApiClientOptions = {}) {
     get: <T>(path: string, opts?: RequestOptions) => request<T>('GET', path, undefined, opts),
     post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>('POST', path, body ?? {}, opts),
     put: <T>(path: string, body: unknown, opts?: RequestOptions) => request<T>('PUT', path, body, opts),
+    // A multipart upload; the CSRF token and its one retry work as for any change.
+    postForm: <T>(path: string, form: FormData, opts?: RequestOptions) => request<T>('POST', path, form, opts),
+    // An address for something the browser loads itself, such as an image.
+    url,
     // The token is bound to who is signed in, so ask for a new one after signing in or out.
     forgetCsrfToken: () => {
       csrf = null

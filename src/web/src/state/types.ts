@@ -143,4 +143,6 @@ export interface AppState {
   joinLinks: Record<string, { code: string; on: boolean }>
   joinRequests: DemoJoinRequest[]
   myJoinRequest: string | null
+  // A project's image in the demo, as a data URL, by project id. See demoImage.ts.
+  images: Record<string, { version: string; dataUrl: string }>
 }

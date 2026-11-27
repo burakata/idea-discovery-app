@@ -4,6 +4,7 @@
 // build includes this file (it is imported by demoStore.tsx).
 import { ApiError } from '../api/client'
 import { projects } from '../projects'
+import { imageVersionOf } from './demoImage'
 import type {
   Invitation,
   InviteInput,
@@ -69,7 +70,7 @@ export function initialPeopleState(people: Record<string, Person>, now = new Dat
   const invitations: Record<string, Invitation[]> = {}
   const joinLinks: AppState['joinLinks'] = {}
   const joinRequests: AppState['joinRequests'] = []
-  return { created: [] as string[], texts, members, invitations, sessions, joinLinks, joinRequests, myJoinRequest: null }
+  return { created: [] as string[], texts, members, invitations, sessions, joinLinks, joinRequests, myJoinRequest: null, images: {} as AppState['images'] }
 }
 
 // A project's title and introduction: Burak's own text if he has set it, else the sample's.
@@ -116,7 +117,7 @@ export function detailsOf(state: AppState, projectId: string): ProjectDetails {
     }
   })
   members.sort((a, b) => Number(b.role === 'consultant') - Number(a.role === 'consultant'))
-  return { id: projectId, title: texts.title, intro: texts.intro, members }
+  return { id: projectId, title: texts.title, intro: texts.intro, imageVersion: imageVersionOf(state, projectId), members }
 }
 
 export function invitationsOf(state: AppState, projectId: string): Invitation[] {

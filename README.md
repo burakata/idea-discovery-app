@@ -13,8 +13,8 @@ Turkish.
 **Status:** Phase 1 in progress. M0 is done, and M1 is nearly done. Against
 the real API, people sign in with email links, the consultant creates
 projects and invites people, people can ask to join, and the room has its
-idea page, a shared discussion and the shared summary's empty state. Still to
-come in M1: the last room screens and deployment. There is no AI yet; it
+idea page (with an optional project image), a shared discussion and the
+shared summary's empty state. Still to come in M1: deployment. There is no AI yet; it
 comes in M2. See the
 [milestones](https://github.com/burakata/idea-discovery-app/milestones).
 
@@ -66,7 +66,8 @@ consultant; **Reset demo** starts again. [PROTOTYPE.md](PROTOTYPE.md) lists
 what is simulated.
 
 **The API** needs the .NET 10 SDK. It has sign-in by email link, projects and
-their images, invitations, asking to join, and conversations:
+their images (re-encoded on the server with SkiaSharp), invitations, asking
+to join, and conversations:
 
 ```
 dotnet test src/api
