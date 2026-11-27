@@ -30,7 +30,8 @@ public sealed record EmailSettings(EmailProvider Provider, string From, string F
             else if (raw.Trim().Equals("Resend", StringComparison.OrdinalIgnoreCase)) provider = EmailProvider.Resend;
             else
             {
-                problems.Add($"Email:Provider '{raw}' is not known. Use Resend{(development ? " or Folder" : "")}.");
+                // The value is not repeated: a setting in the wrong place can be a secret.
+                problems.Add($"Email:Provider is not a known provider. Use Resend{(development ? " or Folder" : "")}.");
                 valid = false;
             }
         }

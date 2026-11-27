@@ -62,7 +62,7 @@ describe('the invite outcome', () => {
   it('says each of the three plainly', () => {
     expect(inviteMessage({ kind: 'invited' }, 'a@x.test').text).toBe('Invitation email on its way to a@x.test.')
     expect(inviteMessage({ kind: 'added', displayName: 'Ayşe Demir' }, 'a@x.test').text).toBe(
-      'Ayşe Demir already has an account and was added. A sign-in link was emailed.',
+      'Ayşe Demir already has an account and was added. A sign-in link is on its way.',
     )
     const later = inviteMessage({ kind: 'tryLater' }, 'a@x.test')
     expect(later.text).toBe(c.people.tryLater)

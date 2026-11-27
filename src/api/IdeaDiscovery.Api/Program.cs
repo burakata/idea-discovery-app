@@ -22,6 +22,7 @@ var authRead = AuthSettings.Read(builder.Configuration, builder.Environment, pro
 var emailRead = EmailSettings.Read(builder.Configuration, builder.Environment, problems);
 var hostingRead = HostingSettings.Read(builder.Configuration, builder.Environment, problems);
 var connection = DatabaseSetup.ReadConnection(builder.Configuration, problems);
+DatabaseSetup.CheckConsultant(builder.Configuration, builder.Environment, problems);
 problems.ThrowIfAny();
 // Nothing is null past this point: a missing value added a problem above.
 var authSettings = authRead!;

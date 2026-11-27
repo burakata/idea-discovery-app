@@ -13,6 +13,14 @@ public static class DatabaseSetup
         return null;
     }
 
+    // Outside Development nobody could manage projects without a consultant.
+    // In Development it stays a warning (see SyncConsultant).
+    public static void CheckConsultant(IConfiguration config, IHostEnvironment environment, StartupProblems problems)
+    {
+        if (!environment.IsDevelopment() && string.IsNullOrWhiteSpace(config["Consultant:Email"]))
+            problems.Add("Consultant:Email is not set. Set it to the consultant's email address.");
+    }
+
     public static void AddDatabase(this IServiceCollection services, string connection) =>
         services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
 

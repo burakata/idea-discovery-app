@@ -7,6 +7,7 @@ using IdeaDiscovery.Api.Projects;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
@@ -381,6 +382,47 @@ public class ProductionReadinessTests
     }
 
     [Fact]
+    public void A_Production_start_without_a_consultant_is_refused_alongside_other_problems()
+    {
+        using var host = new ProductionHost(s =>
+        {
+            s["Consultant:Email"] = null;
+            s["Proxy:KnownProxy"] = null;
+        });
+
+        var message = Messages(Assert.ThrowsAny<Exception>(() => host.CreateClient()));
+
+        Assert.Contains("Consultant:Email", message);
+        Assert.Contains("Proxy:KnownProxy", message);
+    }
+
+    [Fact]
+    public void In_Development_a_missing_consultant_is_only_a_warning()
+    {
+        var problems = new StartupProblems();
+
+        Data.DatabaseSetup.CheckConsultant(Config(), Env("Development"), problems);
+
+        Assert.Empty(problems.All);
+    }
+
+    [Fact]
+    public void An_unknown_provider_is_refused_without_repeating_its_value()
+    {
+        var secret = "re_looks_like_a_key_in_the_wrong_place";
+        foreach (var environment in new[] { "Production", "Development" })
+        {
+            var problems = new StartupProblems();
+
+            Assert.Null(EmailSettings.Read(Config(("Email:Provider", secret)), Env(environment), problems));
+
+            var problem = Assert.Single(problems.All);
+            Assert.Contains("Email:Provider", problem);
+            Assert.DoesNotContain(secret, problem);
+        }
+    }
+
+    [Fact]
     public void A_Production_start_with_Resend_but_no_sender_or_key_names_both()
     {
         using var host = new ProductionHost(s =>
@@ -449,6 +491,56 @@ public class ProductionReadinessTests
         Assert.True(queue.Enqueue(new Job()));
     }
 
+    private static async Task<(HttpStatusCode Status, string Body)> AskForLink(HttpClient client)
+    {
+        var csrf = await client.GetAsync("/auth/csrf");
+        var cookie = csrf.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("idr_csrf")).Split(';')[0];
+        using var json = JsonDocument.Parse(await csrf.Content.ReadAsStringAsync());
+        var request = new HttpRequestMessage(HttpMethod.Post, "/auth/request-link")
+        {
+            Content = JsonContent.Create(new { email = RoomsFactory.ConsultantEmail }),
+        };
+        request.Headers.TryAddWithoutValidation("Origin", RoomsFactory.BaseUrl);
+        request.Headers.TryAddWithoutValidation("X-CSRF-TOKEN", json.RootElement.GetProperty("token").GetString());
+        request.Headers.TryAddWithoutValidation("Cookie", cookie);
+        var response = await client.SendAsync(request);
+        return (response.StatusCode, await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Asking_for_a_link_gets_the_same_answer_when_the_email_queue_is_full()
+    {
+        using var normal = new RoomsFactory();
+        using var normalClient = normal.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            { BaseAddress = new Uri(RoomsFactory.BaseUrl), AllowAutoRedirect = false });
+        var expected = await AskForLink(normalClient);
+
+        using var f = new RoomsFactory();
+        var log = new CapturedLog();
+        using var full = f.WithWebHostBuilder(b =>
+        {
+            b.ConfigureLogging(l => l.AddProvider(log));
+            b.ConfigureServices(services =>
+            {
+                // Nothing drains this queue, and it already holds a job.
+                var queue = new EmailQueue(1);
+                Assert.True(queue.Enqueue(new Job()));
+                services.RemoveAll<EmailQueue>();
+                services.AddSingleton(queue);
+                services.RemoveAll<IHostedService>();
+            });
+        });
+        using var fullClient = full.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            { BaseAddress = new Uri(RoomsFactory.BaseUrl), AllowAutoRedirect = false });
+
+        var actual = await AskForLink(fullClient);
+
+        Assert.Equal(HttpStatusCode.Accepted, expected.Status);
+        Assert.Equal(expected, actual);
+        Assert.Contains(log.Lines, l => l.Contains("queue is full"));
+        Assert.Equal(1, full.Services.GetRequiredService<EmailQueue>().Unfinished);
+    }
+
     // ---- Forwarded headers ----
 
     private static async Task<string?> FailedRedeemAddress(ProductionHost host, HttpClient client)
@@ -503,6 +595,22 @@ public class ProductionReadinessTests
     }
 
     [Fact]
+    public async Task Clients_behind_the_proxy_do_not_share_a_per_IP_limit()
+    {
+        // Forwarded headers must be applied before the rate limiter: otherwise
+        // every client would be counted as the proxy.
+        using var host = new ProductionHost();
+        using var first = host.ClientFrom(ProductionSettings.ProxyAddress, forwardedFor: "198.51.100.1", forwardedProto: "https");
+        using var second = host.ClientFrom(ProductionSettings.ProxyAddress, forwardedFor: "198.51.100.2", forwardedProto: "https");
+
+        for (var i = 0; i < 10; i++)
+            Assert.Equal(HttpStatusCode.BadRequest, (await RedeemWrongToken(first)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await RedeemWrongToken(first)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await RedeemWrongToken(second)).StatusCode);
+    }
+
+    [Fact]
     public async Task A_different_address_than_the_proxy_is_not_trusted_even_in_the_same_network()
     {
         using var host = new ProductionHost();
@@ -520,9 +628,10 @@ public class ProductionReadinessTests
 
         // The secure antiforgery cookie only works on an https request.
         Assert.Equal(HttpStatusCode.OK, (await trusted.GetAsync("/auth/csrf")).StatusCode);
-        var error = await Record.ExceptionAsync(async () =>
-            Assert.Equal(HttpStatusCode.OK, (await untrusted.GetAsync("/auth/csrf")).StatusCode));
-        Assert.NotNull(error);
+        // From anyone else the header is ignored: the request stays http, and
+        // antiforgery refuses to set its Secure cookie on it.
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => untrusted.GetAsync("/auth/csrf"));
+        Assert.Contains("not an SSL request", error.Message);
     }
 
     [Fact]
