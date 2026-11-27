@@ -1,8 +1,8 @@
 # Idea Discovery Rooms
 ## Phase 1 Product Requirements Document & Future Roadmap
 
-**Version:** 0.7 — Scope baseline, with the v1 brief carried over, the Milestone 0 decisions recorded, the home page and project content settled, and a sign-in direction for the product stage  
-**Prepared:** 19 November 2026; updated 20 November 2026  
+**Version:** 0.8 — Scope baseline, with the v1 brief carried over, the Milestone 0 decisions recorded, the home page and project content settled, a sign-in direction for the product stage, and scene sketches in the discussion  
+**Prepared:** 19 November 2026; updated 27 November 2026  
 **Status:** Planning document; not a development contract or an approved technical architecture  
 **Product owner / initial consultant:** Private-tool owner  
 **First pilot:** A pallet-transport business-idea discussion (project-specific content, not part of the generic app)
@@ -56,7 +56,7 @@ The app is **not** the clients' business software, a marketplace, a general proj
 | Questions | Natural conversation; short multiple-choice questions when they genuinely clarify, not a wall of forms. |
 | Shared understanding | Owners react **Right / Not right**, with optional explanation; consultant alone formally confirms summary items. |
 | Notifications | Email consultant when an approval needs action; notify participants when their response is needed, without spamming all activity. |
-| Outputs requested | Short idea summary; confirmed / unconfirmed / disagreements; next-conversation questions; simple business flow diagram; business-model comparison; optional clickable concept prototype. |
+| Outputs requested | Short idea summary; confirmed / unconfirmed / disagreements; next-conversation questions; simple business flow diagram; scene sketches in the discussion on the consultant's request; business-model comparison; optional clickable concept prototype. |
 | Devices | Phone and desktop are equal priorities. |
 
 ### 2.2 Proposed defaults — implement provisionally, but keep visible as proposals
@@ -147,7 +147,7 @@ Each project room has three sections for owners: **The idea**, **Discussion** an
   | Print version | Generated from the idea page and the shared summary, in the reader's language, so it is always current. The link is hidden until then (R22) | M3 |
 
   Until its content exists, each section shows a plain "nothing here yet" state.
-- **Discussion:** the project's active conversation (§4.2). Each message shows the writer's name and role (Business owner, Software consultant, AI assistant). The assistant asks one question at a time. After an owner sends a message, a quiet line tells them a reply will follow.
+- **Discussion:** the project's active conversation (§4.2). Each message shows the writer's name and role (Business owner, Software consultant, AI assistant). The assistant asks one question at a time. After an owner sends a message, a quiet line tells them a reply will follow. On the consultant's request, a scene sketch may appear in the discussion, labelled as needing confirmation, and owners react Right / Not right (R28). Sketches never appear on the idea page or in the shared summary.
 - **Shared summary:** three groups: Confirmed, Early interpretations, Open questions (§4.3). On each early interpretation an owner can tap "Right" or "Not right" and add a correction. Everyone sees who reacted and how.
 
 ## 5. Phase 1 functional requirements
@@ -178,19 +178,20 @@ Each project room has three sections for owners: **The idea**, **Discussion** an
 | R20 | Business-model comparison output | P1 | Requested on demand, neutral and sourced; not used to impose a competitor's model on the client. |
 | R21 | Email notifications | P1 | Consultant gets actionable approval alert; owner gets action-needed alert; avoid an email for every activity. |
 | R22 | Output persistence and export | P1 | Summaries, diagrams, comparison tables and their versions remain linked to the conversation; consultant can export a readable file. |
-| R23 | Optional concept prototype | P1 (late / experimental) | Only consultant explicitly requests a draft clickable concept; it is labelled illustrative/unconfirmed and never generated automatically. |
+| R23 | Optional concept prototype | P1 (late / experimental) | Only consultant explicitly requests a draft clickable concept; it is labelled illustrative/unconfirmed and never generated automatically. Best requested once the shared summary is largely confirmed (guidance; the app does not enforce it). |
 | R24 | Mobile / desktop usability | P0 | Critical tasks—sign in, read, answer, approve (consultant)—work on phone and desktop without horizontal scrolling. |
 | R25 | Simple progress and action-needed status | P1 | Room shows a plain-language stage and whether a human reply or consultant approval is pending; no invented percentage-complete score. |
 | R26 | Consultant-private notes | P1 (proposed) | Consultant may save notes separate from shared discussion; owners never see them, and the AI cannot quote them to owners. |
 | R27 | Consultant-added statements | P1 | Consultant can add statements and open questions to the shared summary, including answers given on paper or in person; the source is recorded. |
+| R28 | Scene sketches in the discussion | P1 | On the consultant's request only, the Visual Mapper drafts up to three line drawings of how the business works. Posted only after the consultant approves, in every AI mode. Unknown or disputed parts are drawn as question marks; no screens, apps or devices. Captions are in both languages. Owners react Right / Not right; a sketch is never confirmed. The SVG is cleaned on the server. |
 
 ### 5.1 AI response and approval behaviour
 
 ![AI response and approval modes](assets/ai_publication_flow.svg)
 
-- **Off:** no AI-generated public messages. Human members continue posting normally. Consultant-only analysis may remain separately available if enabled in private settings (proposed distinction).
+- **Off:** no AI-generated public messages. Human members continue posting normally. Consultant-only analysis may remain separately available if enabled in private settings (proposed distinction). A scene sketch the consultant requested and approved may still be posted: it is a shared output the consultant publishes, like the job flow, not an AI reply (R28).
 - **Review (default):** Lead creates a draft, optionally consults a specialist, and waits for consultant approval. Consultant may edit or reject; owner never sees draft.
-- **Automatic:** Lead may post selectively, not after every human message. Shared summary, diagrams and other shared outputs **still** require consultant approval under the recommended pilot rule.
+- **Automatic:** Lead may post selectively, not after every human message. Shared summary, diagrams, scene sketches and other shared outputs **still** require consultant approval under the recommended pilot rule.
 - **Pending question rule:** if an earlier question awaits an answer, default to no new question rather than sending another prompt.
 - **Stale draft rule:** if conversation changes while a draft is waiting, show a warning and permit regeneration or informed approval.
 
@@ -206,9 +207,9 @@ The AI uses a short MCQ only when it would materially simplify a real choice. De
 | **Clarity Reviewer** | Consultant request; Lead internal consult if configured | Consultant only | One high-value ambiguity, possible disagreement or pacing problem with source references; proposed next question. |
 | **Domain Specialist** | Consultant request; private Lead consult | Consultant by default | Plain-language background; distinguishes external example from client intent. |
 | **Summary Editor** | Consultant request / conversation-end proposal | Draft review queue | Traceable concise summary, status of claims, 1–3 questions for next conversation. |
-| **Visual Mapper** | Consultant request when enough facts exist | Draft review queue | Small, readable business journey diagram marking unknown connections as unknown. On the consultant's request, also a simple line illustration (SVG) for the project's idea page, cleaned of any scripts on the server and published only after approval. |
+| **Visual Mapper** | Consultant request when enough facts exist | Draft review queue | Small, readable business journey diagram marking unknown connections as unknown. On the consultant's request, also a simple line illustration (SVG) for the project's idea page, cleaned of any scripts on the server and published only after approval. On the consultant's request, also a scene sketch for the discussion (R28): up to three simple line drawings (SVG) of how the business works, drawn only from what the owners said (in the discussion or as recorded by the consultant), with the source messages listed for the consultant. Unknown parts, and parts the owners describe differently, are drawn as question marks. No screens, apps, devices or software, and nothing the owners did not describe. The drawings carry no text; each has a short caption in English and Turkish, and the sketch is labelled "Sketch · Needs confirmation". Owners react Right / Not right to the whole sketch, with an optional note. A sketch is never confirmed and never becomes a summary statement by itself. The Lead may suggest privately to the consultant that enough is known to sketch; it never requests, draws or posts one. Cleaned of any scripts on the server and posted only after the consultant approves, in every AI mode. |
 
-**The consultant's private assistant.** Each project has a private chat between the consultant and the AI, separate from the shared discussion. The assistant knows the project's context and the shared discussion, and can call the specialists above. Owners never see this chat; the server enforces it. Anything it proposes for owners to see (the idea page, the summary, the job flow, an illustration) goes through the consultant's approval. Built in Milestone 3, with the specialists.
+**The consultant's private assistant.** Each project has a private chat between the consultant and the AI, separate from the shared discussion. The assistant knows the project's context and the shared discussion, and can call the specialists above. Owners never see this chat; the server enforces it. Anything it proposes for owners to see (the idea page, the summary, the job flow, an illustration, a scene sketch) goes through the consultant's approval. Built in Milestone 3, with the specialists.
 
 A **Prototype Designer** may be a later optional specialist for consultant-requested concept prototypes. There is one default public Lead—not five agents talking at the owners. The consultant may view the specialists' **visible task requests and outputs**, but not hidden chain-of-thought or inaccessible model internals.
 
@@ -223,6 +224,7 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 - AI messages are translated where needed for readers of the other language.
 - Natural Turkish and British English; names, source quotes and uncertainty preserved.
 - Agent activity and consultant-only controls can remain English in the pilot (proposed default).
+- Scene sketch captions are written in both languages and approved together; the Turkish caption must not make anything sound more certain than the English one.
 
 ## 6. Required discovery outputs
 
@@ -232,8 +234,11 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 | **Shared understanding** | Explicit owner statements, interpretations, disagreements and open questions, with speakers/source messages | During and at end | Owners react; consultant confirms; versions retained |
 | **Next-conversation guide** | One short next topic plus up to three high-value unresolved questions | On finishing or request | Consultant reviews; linked to next conversation |
 | **Business journey sketch** | Simple steps from a concrete example; unknown steps shown as questions | When sufficient evidence exists | Consultant approves before sharing |
+| **Scene sketch** | Up to three line drawings of how the business works, from the owners' words; unknown parts as question marks; captions in both languages | Consultant request only | Consultant approves before posting in the discussion; owners react; labelled as needing confirmation; never confirmed |
 | **Business-model comparison** | Neutral alternatives/examples and differences, not recommendation or business validation | Consultant request | Clearly attributed as external context; saved on approval |
-| **Clickable concept prototype** | Minimal UI demonstration of a possible interaction or service, not functional product scope | **Explicit consultant request only** | Marked exploratory; source assumptions visible; output versioned |
+| **Clickable concept prototype** | Minimal UI demonstration of a possible interaction or service, not functional product scope | **Explicit consultant request only**; best once the shared summary is largely confirmed | Marked exploratory; source assumptions visible; output versioned |
+
+The business journey sketch is the job flow on the idea page; scene sketches are pictures posted in the discussion.
 
 **Output quality rule:** every claim should, where possible, link to the participant's original message or a declared reference. AI interpretation and owner agreement must never be represented as the same thing. A proposed sketch or prototype is not an approved requirement.
 
@@ -286,6 +291,7 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 | A14 · Output source | Summary item cites an owner statement | Consultant can view supporting original; AI cannot confirm item. |
 | A15 · Secure sharing | A link is forwarded to a non-invited person | Access is denied unless that identity is authorised for the project. |
 | A16 · Future project | Consultant creates a gardening idea project | No pallet-specific text or agents appear without explicit configuration. |
+| A17 · Scene sketch | AI is Automatic, one step of the job is unknown, and the consultant requests a sketch | The unknown step is drawn as a question mark and no screen or app is drawn; owners see nothing until the consultant approves; scripts are removed; the caption shows in the reader's language; an owner's Not right is kept with their name. |
 
 ### Pilot success signals (qualitative)
 
@@ -329,7 +335,7 @@ Retain the ten controls from **AI Discovery Playbook v1.1**: `/clarify`, `/real-
 | AgentDefinition / AgentRun | role, prompt version, visibility, invocation trigger, input references, outcome, timestamps |
 | AIDraft / Approval | proposed content, source context, state, approver, edits, decisions, publish event |
 | SummaryClaim / Reaction | original source references, claim status, per-owner Right/Not right, consultant confirmation |
-| Output / OutputVersion | project + conversation, output type, draft/approved state, artefact path/data, source citations |
+| Output / OutputVersion | project + conversation, output type, draft/approved state, artefact path/data, source citations; a scene sketch also holds its cleaned SVG drawings, captions in both languages and the message that posted it (how owners' reactions to it are stored is decided when M3 is planned) |
 | Notification / AuditEvent | recipient, reason, delivery state, actor, action, timestamp |
 
 Design explicit project and conversation scoping into every query. Store raw original messages independently of machine translations. Source references should point to message IDs and never depend on text being copied into prompts without attribution.
@@ -341,7 +347,7 @@ Design explicit project and conversation scoping into every query. Store raw ori
 - **Data controls:** publish a brief privacy notice; define retention, deletion/export and backup policies before real owners submit confidential details.
 - **Secrets and AI:** API keys server-side; minimum necessary conversation context sent to the AI provider; log outputs and references but avoid storing sensitive prompts unnecessarily.
 - **Audit and provenance:** approvals, summary confirmations, overrides, mode toggles and conversation closure have timestamps and actors.
-- **Safe rendering:** sanitise user-supplied text/Markdown, validate attachments and prevent cross-project references in AI tools.
+- **Safe rendering:** sanitise user-supplied text/Markdown, validate attachments and prevent cross-project references in AI tools. AI-generated SVG is cleaned on the server and served as an image to members only.
 - **Resilience:** temporary AI/email failure must not lose human messages; queued tasks can retry safely without duplicate publication.
 - **Accessibility:** legible on phones, keyboard-friendly chat and forms, labelled icons and options, sufficient contrast and meaningful non-image alternatives.
 
@@ -376,19 +382,19 @@ Security, authentication and data-protection obligations are release blockers fo
 ### Milestone 3 — Understanding, specialist oversight and outputs
 
 - Owner reactions, claim provenance, consultant confirmation, approved project summary.
-- Clarity Reviewer and Domain Specialist first; Summary Editor and Visual Mapper after that.
+- Clarity Reviewer and Domain Specialist first; Summary Editor and Visual Mapper after that. The Visual Mapper draws the job flow first, then the illustration and scene sketches (R28).
 - Private agent task/activity log; consultant facilitator controls; the consultant's private assistant chat (§5.3).
 - The idea page's job flow, understanding, similar businesses, an AI-drawn illustration on request, and the generated print version (§4.4).
 - Draft and approve idea snapshots, diagrams, comparison tables and next-session guide; persistence, simple progress indicators and readable exports.
 - Short MCQ component with Other / Not decided.
-- **Exit:** A09–A14; one full conversation can produce an approved, attributable output for the next round.
+- **Exit:** A09–A14 and A17; one full conversation can produce an approved, attributable output for the next round.
 
 ### Milestone 4 — Real pilot hardening and optional prototype output
 
 - Polish bilingual translations, notification preferences/actionable emails, mobile access and error flows.
 - Permissions, retention/deletion, operational logs, backups and accessibility QA.
 - Pilot with an actual project and owners; evaluate **whether AI added understanding**, not message count.
-- Add consultant-triggered exploratory clickable concept prototype generator if time and output reliability allow; otherwise retain it as explicitly planned Phase 1-late scope, not a hidden omission.
+- Add consultant-triggered exploratory clickable concept prototype generator if time and output reliability allow; otherwise retain it as explicitly planned Phase 1-late scope, not a hidden omission. It is best requested once the shared summary is largely confirmed.
 - **Exit:** real participants can complete and finish one discovery conversation safely; issues from pilot are tracked.
 
 ### Sequencing principle
@@ -442,6 +448,7 @@ A future item moves into Phase 1 only when: (a) the pilot reveals a real unmet n
 | Project-specific context contaminates new projects | Versioned per-project instructions with neutral global defaults and isolation tests. |
 | Invitation or data leakage | Identity-bound links, membership checks, audit logs and deletion controls before external pilot. |
 | Costs from autonomous specialist calls | Configurable triggers, limits, per-room modes and request/output audit. |
+| A sketch is read as the agreed design | Labelled "Needs confirmation", unknown and disputed parts drawn as question marks, no screens or apps, never confirmed, and drawn only on the consultant's request. |
 
 ## 14. Definition of Done for the first real pilot
 
@@ -477,3 +484,4 @@ When an item changes, record: decision date, who confirmed it, the old and new s
 | 0.5 | 20 November 2026 | Burak | §2.1 Access, R02 and §9 Identity: besides the emailed link, the consultant can copy a person's one-time sign-in link and share it by hand (e.g. WhatsApp), and, where a project allows it, a person can ask to join from the project link and the consultant approves. Nothing of the project is shown before approval. | Simpler ways for owners to join, without weakening the rule that a shared link alone never opens confidential content. | A15 unchanged: a forwarded project link shows only the ask-to-join page, and an unapproved request reads nothing. | None (R02 stays P0). |
 | 0.6 | 20 November 2026 | Burak | §4.4: the home page (neutral when signed out; owners always see their project list) and where each part of the idea page comes from, by milestone. R02: the consultant can remove a member; earlier messages stay, marked. §5.3: the consultant's private assistant chat per project (M3), and the Visual Mapper can draw a project illustration on request (M3). §11: M1 and M3 list these. | How the real app looks on first use and how a new project's idea page is filled were not written down; the prototype's hand-written pallet page hid the question. | None changed. A15 also covers the signed-out home page; removing a member gets its own API tests in M1. | Uploaded project images (part of R01, P0) are scheduled in M1. The private assistant and the AI-drawn illustration are added as P1 in M3. |
 | 0.7 | 20 November 2026 | Burak | §12, F16: a note on how sign-in would work if the tool becomes a product: Google or Microsoft sign-in for consultants, with an emailed link as the fallback; one-time links for owners; no passwords; a workspace per consultant or firm. | Burak asked how other consultants would sign up if this became a product. Writing the direction down now keeps it from being decided by accident in Phase 1. | None changed. | None: F16 stays at Product stage, and Phase 1 keeps one consultant and links only. |
+| 0.8 | 27 November 2026 | Burak | R28 and §5.3: on the consultant's request, the Visual Mapper drafts scene sketches for the discussion (up to three line drawings from the owners' words, unknown or disputed parts as question marks, no screens or apps, captions in both languages, owners react, never confirmed, approved before posting in every mode). §5.1: an approved sketch may be posted while AI is Off. §2.1, §4.4, §5.5, §6, §9, §10, §11 and §13 updated to match. R23 and M4: the concept prototype is best requested once the summary is largely confirmed (guidance only). | Owners react to a picture faster than to text, so misunderstandings show sooner. Sketches show the business, not software, which keeps discovery away from features; the prototype stays late for that reason. | A17 added (M3 exit). | R28 added as P1 in M3. R23 unchanged. F03 (multiple journeys) and F10 (notes on parts of a drawing) stay in the future register. |
