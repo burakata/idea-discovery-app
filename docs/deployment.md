@@ -171,7 +171,9 @@ arrive, check that the DNS record points at the server and that ports 80 and
 
 ## 8. Day to day
 
-**Update** to a new build (the commit SHA of a build published from `main`):
+**Update** to a new build (use a commit whose **Publish images** job in GitHub Actions is green; a quick
+merge after another can cancel the earlier run, so that commit was never
+published, and `update.sh` then stops safely at the download):
 
 ```
 cd ~/idea-discovery
@@ -179,7 +181,7 @@ cd ~/idea-discovery
 ```
 
 It downloads the new images, stops the API, copies the database to
-`/srv/idea-discovery/data/backups/pre-update-<sha>-<time>.db`, keeps only the
+`/srv/idea-discovery/data/backups/pre-update-<new-sha>-from-<previous-sha>-<time>.db`, keeps only the
 newest two copies, starts the new build and waits until it is healthy. It
 prints the **previous tag**; keep it for a rollback. Database changes in the
 new build are applied on start and cannot be undone, which is why rollback
@@ -193,7 +195,8 @@ restores the copy.
 
 A rollback is a security event, so the script does more than go back. It
 restores the database copy that `update.sh` made when it installed the build
-you are rolling back from (and refuses if there is none), so it only works for
+you are rolling back from, and only if its name says it was taken before the
+update from the SHA you give (it refuses otherwise, naming what it expects), so it only works for
 the most recent update. What was done after the copy is lost; the replaced
 database is kept aside as `rolled-back-<time>.db` (the newest two are kept).
 Then:
@@ -221,7 +224,7 @@ sudo sqlite3 -readonly /srv/idea-discovery/data/backups/rolled-back-<time>.db   
 ```
 
 Look at the entries dated after the time in the name of the copy that was
-restored (`pre-update-<sha>-<time>.db`). `Details` names the person (for a
+restored (`pre-update-<new-sha>-from-<previous-sha>-<time>.db`). `Details` names the person (for a
 removed member, as `user:<id>`; to find the email, run
 `SELECT Id, Email FROM Users;` the same way). Then sign in yourself, repeat
 each removal, revocation or rejection in the app, and only then ask people to

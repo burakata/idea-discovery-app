@@ -30,10 +30,16 @@ require_sha "$current_tag"
 # update.sh named its copy after the build it installed, which is the build being
 # rolled back from. Only that copy matches the database this build has been using.
 echo "Looking for the database copy taken by the update to $current_tag..."
-backup="$(in_data 'ls -1t "/data/backups/pre-update-$1-"*.db 2>/dev/null | head -n 1 || true' "$current_tag")"
+# Both SHAs were checked as full hex above, so they are safe inside a pattern.
+backup="$(in_data 'ls -1t "/data/backups/pre-update-$1-from-"*.db 2>/dev/null | head -n 1 || true' "$current_tag")"
 backup="$(printf "%s" "$backup" | tr -d "[:cntrl:]")"
 [ -n "$backup" ] || fail "There is no database copy from the update to $current_tag. Nothing was changed."
 echo "Copy: $backup"
+case "$backup" in
+  /data/backups/pre-update-"$current_tag"-from-"$old_tag"-*.db) ;;
+  *) expected="${backup#/data/backups/pre-update-"$current_tag"-from-}"
+     fail "The copy for $current_tag was taken before the update from ${expected%%-*}, not $old_tag. Run: ./rollback.sh ${expected%%-*}. Nothing was changed." ;;
+esac
 echo
 echo "This will:"
 echo "  - go back to build $old_tag"

@@ -13,6 +13,7 @@ require_env_file
 
 previous_tag="$(get_env IMAGE_TAG)"
 [ -n "$previous_tag" ] || fail "IMAGE_TAG is empty in .env."
+require_sha "$previous_tag"
 [ "$previous_tag" != "$new_tag" ] || fail "The server already runs $new_tag."
 
 echo "1/5 Downloading the new images (the app keeps running meanwhile)..."
@@ -33,7 +34,7 @@ in_data '
   fi
   mkdir -p /data/backups
   rm -f /data/backups/*.partial
-  copy="/data/backups/pre-update-$1-$2.db"
+  copy="/data/backups/pre-update-$1-from-$3-$2.db"
   # A write-ahead file left after the stop belongs to the copy too.
   if [ -s /data/idea-discovery.db-wal ]; then cp /data/idea-discovery.db-wal "$copy-wal"; fi
   # Written under another name and renamed last, so a partial copy is never
@@ -46,7 +47,7 @@ in_data '
     rm -f "$old" "$old-wal"
     echo "Deleted the older copy $old"
   done
-' "$new_tag" "$stamp" || {
+' "$new_tag" "$stamp" "$previous_tag" || {
   echo "ERROR: the database copy failed. Nothing else was changed, and the API is stopped." >&2
   echo "Start it again with: docker compose up -d" >&2
   exit 1

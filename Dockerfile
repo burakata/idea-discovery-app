@@ -31,7 +31,7 @@ ENTRYPOINT ["sh", "-c", "umask 077 && exec dotnet IdeaDiscovery.Api.dll"]
 # ---------------------------------------------------------------- Web
 FROM node:24-slim AS web-build
 # The repository's layout is kept, so the client's relative imports resolve: the
-# demo code imports ../../prompts/..., and the bundler and the type check both
+# demo code imports ../../../../prompts/interviewer.md (from src/web/src/demo), and the bundler and the type check both
 # need that file. None of it reaches the api build's output.
 WORKDIR /repo
 COPY src/web/package.json src/web/package-lock.json src/web/
