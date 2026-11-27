@@ -154,6 +154,21 @@ public static class ProjectImageEndpoints
         || b.StartsWith(new byte[] { 0xFF, 0xD8, 0xFF })
         || (b.Length >= 12 && b[..4].SequenceEqual("RIFF"u8) && b.Slice(8, 4).SequenceEqual("WEBP"u8));
 
+    // A 1 x 1 PNG, built in.
+    private const string SelfCheckImage =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+    // Runs a tiny built-in image through the same decode and re-encode as an
+    // upload, so a missing native library stops the app at startup, not at the
+    // first upload.
+    public static void SelfCheck()
+    {
+        Output? output;
+        try { output = ReEncode(Convert.FromBase64String(SelfCheckImage)); }
+        catch (Exception ex) { throw new InvalidOperationException("The image library could not load.", ex); }
+        if (output is null) throw new InvalidOperationException("The image library could not load: it did not process a test image.");
+    }
+
     // Null when the file is not a usable image. Dimensions come from the
     // header and are checked before any pixel is decoded.
     private static Output? ReEncode(byte[] bytes)

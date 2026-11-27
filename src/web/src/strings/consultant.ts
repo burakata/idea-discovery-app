@@ -137,7 +137,7 @@ export const consultant = {
     inviteSubmit: 'Send invitation',
     inviting: 'Sending…',
     fieldsMissing: 'Write an email address and a name.',
-    invitedTo: 'Invitation sent to {email}.',
+    invitedTo: 'Invitation email on its way to {email}.',
     added: '{name} already has an account and was added. A sign-in link was emailed.',
     tryLater: 'Too many invitations went to this address today. Try again tomorrow.',
     invitations: 'Invitations',

@@ -22,14 +22,26 @@ public sealed record AddedEmail(Guid UserId, Guid ProjectId, Guid AddedById) : E
 // In-process queue. A job lost in a restart is simply asked for again.
 public sealed class EmailQueue
 {
-    private readonly Channel<EmailJob> _channel = Channel.CreateBounded<EmailJob>(
-        new BoundedChannelOptions(1000) { FullMode = BoundedChannelFullMode.DropWrite });
+    public const int DefaultCapacity = 1000;
 
+    private readonly Channel<EmailJob> _channel;
     private int _unfinished;
+
+    public EmailQueue() : this(DefaultCapacity) { }
+
+    // A small capacity lets a test fill the queue.
+    public EmailQueue(int capacity)
+    {
+        // Wait, not DropWrite: with DropWrite TryWrite answers true while it
+        // drops the job, so a full queue could never be told to the caller.
+        _channel = Channel.CreateBounded<EmailJob>(
+            new BoundedChannelOptions(capacity) { FullMode = BoundedChannelFullMode.Wait });
+    }
 
     // Jobs queued or being handled. Tests wait for it to reach zero.
     public int Unfinished => Volatile.Read(ref _unfinished);
 
+    // False when the queue is full; the job is then not queued.
     public bool Enqueue(EmailJob job)
     {
         Interlocked.Increment(ref _unfinished);

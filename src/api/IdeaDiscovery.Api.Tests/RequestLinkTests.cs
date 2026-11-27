@@ -462,35 +462,32 @@ public class RequestLinkTests
     private sealed class ProductionFactory : WebApplicationFactory<Program>
     {
         private readonly SqliteConnection _keepAlive;
-        private readonly Dictionary<string, string> _settings;
+        private readonly Dictionary<string, string?> _settings;
         public WarningLog Log { get; } = new();
 
-        public ProductionFactory(Dictionary<string, string>? extra = null)
+        public ProductionFactory(Dictionary<string, string?>? extra = null)
         {
             var connection = $"Data Source=file:{Guid.NewGuid():N}?mode=memory&cache=shared";
             _keepAlive = new SqliteConnection(connection);
             _keepAlive.Open();
-            _settings = new Dictionary<string, string>
-            {
-                ["Auth:TokenKey"] = "production-test-key-0123456789-abcdefghij",
-                ["App:PublicBaseUrl"] = RoomsFactory.BaseUrl,
-                ["Consultant:Email"] = RoomsFactory.ConsultantEmail,
-                ["ConnectionStrings:Default"] = connection,
-            };
+            _settings = ProductionSettings.Good(connection);
             foreach (var (k, v) in extra ?? []) _settings[k] = v;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Production");
-            foreach (var (k, v) in _settings) builder.UseSetting(k, v);
+            foreach (var (k, v) in _settings)
+                if (v is not null) builder.UseSetting(k, v);
             builder.ConfigureLogging(l => l.AddProvider(Log));
         }
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            if (disposing) _keepAlive.Dispose();
+            if (!disposing) return;
+            _keepAlive.Dispose();
+            ProductionSettings.DeleteKeys(_settings);
         }
     }
 
@@ -510,21 +507,40 @@ public class RequestLinkTests
     }
 
     [Fact]
-    public async Task Outside_Development_with_no_provider_the_app_starts_with_a_warning_and_drops_the_email_without_the_link()
+    public void Outside_Development_with_no_provider_the_app_refuses_to_start()
     {
-        using var f = new ProductionFactory();
-        var person = new Person(f.CreateClient(new WebApplicationFactoryClientOptions
+        using var f = new ProductionFactory(new() { ["Email:Provider"] = null });
+
+        var error = Assert.ThrowsAny<Exception>(() => f.CreateClient());
+
+        var messages = new List<string>();
+        for (var e = error; e is not null; e = e.InnerException) messages.Add(e.Message);
+        Assert.Contains(messages, m => m.Contains("Email:Provider is not set"));
+    }
+
+    [Fact]
+    public async Task In_Development_with_no_provider_the_app_starts_with_a_warning_and_drops_the_email_without_the_link()
+    {
+        using var f = new RoomsFactory();
+        AddMembership(f, f.SeedOwner("owner@example.com"));
+        var log = new WarningLog();
+        using var app = f.WithWebHostBuilder(b =>
+        {
+            b.UseSetting("Email:Provider", "");
+            b.ConfigureLogging(l => l.AddProvider(log));
+        });
+        var person = new Person(app.CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri(RoomsFactory.BaseUrl),
             HandleCookies = true,
         }));
 
-        Assert.Contains(f.Log.Lines, l => l.Contains("Email:Provider is not set"));
-        await AssertEmptyAccepted(await person.Post("/auth/request-link", new { email = RoomsFactory.ConsultantEmail }));
-        for (var i = 0; i < 500 && !f.Log.Lines.Any(l => l.Contains("an email was dropped")); i++)
+        Assert.Contains(log.Lines, l => l.Contains("Email:Provider is not set"));
+        await AssertEmptyAccepted(await person.Post("/auth/request-link", new { email = "owner@example.com" }));
+        for (var i = 0; i < 500 && !log.Lines.Any(l => l.Contains("an email was dropped")); i++)
             await Task.Delay(10);
 
-        Assert.Contains(f.Log.Lines, l => l.Contains("an email was dropped"));
-        Assert.DoesNotContain(f.Log.Lines, l => l.Contains("/sign-in") || l.Contains("#t="));
+        Assert.Contains(log.Lines, l => l.Contains("an email was dropped"));
+        Assert.DoesNotContain(log.Lines, l => l.Contains("/sign-in") || l.Contains("#t="));
     }
 }

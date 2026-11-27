@@ -16,8 +16,6 @@ namespace IdeaDiscovery.Api.Tests;
 // startup refusals, the rate limit, the audit trail and GET safety.
 public class SignInProtectionsTests
 {
-    private const string GoodKey = "production-test-key-0123456789-abcdefghij";
-
     // An app in a chosen environment with chosen settings and a private database.
     private sealed class ConfiguredFactory : WebApplicationFactory<Program>
     {
@@ -32,24 +30,23 @@ public class SignInProtectionsTests
             _settings = new Dictionary<string, string?>(settings) { ["ConnectionStrings:Default"] = connection };
         }
 
-        public static Dictionary<string, string?> Good() => new()
-        {
-            ["Auth:TokenKey"] = GoodKey,
-            ["App:PublicBaseUrl"] = "https://rooms.test",
-            ["Consultant:Email"] = "consultant@rooms.test",
-        };
+        // Every setting a Production start requires (the connection is set above).
+        public static Dictionary<string, string?> Good() => ProductionSettings.Good("");
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Production");
             foreach (var (key, value) in _settings)
                 if (value is not null) builder.UseSetting(key, value);
+            builder.ConfigureServices(TestRemoteAddress.AddTo);
         }
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            if (disposing) _keepAlive.Dispose();
+            if (!disposing) return;
+            _keepAlive.Dispose();
+            ProductionSettings.DeleteKeys(_settings);
         }
     }
 
@@ -141,6 +138,9 @@ public class SignInProtectionsTests
             AllowAutoRedirect = false,
             HandleCookies = false,
         }));
+        // The proxy's address and its forwarded protocol make the request https.
+        person.Http.DefaultRequestHeaders.Add(TestRemoteAddress.Header, ProductionSettings.ProxyAddress);
+        person.Http.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
 
         // Cookies are read by hand, so this does not depend on the cookie jar.
         var csrfResponse = await person.Http.GetAsync("/auth/csrf");

@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using IdeaDiscovery.Api;
 using IdeaDiscovery.Api.Auth;
 using IdeaDiscovery.Api.Conversations;
 using IdeaDiscovery.Api.Data;
@@ -6,27 +7,54 @@ using IdeaDiscovery.Api.Mail;
 using IdeaDiscovery.Api.Projects;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Refuses to start outside Development without a strong token key and an
-// https public address.
-var authSettings = AuthSettings.Read(builder.Configuration, builder.Environment);
+// Every setting is read first; the app then refuses to start once, naming each
+// problem. Outside Development that includes a strong token key, an https public
+// address, an email provider (Resend), the one proxy and the key folder.
+var problems = new StartupProblems();
+var authRead = AuthSettings.Read(builder.Configuration, builder.Environment, problems);
+var emailRead = EmailSettings.Read(builder.Configuration, builder.Environment, problems);
+var hostingRead = HostingSettings.Read(builder.Configuration, builder.Environment, problems);
+var connection = DatabaseSetup.ReadConnection(builder.Configuration, problems);
+problems.ThrowIfAny();
+// Nothing is null past this point: a missing value added a problem above.
+var authSettings = authRead!;
+var emailSettings = emailRead!;
+var hostingSettings = hostingRead!;
+
+// Proves the image library's native part loads here, before the first upload needs it.
+ProjectImageEndpoints.SelfCheck();
+
 builder.Services.AddSingleton(authSettings);
 builder.Services.AddSingleton<TokenHasher>();
 builder.Services.AddScoped<SignInLinks>();
 
-// Refuses to start with the Folder sender outside Development. With no
-// provider the app starts and drops emails with a warning.
-var emailSettings = EmailSettings.Read(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton(emailSettings);
 builder.Services.AddSingleton<EmailQueue>();
 // Refuses to start if a supported language has no email template, or its placeholders differ.
 builder.Services.AddSingleton(EmailTemplates.LoadFromBuildOutput());
-if (emailSettings.Provider == EmailProvider.Folder) builder.Services.AddSingleton<IEmailSender, FolderEmailSender>();
-else builder.Services.AddSingleton<IEmailSender, NoEmailSender>();
+switch (emailSettings.Provider)
+{
+    case EmailProvider.Folder:
+        builder.Services.AddSingleton<IEmailSender, FolderEmailSender>();
+        break;
+    case EmailProvider.Resend:
+        // A client per send, so connections and DNS are refreshed by the factory.
+        builder.Services.AddHttpClient(ResendEmailSender.ClientName, client => client.Timeout = TimeSpan.FromSeconds(15));
+        builder.Services.AddSingleton<IEmailSender>(sp => new ResendEmailSender(
+            sp.GetRequiredService<IHttpClientFactory>(), emailSettings,
+            sp.GetRequiredService<ILogger<ResendEmailSender>>(), sp.GetRequiredService<TimeProvider>()));
+        break;
+    default: // only in Development, where the provider may be left unset
+        builder.Services.AddSingleton<IEmailSender, NoEmailSender>();
+        break;
+}
 builder.Services.AddHostedService<EmailDispatcher>();
 // One clock for the whole app, so tests can move it.
 builder.Services.TryAddSingleton(TimeProvider.System);
@@ -68,11 +96,38 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = "idr_csrf";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Strict;
-    // Antiforgery refuses to run behind a TLS-terminating proxy when this is
-    // Always, because the app sees plain http. The token's cookie carries no
-    // access; PR 9 (forwarded headers) makes it Secure on the public address.
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    // Antiforgery refuses to run on a request that is not https when this is
+    // Always. Behind the proxy the forwarded protocol (Proxy:KnownProxy) makes
+    // requests https, so outside Development the cookie is always Secure.
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
 });
+
+// Where the proxy sits: only the one configured address may say who the client
+// is and which scheme it used, and only one hop is believed. Without the
+// setting (Development) no forwarded header is trusted.
+if (hostingSettings.KnownProxy is { } knownProxy)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        // The defaults trust loopback; only the configured proxy is trusted.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownProxies.Add(knownProxy);
+        options.ForwardLimit = 1;
+    });
+}
+
+// Keys that survive restarts, so sessions and antiforgery tokens stay valid.
+// They are not encrypted at rest; the folder's permissions protect them.
+if (hostingSettings.KeysPath is { } keysPath)
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName(HostingSettings.ApplicationName)
+        .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+}
 
 // Using links is limited per client IP: 10 attempts in 15 minutes.
 builder.Services.AddRateLimiter(options =>
@@ -82,7 +137,7 @@ builder.Services.AddRateLimiter(options =>
     // which says nothing about any email.
     options.AddPolicy(AuthEndpoints.RequestLinkRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            ClientIp.PartitionKey(context.Connection.RemoteIpAddress),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
@@ -92,7 +147,7 @@ builder.Services.AddRateLimiter(options =>
     // Asking to join: 5 an hour per client IP.
     options.AddPolicy(JoinEndpoints.AskRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            ClientIp.PartitionKey(context.Connection.RemoteIpAddress),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 5,
@@ -102,7 +157,7 @@ builder.Services.AddRateLimiter(options =>
     // Inviting: 30 an hour per client IP.
     options.AddPolicy(InvitationEndpoints.InviteRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            ClientIp.PartitionKey(context.Connection.RemoteIpAddress),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 30,
@@ -121,7 +176,7 @@ builder.Services.AddRateLimiter(options =>
             }));
     options.AddPolicy(AuthEndpoints.RedeemRateLimit, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            ClientIp.PartitionKey(context.Connection.RemoteIpAddress),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
@@ -143,7 +198,7 @@ builder.Services.AddAuthorization(options =>
         .RequireClaim(SessionValidation.ConsultantClaim, "true"));
 });
 
-builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddDatabase(connection!);
 
 var app = builder.Build();
 
@@ -151,6 +206,10 @@ DatabaseSetup.Initialise(app.Services);
 
 if (emailSettings.Provider == EmailProvider.None)
     app.Logger.LogWarning("Email:Provider is not set. Sign-in emails are dropped, not sent.");
+
+// First, so everything after it (path base, authentication, the rate limiter,
+// audit entries) sees the client's address and scheme, not the proxy's.
+if (hostingSettings.KnownProxy is not null) app.UseForwardedHeaders();
 
 // The browser reaches the API at /api/... on its own origin, so the client's
 // pages never clash with API routes. The root paths keep working too. Routing

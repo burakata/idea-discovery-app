@@ -147,11 +147,15 @@ and the project image (`GET /projects/{id}/image` for members, Burak's
 - Outside Development the API refuses to start without
   `ConnectionStrings:Default`, `Auth:TokenKey` (a secret of at least 32
   characters) and `App:PublicBaseUrl` (the https address links are built
-  from). It also needs `Consultant:Email`. Set them as environment
+  from). It also needs `Consultant:Email`, `Email:Provider` (`Resend`, with
+  `Email:From` and `Email:Resend:ApiKey`), `Proxy:KnownProxy` (the one
+  proxy's IP address) and `DataProtection:KeysPath` (a folder for the keys).
+  It lists every missing setting at once. Set them as environment
   variables or server settings, never committed.
 - Emails: in Development `Email:Provider` is `Folder`, so sign-in emails
   are saved as `.eml` files in `src/api/IdeaDiscovery.Api/emails/` (open one
-  to sign in locally). `Folder` is refused outside Development; with no
-  provider set there, the API starts with a warning and sends nothing.
+  to sign in locally). `Folder` is refused outside Development, and so is
+  no provider: the API refuses to start. (In Development with none set, it
+  starts with a warning and sends nothing.)
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.
