@@ -97,6 +97,8 @@ export function createConversationFeed(options: FeedOptions) {
   let loaded = false
   let retrying = false
   let gone = false
+  // The shown conversation is finished and the last read after that has succeeded.
+  let settled = false
 
   let state: FeedState = snapshot()
   const listeners = new Set<() => void>()
@@ -144,10 +146,6 @@ export function createConversationFeed(options: FeedOptions) {
     try {
       do {
         again = false
-        // A conversation known to be finished before this round needs no more message reads.
-        // One learned to be finished in this round is still read once more, after the list:
-        // a message sent just before it finished is then not missed.
-        const finishedBefore = cursor !== undefined && isFinished()
         try {
           // The first read of a conversation uses the list the screen already has.
           if (cursor !== undefined) {
@@ -155,7 +153,11 @@ export function createConversationFeed(options: FeedOptions) {
             if (stopped || mine !== epoch) return
             conversations = list
           }
-          if (cursor === undefined || !finishedBefore) {
+          // A conversation needs no more message reads only once a read has succeeded after
+          // the list said it was finished: a message sent just before it finished is then
+          // not missed, even if that read failed and has to be tried again.
+          if (!settled) {
+            const listedFinished = isFinished()
             const page = await source.readMessages(projectId, number, cursor)
             if (stopped || mine !== epoch) return
             confirmed = mergeById(confirmed, page.messages)
@@ -163,6 +165,7 @@ export function createConversationFeed(options: FeedOptions) {
             pending = pending.filter((message) => !ids.has(message.id))
             cursor = page.cursor
             loaded = true
+            settled = listedFinished
           }
           retrying = false
         } catch (failure) {
@@ -230,6 +233,7 @@ export function createConversationFeed(options: FeedOptions) {
       confirmed = []
       pending = []
       cursor = undefined
+      settled = false
       loaded = false
       retrying = false
       running = false

@@ -129,14 +129,15 @@ export function readMessages(state: AppState, projectId: string, number: number,
 
 const MAX_TEXT_LENGTH = 4000
 
-// Refuses like the API does: a bad text is 400 or 413, and no active conversation is 409.
-// Returns the text to store.
-export function checkToPost(state: AppState, projectId: string, text: string): string {
+// Refuses like the API does: an unknown conversation is 404, a bad text is 400 or 413, and a
+// conversation that is not (or no longer) the active one is 409. Returns the text to store.
+export function checkToPost(state: AppState, projectId: string, number: number, text: string): string {
   const room = roomOrRefuse(state, projectId)
+  if (!room.conversations.some((entry) => entry.number === number)) throw new ApiError(404, null)
   const clean = text.trim()
   if (!clean) throw new ApiError(400, 'message_not_valid')
   if (clean.length > MAX_TEXT_LENGTH) throw new ApiError(413, null)
-  if (!activeOf(room)) throw new ApiError(409, 'no_active_conversation')
+  if (activeOf(room)?.number !== number) throw new ApiError(409, 'no_active_conversation')
   return clean
 }
 

@@ -20,8 +20,8 @@ public static class ConversationsTestSupport
         $"/projects/{projectId}/conversations/{number}/messages" +
         (after is null ? "" : "?after=" + Uri.EscapeDataString(after));
 
-    public static string ActiveMessagesUrl(Guid projectId) =>
-        $"/projects/{projectId}/conversations/active/messages";
+    public static string ActiveMessagesUrl(Guid projectId, int number = 1) =>
+        $"/projects/{projectId}/conversations/{number}/messages";
 
     public static string FinishUrl(Guid projectId) =>
         $"/consultant/projects/{projectId}/conversations/active/finish";
@@ -66,7 +66,8 @@ public static class ConversationsTestSupport
     // Posts to the active conversation and expects 201; returns the message.
     public static async Task<Message> PostMessage(this Person person, Guid projectId, string text)
     {
-        var response = await person.Post(ActiveMessagesUrl(projectId), new { text });
+        var active = (await person.Conversations(projectId)).Single(c => c.State == "active");
+        var response = await person.Post(ActiveMessagesUrl(projectId, active.Number), new { text });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return ParseMessage(await person.Json(response));
     }

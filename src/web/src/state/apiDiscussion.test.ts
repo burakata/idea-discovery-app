@@ -106,15 +106,15 @@ describe('the discussion against the API', () => {
 
   it('posts the text and returns the stored message', async () => {
     const { session, calls } = await signedIn((url, method) =>
-      method === 'POST' && url === '/api/projects/p1/conversations/active/messages' ? json(row, 201) : undefined,
+      method === 'POST' && url === '/api/projects/p1/conversations/3/messages' ? json(row, 201) : undefined,
     )
-    expect(await session.postMessage('p1', 'Hello')).toMatchObject({ id: 'm1', text: 'Hello' })
+    expect(await session.postMessage('p1', 3, 'Hello')).toMatchObject({ id: 'm1', text: 'Hello' })
     expect(JSON.parse(calls[0].body ?? '{}')).toEqual({ text: 'Hello' })
   })
 
   it('shows a 409 on a post as its own message, in both languages, so the screen can say it plainly', async () => {
     const { session } = await signedIn(() => json({ error: 'no_active_conversation' }, 409))
-    const failure = await failureOf(session.postMessage('p1', 'Hello'))
+    const failure = await failureOf(session.postMessage('p1', 3, 'Hello'))
     expect(failure.status).toBe(409)
     expect(failure.key).toBe('conversationFinished')
     expect(failure.key).not.toBe('generic')
@@ -131,7 +131,7 @@ describe('the discussion against the API', () => {
     ]
     for (const [answer, key] of cases) {
       const { session } = await signedIn(() => answer.clone())
-      expect((await failureOf(session.postMessage('p1', 'Hello'))).key).toBe(key)
+      expect((await failureOf(session.postMessage('p1', 3, 'Hello'))).key).toBe(key)
     }
   })
 

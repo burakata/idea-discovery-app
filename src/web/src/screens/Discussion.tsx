@@ -133,7 +133,7 @@ function Thread({ room }: { room: Room }) {
     setSending(true)
     setSendError(null)
     try {
-      feed.add(await store.postMessage(room.id, text))
+      feed.add(await store.postMessage(room.id, number, text))
       setDraft('')
       setDraftFrom(null)
       // Look again at once, so a message never sits under a conversation just finished.

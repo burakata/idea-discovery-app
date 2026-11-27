@@ -58,14 +58,20 @@ public static partial class ConversationEndpoints
             });
         });
 
-        app.MapPost("/projects/{projectId:guid}/conversations/active/messages", async (
-            Guid projectId, HttpContext http, AppDbContext db, TimeProvider clock) =>
+        // The message goes to the conversation the writer was looking at, never to
+        // "whatever is active now": Burak may have finished it and started the next
+        // one while the writer was typing.
+        app.MapPost("/projects/{projectId:guid}/conversations/{number}/messages", async (
+            Guid projectId, string number, HttpContext http, AppDbContext db, TimeProvider clock) =>
         {
             // Refused before the body is read. The request-size metadata below
             // enforces it for bodies with no declared length.
             if (http.Request.ContentLength > MaxBodyBytes) return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
             var project = await ProjectAccess.FindAsync(db, http.User, projectId);
             if (project is null) return Results.NotFound();
+            if (!int.TryParse(number, out var n)) return Results.NotFound();
+            if (!await db.Conversations.AnyAsync(c => c.ProjectId == project.Id && c.Number == n))
+                return Results.NotFound();
             var text = Clean((await ReadBody(http))?.Text);
             if (text is null) return Invalid();
 
@@ -76,7 +82,7 @@ public static partial class ConversationEndpoints
             var id = Guid.NewGuid();
             var now = clock.GetUtcNow().UtcDateTime;
 
-            // One statement finds the Active conversation, numbers the message
+            // One statement finds the named conversation if it is still Active, numbers the message
             // and inserts it, so a finish at the same moment either comes first
             // (no row, 409) or after (the message was already stored).
             var inserted = await Retrying(() => db.Database.ExecuteSqlInterpolatedAsync($"""
@@ -84,7 +90,7 @@ public static partial class ConversationEndpoints
                 SELECT {id}, c."Id", {author}, {text}, {language}, {now},
                        COALESCE((SELECT MAX(m."Sequence") FROM "Messages" m WHERE m."ConversationId" = c."Id"), 0) + 1
                 FROM "Conversations" c
-                WHERE c."ProjectId" = {project.Id} AND c."State" = 'Active'
+                WHERE c."ProjectId" = {project.Id} AND c."Number" = {n} AND c."State" = 'Active'
                   AND ({isConsultant} OR EXISTS (
                       SELECT 1 FROM "ProjectMembers" pm WHERE pm."ProjectId" = {project.Id} AND pm."UserId" = {author}))
                 """));
@@ -97,7 +103,7 @@ public static partial class ConversationEndpoints
             }
 
             var message = (await ReadMessages(db, project.Id, null, 0, id)).Single();
-            return Results.Created($"/projects/{project.Id}/conversations/active/messages/{id}", message.Body);
+            return Results.Created($"/projects/{project.Id}/conversations/{n}/messages/{id}", message.Body);
         }).RequireRateLimiting(PostRateLimit)
           .WithMetadata(new RequestSizeLimitAttribute(MaxBodyBytes));
 

@@ -79,10 +79,10 @@ export function createConversationApi(api: ApiClient) {
       return toMessagePage(await api.get<unknown>(`/projects/${id(projectId)}/conversations/${number}/messages${after}`))
     },
 
-    async post(projectId: string, text: string): Promise<RoomMessage> {
+    async post(projectId: string, number: number, text: string): Promise<RoomMessage> {
       let body: unknown
       try {
-        body = await api.post<unknown>(`/projects/${id(projectId)}/conversations/active/messages`, { text })
+        body = await api.post<unknown>(`/projects/${id(projectId)}/conversations/${number}/messages`, { text })
       } catch (failure) {
         // On this call "invalid_request" means the text: an empty message or a bad character.
         if (failure instanceof ApiError && failure.code === 'invalid_request') {

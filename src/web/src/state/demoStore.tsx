@@ -670,8 +670,8 @@ export function createRoomActions(
     listConversations: async (projectId) => roomRules.conversationsOf(latest.current, projectId),
     readMessages: async (projectId, number, cursor) =>
       roomRules.readMessages(latest.current, projectId, number, cursor),
-    postMessage: async (projectId, text) => {
-      const clean = roomRules.checkToPost(latest.current, projectId, text)
+    postMessage: async (projectId, number, text) => {
+      const clean = roomRules.checkToPost(latest.current, projectId, number, text)
       const writer = latest.current.people[latest.current.viewAs]
       apply({ type: 'send', roomId: projectId, text: clean })
       if (writer.role === 'owner' && latest.current.rooms[projectId].autoReply) {
