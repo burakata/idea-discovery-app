@@ -399,7 +399,8 @@ public class ConversationsTests
         {
             // The {number}/messages pattern is both the read (GET) and the post (POST).
             var endpoints = routes.Where(e => e.RoutePattern.RawText == pattern).ToList();
-            Assert.NotEmpty(endpoints);
+            if (pattern.EndsWith("/{number}/messages")) Assert.Equal(2, endpoints.Count);
+            else Assert.Single(endpoints);
             Assert.All(endpoints, endpoint => Assert.Null(endpoint.Metadata.GetMetadata<IAllowAnonymous>()));
         }
     }
