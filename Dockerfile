@@ -4,7 +4,7 @@
 # The build context is the repository root (see .dockerignore).
 
 # ---------------------------------------------------------------- API
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api-build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS api-build
 WORKDIR /src/api
 # Restore first, so the packages are cached until the project file changes.
 COPY src/api/global.json ./
@@ -13,9 +13,10 @@ RUN dotnet restore IdeaDiscovery.Api/IdeaDiscovery.Api.csproj
 COPY src/api/IdeaDiscovery.Api/ IdeaDiscovery.Api/
 RUN dotnet publish IdeaDiscovery.Api/IdeaDiscovery.Api.csproj -c Release --no-restore -o /app
 
-# Debian-based, not Alpine: SkiaSharp's native library needs glibc. The API
-# refuses to start if its image self-check fails.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
+# Ubuntu 24.04 (noble) based, not Alpine: SkiaSharp's native library needs glibc.
+# The API refuses to start if its image self-check fails. The tag names the OS on
+# purpose, so a new default base image never arrives unannounced.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS api
 WORKDIR /app
 COPY --from=api-build /app ./
 # /data holds the SQLite file, the Data Protection keys and the pre-update
@@ -29,15 +30,16 @@ ENTRYPOINT ["sh", "-c", "umask 077 && exec dotnet IdeaDiscovery.Api.dll"]
 
 # ---------------------------------------------------------------- Web
 FROM node:24-slim AS web-build
-WORKDIR /src
-COPY src/web/package.json src/web/package-lock.json web/
-RUN npm --prefix web ci
-# The type check also reads prompts/ (the demo's scripted lines), so it is copied;
-# none of it reaches the api build's output.
+# The repository's layout is kept, so the client's relative imports resolve: the
+# demo code imports ../../prompts/..., and the bundler and the type check both
+# need that file. None of it reaches the api build's output.
+WORKDIR /repo
+COPY src/web/package.json src/web/package-lock.json src/web/
+RUN npm --prefix src/web ci
 COPY prompts prompts
-COPY src/web web
-RUN npm --prefix web run build:api
+COPY src/web src/web
+RUN npm --prefix src/web run build:api
 
 FROM caddy:2 AS web
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
-COPY --from=web-build /src/web/dist /srv
+COPY --from=web-build /repo/src/web/dist /srv

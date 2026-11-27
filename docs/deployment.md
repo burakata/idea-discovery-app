@@ -88,9 +88,11 @@ Do **not** add an AAAA record (see [IPv6](#ipv6)). Check later with
    **SPF** TXT record and an **MX** record at `send.rooms`. Wait until Resend
    says the domain is **Verified**.
 4. Add a **DMARC** record: TXT, name `_dmarc.rooms`, value
-   `v=DMARC1; p=none;`. This only asks mail providers to report; it blocks
-   nothing. It can be tightened later (`p=quarantine`) once you have seen the
-   reports are clean.
+   `v=DMARC1; p=none; rua=mailto:<an address you read>;`. `p=none` blocks
+   nothing; `rua` asks mail providers to send you daily summary reports about
+   who sends mail as this domain, so you can see problems before tightening the
+   policy later (`p=quarantine`). The reports are XML files and arrive in that
+   inbox; use an address you actually read.
 5. **API Keys, Create**: permission **Sending access**, domain
    `rooms.<your domain>`. Copy the key once; you paste it in step 6. Do not
    store it anywhere else.
@@ -103,9 +105,9 @@ Do **not** add an AAAA record (see [IPv6](#ipv6)). Check later with
 
 ## 5. GitHub: make the images public, once
 
-CI builds both images on every pull request and, when a change is merged to
-`main`, publishes them to GitHub's container registry, tagged with the full
-commit SHA. After the **first** publish:
+CI builds and tests both images on every pull request. When a change is merged
+to `main`, a separate job (**Publish images**) publishes the tested images to
+GitHub's container registry, tagged with the full commit SHA. After the **first** publish:
 
 1. GitHub, your profile, **Packages**: open `idea-discovery-app/api`, then
    **Package settings**, **Change visibility**, **Public**.
@@ -190,8 +192,11 @@ restores the copy.
 ```
 
 A rollback is a security event, so the script does more than go back. It
-restores the newest pre-update database copy (what was done after the copy is
-lost; the replaced database is kept aside as `rolled-back-<time>.db`), then:
+restores the database copy that `update.sh` made when it installed the build
+you are rolling back from (and refuses if there is none), so it only works for
+the most recent update. What was done after the copy is lost; the replaced
+database is kept aside as `rolled-back-<time>.db` (the newest two are kept).
+Then:
 
 - **Every unused sign-in link stops working.** Links are stored only as a
   keyed hash, under `Auth__TokenKey`; the script writes a new key, so no old
@@ -201,14 +206,34 @@ lost; the replaced database is kept aside as `rolled-back-<time>.db`), then:
   keys, so every cookie in every browser becomes unreadable. Sessions made
   after the copy are also gone with the restored database.
 
-After it, ask people to request a new link; you can copy one from the People
-screen. The scripts never print secrets.
+- **Access you removed after the copy comes back.** Removed members are
+  members again, revoked invitations are open again and rejected join requests
+  are pending again.
+
+**Before telling anyone to sign in again**, re-apply those removals,
+revocations and rejections. The replaced database lists them in its audit log.
+To read it, install the SQLite tool once (`sudo apt install -y sqlite3`), then:
+
+```
+sudo sqlite3 -readonly /srv/idea-discovery/data/backups/rolled-back-<time>.db   "SELECT CreatedAt, Action, Details FROM AuditEvents
+   WHERE Action IN ('member_removed','invitation_revoked','join_rejected')
+   ORDER BY CreatedAt;"
+```
+
+Look at the entries dated after the time in the name of the copy that was
+restored (`pre-update-<sha>-<time>.db`). `Details` names the person (for a
+removed member, as `user:<id>`; to find the email, run
+`SELECT Id, Email FROM Users;` the same way). Then sign in yourself, repeat
+each removal, revocation or rejection in the app, and only then ask people to
+request a new link (you can copy one from the People screen). The scripts never
+print secrets.
 
 **Where things are**
 
 - Data, on the server: `/srv/idea-discovery/data` (owner uid 1654, mode 700,
   so use `sudo` to look): `idea-discovery.db` (the database), `keys/` (Data
-  Protection keys), `backups/` (the pre-update and rolled-back copies).
+  Protection keys), `backups/` (the newest two pre-update copies and the
+  newest two rolled-back databases).
 - Certificates: a Docker volume, kept by Docker.
 - Settings: `~/idea-discovery/.env`.
 
@@ -236,11 +261,14 @@ the API's audit entries with that address, not a Docker one.
 ## 9. Before real owners: the release gate
 
 This deployment holds **test participants and invented data only**. It has
-no backups (only the two pre-update copies, which are not backups). Before
+no backups (only the pre-update and rolled-back copies, which are not backups
+and hold participants' data: delete them when they are not needed, and they
+fall under the retention rules below). Before
 real business owners join (M4), these must exist:
 
 - the privacy notice, naming Resend and, from M2, the AI provider;
 - tested backups, and a tested restore, rolling off after 30 days;
-- retention periods for session and audit IP addresses.
+- retention periods for session and audit IP addresses, and for the
+  pre-update and rolled-back database copies.
 
 See the release-gate row in [decisions.md](decisions.md).

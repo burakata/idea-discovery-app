@@ -41,13 +41,20 @@
 		reverse_proxy api:8080
 	}
 
+	# Built assets have hashed names, so they may be cached for good. A missing asset
+	# is a plain 404, never the page (which must not be cached as an asset).
+	handle /assets/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
 	# Everything else is the client. Unknown paths get the page (the client does its
-	# own routing), so /health and other root API paths never reach the API.
+	# own routing), so /health and other root API paths never reach the API. Pages
+	# are always re-checked, so an update shows at once.
 	handle {
 		root * /srv
-		# Pages are always re-checked; the built assets have hashed names.
 		header Cache-Control "no-cache"
-		header /assets/* Cache-Control "public, max-age=31536000, immutable"
 		try_files {path} /index.html
 		file_server
 	}

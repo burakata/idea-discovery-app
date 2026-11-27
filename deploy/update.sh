@@ -24,22 +24,33 @@ docker compose stop api
 echo "3/5 Copying the database..."
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 in_data '
+  # Stop at the first failure: a failed copy must never be followed by deleting an
+  # older copy or starting the new version.
+  set -e
   if [ ! -f /data/idea-discovery.db ]; then
     echo "No database yet, nothing to copy."
     exit 0
   fi
   mkdir -p /data/backups
+  rm -f /data/backups/*.partial
   copy="/data/backups/pre-update-$1-$2.db"
-  cp /data/idea-discovery.db "$copy"
   # A write-ahead file left after the stop belongs to the copy too.
   if [ -s /data/idea-discovery.db-wal ]; then cp /data/idea-discovery.db-wal "$copy-wal"; fi
+  # Written under another name and renamed last, so a partial copy is never
+  # taken for the newest one.
+  cp /data/idea-discovery.db "$copy.partial"
+  mv "$copy.partial" "$copy"
   echo "Saved $copy"
   # Keep only the newest two copies.
   ls -1t /data/backups/pre-update-*.db | tail -n +3 | while read -r old; do
     rm -f "$old" "$old-wal"
     echo "Deleted the older copy $old"
   done
-' "$new_tag" "$stamp"
+' "$new_tag" "$stamp" || {
+  echo "ERROR: the database copy failed. Nothing else was changed, and the API is stopped." >&2
+  echo "Start it again with: docker compose up -d" >&2
+  exit 1
+}
 
 echo "4/5 Switching to $new_tag and starting..."
 set_env IMAGE_TAG "$new_tag"
