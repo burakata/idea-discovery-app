@@ -33,7 +33,7 @@ Read before planning: the Phase 1 PRD,
 - **Burak approves first.** Each conversation has an AI mode: Off, Review
   (the default: nothing the AI writes reaches owners until Burak approves,
   edits or rejects it) or Automatic (chat replies go out selectively).
-  Summary and job-flow changes always need approval.
+  Summary, job-flow and sketch changes always need approval.
 - **Private stays private.** Owners never see drafts, specialist results,
   agent activity or Burak's private notes. The server enforces this, not the
   screens.

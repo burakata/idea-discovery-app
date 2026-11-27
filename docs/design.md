@@ -55,7 +55,7 @@ languages at both sizes.
 ## Components to build once and reuse
 Card, pill, button (primary, secondary, quiet), message bubble, translation
 line, statement card with reactions, job-flow step, participant row, notice
-box, language switch, count badge.
+box, language switch, count badge, scene sketch (M3).
 
 ## Message bubble
 - Name and role above the text.
@@ -76,6 +76,16 @@ Drawn from a list of steps. Each step has who and what, in both languages,
 and a flag for "unknown". Unknown steps use a dashed outline and a question
 mark. Vertical on phones, horizontal or vertical on desktop, whichever reads
 better.
+
+## Scene sketch (M3)
+A message-bubble variant in the discussion, from the AI assistant.
+- Up to three line drawings in the illustration style, each with its caption
+  in the reader's language beneath it (the caption is also the alt text).
+- The amber "Sketch · Needs confirmation" pill above the drawings.
+- Owners: "Right" and "Not right" for the whole sketch, with names shown, as
+  on statement cards.
+- Drawings stacked on phones; in a row or stacked on desktop, whichever
+  reads better.
 
 ## Prototype labelling
 While AI and sharing are simulated, say so plainly on screen. Never present
