@@ -93,6 +93,7 @@ private notes are demo-only until the API has them.
 | `docs/design.md` | Look and layout rules, for phone and desktop |
 | `docs/decisions.md` | Product and technical decisions, and open questions |
 | `docs/engineering.md` | Principles for writing and reviewing code |
+| `docs/integrations.md` | Every outside service and main building block: what it is for, what data it sees, its status |
 | `docs/design-review/` | Design and owner-test reports, with screenshots |
 | `docs/reference/` | The earlier prototype and the printed feedback document, for reference only |
 | `tools/` | The docs link check, and `tools/screenshots/` for review screenshots |
@@ -118,4 +119,5 @@ private notes are demo-only until the API has them.
 The real build is an ASP.NET Core API on .NET 10 with SQLite and a React
 client, hosted on Hetzner in Germany, with email through Resend and the
 Claude API called from the server only. See
-[docs/decisions.md](docs/decisions.md).
+[docs/integrations.md](docs/integrations.md) for what each service is for,
+and [docs/decisions.md](docs/decisions.md).
