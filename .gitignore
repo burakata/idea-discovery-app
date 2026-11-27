@@ -9,3 +9,7 @@ TestResults/
 *.db-shm
 *.db-wal
 emails/
+
+# Server settings and secrets (only .env.example is committed)
+.env
+deploy/.env

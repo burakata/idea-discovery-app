@@ -1,0 +1,54 @@
+# Caddy is the only thing the internet reaches. It serves the client's files and
+# passes /api/* to the API. Nothing else reaches the API.
+#
+# APP_DOMAIN is set in deploy/.env (for example rooms.example.com). Caddy gets and
+# renews its Let's Encrypt certificate by itself. For "localhost" (the CI check)
+# it uses its own internal certificate authority instead.
+
+{
+	# HTTP/3 needs UDP 443, which is not published. Say so, so browsers do not try.
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$APP_DOMAIN} {
+	# Client address: reverse_proxy sets X-Forwarded-For (and -Proto) from the real
+	# connection. No trusted_proxies is configured, so Caddy trusts nothing: any
+	# X-Forwarded-* a visitor sends is overwritten, never passed on. The API trusts
+	# these headers from this container's address only (Proxy__KnownProxy).
+	encode zstd gzip
+
+	header {
+		# No includeSubDomains and no preload: this is one subdomain of a domain that
+		# also serves other things.
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	# The path is passed on unchanged: the client calls /api/... and the API's path
+	# base is /api. Caddy does not cache responses. The API's own headers (such as
+	# the image's Content-Security-Policy) are left alone.
+	handle /api/* {
+		# The API enforces its own limits (64 KB messages, 5 MB images). This is a
+		# coarse outer limit with room for the upload's envelope.
+		request_body {
+			max_size 8MB
+		}
+		reverse_proxy api:8080
+	}
+
+	# Everything else is the client. Unknown paths get the page (the client does its
+	# own routing), so /health and other root API paths never reach the API.
+	handle {
+		root * /srv
+		# Pages are always re-checked; the built assets have hashed names.
+		header Cache-Control "no-cache"
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}

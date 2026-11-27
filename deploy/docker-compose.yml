@@ -1,0 +1,84 @@
+# The app on the server: Caddy (web) in front, the API behind it.
+# Settings come from deploy/.env (copy .env.example; see docs/deployment.md).
+# Run every command from this folder.
+
+name: idea-discovery
+
+services:
+  web:
+    image: ghcr.io/burakata/idea-discovery-app/web:${IMAGE_TAG:?Set IMAGE_TAG in .env to a commit SHA}
+    restart: unless-stopped
+    # Docker never trims logs by default; keep the last 30 MB per service.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in .env}
+    # IPv4 only, on purpose (see "IPv6" in docs/deployment.md). Binding to 0.0.0.0
+    # keeps Docker from also listening on IPv6, where the visitor's address would be
+    # lost. UDP 443 (HTTP/3) is not published; the Caddyfile turns HTTP/3 off.
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - caddy_data:/data      # certificates and Caddy's state
+      - caddy_config:/config
+    networks:
+      app:
+        # Fixed, so the API can trust this one address for X-Forwarded-For.
+        # Must be inside the subnet below and equal Proxy__KnownProxy in .env.
+        ipv4_address: ${Proxy__KnownProxy:?Set Proxy__KnownProxy in .env}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    image: ghcr.io/burakata/idea-discovery-app/api:${IMAGE_TAG}
+    restart: unless-stopped
+    # Docker never trims logs by default; keep the last 30 MB per service.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # No ports are published: only Caddy, on the private network, can reach it.
+    env_file: .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: Data Source=/data/idea-discovery.db
+      DataProtection__KeysPath: /data/keys
+    volumes:
+      # A host folder, so the scripts and Burak can see it. Created once, owned by the
+      # app user (uid 1654), mode 0700: see docs/deployment.md.
+      - ${DATA_DIR:-/srv/idea-discovery/data}:/data
+    networks:
+      - app
+    # The image has no curl, so bash's /dev/tcp asks /health on port 8080.
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080 &&
+          printf 'GET /health HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3 &&
+          head -n 1 <&3 | grep -q ' 200 '
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    # A clean stop lets SQLite finish writing before the update script copies the file.
+    stop_grace_period: 30s
+
+networks:
+  app:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.7.0/24
+
+volumes:
+  caddy_data:
+  caddy_config:
