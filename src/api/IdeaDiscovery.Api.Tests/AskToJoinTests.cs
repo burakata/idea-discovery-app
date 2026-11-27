@@ -1244,9 +1244,11 @@ public class AskToJoinTests
     {
         private readonly SqliteConnection _keepAlive;
         private readonly string _connection = $"Data Source=file:{Guid.NewGuid():N}?mode=memory&cache=shared";
+        private readonly Dictionary<string, string?> _settings;
 
         public ProductionFactory()
         {
+            _settings = ProductionSettings.Good(_connection);
             _keepAlive = new SqliteConnection(_connection);
             _keepAlive.Open();
         }
@@ -1254,16 +1256,17 @@ public class AskToJoinTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Production");
-            builder.UseSetting("Auth:TokenKey", "production-test-key-0123456789-abcdefghij");
-            builder.UseSetting("App:PublicBaseUrl", RoomsFactory.BaseUrl);
-            builder.UseSetting("Consultant:Email", RoomsFactory.ConsultantEmail);
-            builder.UseSetting("ConnectionStrings:Default", _connection);
+            foreach (var (key, value) in _settings)
+                if (value is not null) builder.UseSetting(key, value);
+            builder.ConfigureServices(TestRemoteAddress.AddTo);
         }
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            if (disposing) _keepAlive.Dispose();
+            if (!disposing) return;
+            _keepAlive.Dispose();
+            ProductionSettings.DeleteKeys(_settings);
         }
     }
 
@@ -1287,6 +1290,9 @@ public class AskToJoinTests
         {
             BaseAddress = new Uri("http://rooms.test"), AllowAutoRedirect = false, HandleCookies = false,
         }));
+        // The proxy's address and its forwarded protocol make the request https.
+        person.Http.DefaultRequestHeaders.Add(TestRemoteAddress.Header, ProductionSettings.ProxyAddress);
+        person.Http.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
 
         var response = await person.Post($"/join/{code}", new { name = "Ayse" });
 

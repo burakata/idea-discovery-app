@@ -13,26 +13,44 @@ public sealed record AuthSettings(string TokenKey, Uri PublicBaseUrl, IReadOnlyL
     // never from the request.
     public string LinkBase => PublicBaseUrl.GetLeftPart(UriPartial.Path).TrimEnd('/');
 
-    public static AuthSettings Read(IConfiguration config, IHostEnvironment environment)
+    // The key is a secret, so it stays out of any text the record prints.
+    private bool PrintMembers(System.Text.StringBuilder builder)
+    {
+        builder.Append("PublicBaseUrl = ").Append(PublicBaseUrl);
+        return true;
+    }
+
+    // Null when a problem was added to `problems`.
+    public static AuthSettings? Read(IConfiguration config, IHostEnvironment environment, StartupProblems problems)
     {
         var development = environment.IsDevelopment();
+        var valid = true;
 
         var key = config["Auth:TokenKey"];
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("Auth:TokenKey is not set. Set it in user secrets or an environment variable.");
-        if (!development && (key.Length < MinimumTokenKeyLength || key == DevelopmentTokenKey))
-            throw new InvalidOperationException(
-                $"Auth:TokenKey must be at least {MinimumTokenKeyLength} characters and not the development value.");
+        {
+            problems.Add("Auth:TokenKey is not set. Set it in user secrets or an environment variable.");
+            valid = false;
+        }
+        else if (!development && (key.Length < MinimumTokenKeyLength || key == DevelopmentTokenKey))
+        {
+            problems.Add($"Auth:TokenKey must be at least {MinimumTokenKeyLength} characters and not the development value.");
+            valid = false;
+        }
 
         var raw = config["App:PublicBaseUrl"];
-        if (!Uri.TryCreate(raw, UriKind.Absolute, out var baseUrl)
+        Uri? baseUrl = null;
+        if (!Uri.TryCreate(raw, UriKind.Absolute, out baseUrl)
             || (baseUrl.Scheme != Uri.UriSchemeHttps && !(development && baseUrl.Scheme == Uri.UriSchemeHttp)))
-            throw new InvalidOperationException(
-                development
-                    ? "App:PublicBaseUrl must be an absolute http or https URL."
-                    : "App:PublicBaseUrl must be an absolute https URL.");
+        {
+            problems.Add(development
+                ? "App:PublicBaseUrl must be an absolute http or https URL."
+                : "App:PublicBaseUrl must be an absolute https URL.");
+            valid = false;
+        }
 
-        var origins = new List<string> { baseUrl.GetLeftPart(UriPartial.Authority) };
-        return new AuthSettings(key, baseUrl, origins);
+        if (!valid) return null;
+        var origins = new List<string> { baseUrl!.GetLeftPart(UriPartial.Authority) };
+        return new AuthSettings(key!, baseUrl, origins);
     }
 }

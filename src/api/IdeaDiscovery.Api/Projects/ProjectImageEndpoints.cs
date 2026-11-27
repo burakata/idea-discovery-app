@@ -154,34 +154,59 @@ public static class ProjectImageEndpoints
         || b.StartsWith(new byte[] { 0xFF, 0xD8, 0xFF })
         || (b.Length >= 12 && b[..4].SequenceEqual("RIFF"u8) && b.Slice(8, 4).SequenceEqual("WEBP"u8));
 
+    // A 1 x 1 PNG, built in.
+    private const string SelfCheckImage =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+    // Runs a tiny built-in image through the same decode and re-encode as an
+    // upload, so a missing native library stops the app at startup, not at the
+    // first upload.
+    public static void SelfCheck()
+    {
+        Output? output;
+        try { output = ReEncodeCore(Convert.FromBase64String(SelfCheckImage)); }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(
+                $"The image library could not load ({ex.GetType().Name}: {ex.Message}).", ex);
+        }
+        if (output is null) throw new InvalidOperationException("The image library could not load: it did not process a test image.");
+    }
+
     // Null when the file is not a usable image. Dimensions come from the
     // header and are checked before any pixel is decoded.
     private static Output? ReEncode(byte[] bytes)
     {
-        if (!HasAllowedSignature(bytes)) return null;
         try
         {
-            using var codec = SKCodec.Create(new MemoryStream(bytes));
-            if (codec is null) return null;
-            var (width, height) = (codec.Info.Width, codec.Info.Height);
-            if (width < 1 || height < 1 || width > MaxSide || height > MaxSide || (long)width * height > MaxPixels)
-                return null;
-
-            // The first frame only, then at most 1600 px on the long edge, then upright. When
-            // a step has nothing to do it returns its input, so Dispose runs twice on one
-            // bitmap, which Skia allows.
-            using var decoded = Decode(codec);
-            if (decoded is null) return null;
-            using var sized = Downsize(decoded);
-            using var upright = Orient(sized, codec.EncodedOrigin);
-            using var image = SKImage.FromBitmap(upright);
-            using var encoded = image.Encode(SKEncodedImageFormat.Webp, OutputQuality);
-            return encoded is null ? null : new Output(encoded.ToArray(), upright.Width, upright.Height);
+            return ReEncodeCore(bytes);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             return null;
         }
+    }
+
+    // As ReEncode, but a failure inside the library is thrown, not hidden.
+    private static Output? ReEncodeCore(byte[] bytes)
+    {
+        if (!HasAllowedSignature(bytes)) return null;
+        using var codec = SKCodec.Create(new MemoryStream(bytes));
+        if (codec is null) return null;
+        var (width, height) = (codec.Info.Width, codec.Info.Height);
+        if (width < 1 || height < 1 || width > MaxSide || height > MaxSide || (long)width * height > MaxPixels)
+            return null;
+
+        // The first frame only, then at most 1600 px on the long edge, then upright. When
+        // a step has nothing to do it returns its input, so Dispose runs twice on one
+        // bitmap, which Skia allows.
+        using var decoded = Decode(codec);
+        if (decoded is null) return null;
+        using var sized = Downsize(decoded);
+        using var upright = Orient(sized, codec.EncodedOrigin);
+        using var image = SKImage.FromBitmap(upright);
+        using var encoded = image.Encode(SKEncodedImageFormat.Webp, OutputQuality);
+        return encoded is null ? null : new Output(encoded.ToArray(), upright.Width, upright.Height);
     }
 
     // The first frame. A source far above the output size is decoded at the largest reduced

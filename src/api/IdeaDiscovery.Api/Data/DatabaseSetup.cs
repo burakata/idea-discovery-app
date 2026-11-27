@@ -4,14 +4,25 @@ namespace IdeaDiscovery.Api.Data;
 
 public static class DatabaseSetup
 {
-    public static void AddDatabase(this IServiceCollection services, IConfiguration config)
+    // Null when the setting is missing; the problem is added to `problems`.
+    public static string? ReadConnection(IConfiguration config, StartupProblems problems)
     {
         var connection = config.GetConnectionString("Default");
-        if (string.IsNullOrWhiteSpace(connection))
-            throw new InvalidOperationException(
-                "ConnectionStrings:Default is not set. Set it in configuration or an environment variable.");
-        services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
+        if (!string.IsNullOrWhiteSpace(connection)) return connection;
+        problems.Add("ConnectionStrings:Default is not set. Set it in configuration or an environment variable.");
+        return null;
     }
+
+    // Outside Development nobody could manage projects without a consultant.
+    // In Development it stays a warning (see SyncConsultant).
+    public static void CheckConsultant(IConfiguration config, IHostEnvironment environment, StartupProblems problems)
+    {
+        if (!environment.IsDevelopment() && string.IsNullOrWhiteSpace(config["Consultant:Email"]))
+            problems.Add("Consultant:Email is not set. Set it to the consultant's email address.");
+    }
+
+    public static void AddDatabase(this IServiceCollection services, string connection) =>
+        services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
 
     // Applies migrations, then makes the configured consultant the only one.
     public static void Initialise(IServiceProvider services)
