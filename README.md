@@ -80,12 +80,19 @@ from the emails saved in `src/api/IdeaDiscovery.Api/emails/`. The room's
 idea page, shared summary and discussion use the API; Burak's queue and
 private notes are demo-only until the API has them.
 
+## Deploying it
+
+The app runs on one small server behind Caddy, from two Docker images that CI
+builds. [docs/deployment.md](docs/deployment.md) is the step-by-step guide
+(server, DNS, email, first start, updates and rollback).
+
 ## What is where
 
 | Path | Contents |
 |---|---|
 | `src/web/` | The client: React, Vite and TypeScript, built as the demo or against the API |
 | `src/api/` | The API: ASP.NET Core on .NET 10, with its tests |
+| `deploy/` | What the server runs: the compose file, the Caddyfile, `.env.example` and the update and rollback scripts |
 | `prompts/` | The AI assistant's prompts, read from these files |
 | `docs/prd/` | The Phase 1 PRD, the single source of scope, with its milestones (§11) and future feature register (§12) |
 | `docs/playbook/` | The AI Discovery Playbook v1.1, which the Lead's prompts are written from |
@@ -93,10 +100,11 @@ private notes are demo-only until the API has them.
 | `docs/design.md` | Look and layout rules, for phone and desktop |
 | `docs/decisions.md` | Product and technical decisions, and open questions |
 | `docs/engineering.md` | Principles for writing and reviewing code |
+| `docs/deployment.md` | Burak's step-by-step guide to deploying the app on the server |
 | `docs/integrations.md` | Every outside service and main building block: what it is for, what data it sees, its status |
 | `docs/design-review/` | Design and owner-test reports, with screenshots |
 | `docs/reference/` | The earlier prototype and the printed feedback document, for reference only |
-| `tools/` | The docs link check, and `tools/screenshots/` for review screenshots |
+| `tools/` | The docs link check, the CI checks for the built client and the Docker images, and `tools/screenshots/` for review screenshots |
 | `.claude/` | The Claude Code setup: the dev loop, subagents and skills |
 
 ## How work is done

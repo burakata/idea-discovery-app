@@ -158,4 +158,7 @@ and the project image (`GET /projects/{id}/image` for members, Burak's
   no provider: the API refuses to start. (In Development with none set, it
   starts with a warning and sends nothing.)
 - Check links in the docs: `powershell -File tools/check-doc-links.ps1`
+- Check the Docker images (needs Docker, openssl and free ports 80 and 443): build
+  both (`docker build --target api -t ghcr.io/burakata/idea-discovery-app/api:local .`,
+  the same with `web`), then `IMAGE_TAG=local bash tools/check-docker-stack.sh`.
 - CI (`.github/workflows/ci.yml`) runs all of these on every pull request.

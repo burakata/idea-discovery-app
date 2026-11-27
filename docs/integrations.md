@@ -11,14 +11,14 @@ request.
 
 | Name | What it is for | Sees owners' data? | Status |
 |---|---|---|---|
-| [Hetzner](#hetzner) | The server the real app runs on | Yes, stores it | Planned, M1 PR 9 |
+| [Hetzner](#hetzner) | The server the real app runs on (Germany) | Yes, stores the database and images | Planned, M1 PR 9 |
 | [Docker](#docker) | Packs the app so it runs the same everywhere | No (runs on our server) | Planned, M1 PR 9 |
-| [Caddy](#caddy) | The front door: HTTPS and what visitors can reach | Passes it through | Planned, M1 PR 9 |
+| [Caddy](#caddy) | The front door: HTTPS and what visitors can reach | Passes it through | Decided; planned, M1 PR 9 |
 | [Let's Encrypt](#lets-encrypt) | Free HTTPS certificates, fetched by Caddy | No, only the address | Planned, M1 PR 9 |
-| [Resend](#resend) | Sends the sign-in and invitation emails | Yes: names, email addresses, links | Planned, M1 PR 9 |
+| [Resend](#resend) | Sends the sign-in and invitation emails | Yes: names, email addresses, links. Stored by Resend, possibly in the US | Planned, M1 PR 9 |
 | [SkiaSharp](#skiasharp) | Cleans and resizes uploaded project images | No (runs on our server) | In use, M1 PR 8c |
 | [Claude API](#claude-api) | The AI assistant | Yes: conversation content | Planned, M2 |
-| [GitHub](#github) | Code, checks on every change, the public demo | No (demo data only) | In use |
+| [GitHub](#github) | Code, checks on every change, the public demo, the app's published images | No (demo data only; the images hold no data) | In use; images from M1 PR 9 |
 
 "Runs on our server" means the code is part of the app itself: nothing
 leaves the server because of it.
@@ -27,7 +27,7 @@ leaves the server because of it.
 
 A visitor's browser reaches **Caddy** over HTTPS (certificate from
 **Let's Encrypt**). Caddy passes the request to the app, which runs in a
-**Docker** box on a **Hetzner** server in Germany. When Burak uploads a
+**Docker** box on a **Hetzner** server in Germany. The images come from GitHub's registry. When Burak uploads a
 picture, **SkiaSharp** cleans it before it is stored. When someone needs a
 sign-in link, the app asks **Resend** to email it. From M2, the app sends
 conversation text to the **Claude API** and gets the AI's drafts back.
@@ -36,8 +36,9 @@ conversation text to the **Claude API** and gets the AI's drafts back.
 
 **The computer the app runs on.** The app has to live on a machine that is
 always on and reachable from the internet. Hetzner rents small servers by the
-month for a few euros. Its data centres are in Germany, so the owners' data
-stays in Europe.
+month for a few euros. Its data centres are in Germany, so what the app
+stores itself (the database and images) stays in Europe. Email is different:
+see Resend, which keeps email content and delivery data outside the server.
 
 - **Data:** everything the app stores: the SQLite database (people,
   projects, messages, sign-in records) and uploaded images, on the server's
@@ -67,7 +68,8 @@ renew certificates by hand, and the API would face the internet directly.
 
 - **Data:** every request passes through it on our own server; it stores
   nothing about owners.
-- **Status:** proposed in the PR 9 plan, not yet decided.
+- **Decided:** 2026-11-27 (M1 PR 9b): the official `caddy:2` image, with the
+  client's files and the Caddyfile baked in. Setup: [deployment.md](deployment.md).
 
 ## Let's Encrypt
 
@@ -82,8 +84,9 @@ the app's address and renews it before it runs out.
 **The service that sends sign-in emails.** The app asks Resend to deliver a
 one-time link to the invited person. Resend handles email delivery; the app
 remains responsible for creating, expiring and checking the link. Resend
-processes and stores email information outside the Hetzner server, so it
-must be included in the privacy notice.
+processes and stores email information outside the Hetzner server, and some
+of that may be in the US, so it must be included in the privacy notice. Not
+everything about the owners stays in Europe because of this.
 
 - **Data:** the recipient's name and email address, and the email's text,
   including the sign-in link.
@@ -99,10 +102,11 @@ must be included in the privacy notice.
 
 ## SkiaSharp
 
-**Makes uploaded images safe.** An uploaded file can hide things: a phone
+**Cleans uploaded images.** An uploaded file can hide things: a phone
 photo's location, or content made to attack a browser. SkiaSharp redraws every
-upload as a fresh, clean WebP image, so only the picture survives, and it
-shrinks very large photos. It is a code library (MIT licence, .NET
+upload as a fresh WebP image, which reduces risk and strips the metadata we
+test for (it does not make every file safe), and it shrinks very large
+photos. It is a code library (MIT licence, .NET
 Foundation), not an outside service.
 
 - **Data:** the uploaded image, on our own server only.
@@ -132,5 +136,8 @@ public demo.
 
 - **Data:** none of the owners'. The demo uses invented sample data and keeps
   everything in the visitor's own browser.
-- **Planned:** possibly GitHub's container registry for the app's Docker
-  image (an open PR 9 decision).
+- **Container registry (GHCR):** CI builds the app's two Docker images (the
+  API, and Caddy with the client) and publishes them, tagged with the commit,
+  to GitHub's container registry when a change is merged to `main`. The
+  images are public and hold no settings or data; the server runs one commit's
+  tag, never `latest`. Decided 2026-11-27 (M1 PR 9b).

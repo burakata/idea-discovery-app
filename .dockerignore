@@ -1,0 +1,21 @@
+# What the Docker build never needs, and must never contain.
+**/node_modules
+**/bin
+**/obj
+**/dist
+src/api/IdeaDiscovery.Api/emails/
+**/emails/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.env*
+!.env.example
+src/api/**/.env*
+# src/web/.env.api (VITE_DATA_SOURCE=api, no secrets) is needed by the client build.
+.git
+.github
+.claude
+.vs
+docs/reference
+deploy/*
+!deploy/Caddyfile
